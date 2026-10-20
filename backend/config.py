@@ -187,6 +187,16 @@ def is_allowed_retailer(url: str | None) -> bool:
 
 
 # --------------------------------------------------------------------------
+# Coordinator passcode
+# --------------------------------------------------------------------------
+# The coordinator's screens are the only ones that show a family's street
+# address and phone number, so they sit behind a shared passcode. This is a
+# demo gate, not authentication: there are no user passwords in the MVP, and
+# the passcode is checked on the server, never in the browser.
+
+COORDINATOR_PASSCODE = "wishingtree-demo"
+
+# --------------------------------------------------------------------------
 # Limits — app behaviour
 # --------------------------------------------------------------------------
 

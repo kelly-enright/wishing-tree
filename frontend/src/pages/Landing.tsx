@@ -1,20 +1,21 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { listAccounts, type Account } from '../api'
+import { clearSession, getSession, homePath, setSession } from '../session'
 
 type Health = {
-  status: string
   region: { name: string; hub_name: string; dropoff_window: string; delivery_window: string }
 }
 
 const ROLES = [
   {
-    to: '/family',
+    to: '/family/signup',
     eyebrow: 'For families',
     title: 'I need help',
     blurb: 'Tell us what you need in your own words. We turn it into wishes you approve before anyone sees them.',
   },
   {
-    to: '/donor',
+    to: '/donor/signup',
     eyebrow: 'For neighbours',
     title: 'I want to give',
     blurb: 'Browse wishes near you, or get matched to the ones your budget and interests fit best.',
@@ -29,6 +30,10 @@ const ROLES = [
 
 export default function Landing() {
   const [health, setHealth] = useState<Health | null>(null)
+  const [accounts, setAccounts] = useState<{ families: Account[]; donors: Account[] } | null>(null)
+  const [showAccounts, setShowAccounts] = useState(false)
+  const [session, setLocalSession] = useState(getSession())
+  const navigate = useNavigate()
 
   useEffect(() => {
     fetch('/api/health')
@@ -36,6 +41,21 @@ export default function Landing() {
       .then(setHealth)
       .catch(() => setHealth(null))
   }, [])
+
+  useEffect(() => {
+    if (!showAccounts || accounts) return
+    listAccounts().then(setAccounts).catch(() => setAccounts({ families: [], donors: [] }))
+  }, [showAccounts, accounts])
+
+  function continueAs(account: Account) {
+    setSession({ role: account.role, alias: account.alias, zip: account.zip })
+    navigate(homePath(account.role))
+  }
+
+  function signOut() {
+    clearSession()
+    setLocalSession(null)
+  }
 
   return (
     <main className="landing">
@@ -50,6 +70,22 @@ export default function Landing() {
         </p>
       </header>
 
+      {session && (
+        <section className="welcome" aria-label="Signed in">
+          <p className="welcome__text">
+            This browser is signed in as <strong>{session.alias}</strong>.
+          </p>
+          <div className="welcome__actions">
+            <Link className="btn btn--light" to={homePath(session.role)}>
+              Continue
+            </Link>
+            <button type="button" className="btn btn--ghost" onClick={signOut}>
+              Sign out
+            </button>
+          </div>
+        </section>
+      )}
+
       <section className="roles" aria-label="Choose how you want to start">
         {ROLES.map((role) => (
           <Link key={role.to} to={role.to} className="role">
@@ -61,13 +97,63 @@ export default function Landing() {
         ))}
       </section>
 
-      <section className="demo">
-        <p className="demo__text">
-          Just looking around? Open a seeded demo family with wishes already on the wall.
-        </p>
-        <Link to="/family/demo" className="demo__link">
-          Open a demo family
-        </Link>
+      <section className="demo" aria-label="Demo shortcut">
+        <div className="demo__header">
+          <div>
+            <p className="demo__tag">Demo shortcut — not part of the real product</p>
+            <p className="demo__text">
+              Continue as an existing family or donor, without signing up or typing anything.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="btn btn--light"
+            onClick={() => setShowAccounts((open) => !open)}
+            aria-expanded={showAccounts}
+          >
+            {showAccounts ? 'Hide accounts' : 'Continue as…'}
+          </button>
+        </div>
+
+        {showAccounts && (
+          <div className="accounts">
+            {!accounts && <p className="accounts__loading">Loading accounts…</p>}
+            {accounts && (
+              <>
+                <div className="accounts__group">
+                  <h2 className="accounts__title">Families</h2>
+                  <ul className="accounts__list">
+                    {accounts.families.map((account) => (
+                      <li key={account.alias}>
+                        <button type="button" className="account" onClick={() => continueAs(account)}>
+                          <span className="account__alias">{account.alias}</span>
+                          <span className="account__detail">
+                            {account.zip} · {account.detail}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="accounts__group">
+                  <h2 className="accounts__title">Donors</h2>
+                  <ul className="accounts__list">
+                    {accounts.donors.map((account) => (
+                      <li key={account.alias}>
+                        <button type="button" className="account" onClick={() => continueAs(account)}>
+                          <span className="account__alias">{account.alias}</span>
+                          <span className="account__detail">
+                            {account.zip} · {account.detail}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </section>
 
       {health && (

@@ -49,6 +49,25 @@ The model is **gpt-6-luna** through the Portkey gateway, named once in
 
 ---
 
+## The three ways in
+
+The landing page has three entry points:
+
+- **I need help** — family sign-up (zip, delivery address, phone)
+- **I want to give** — donor sign-up (zip, address, phone, budget, categories, preference)
+- **Coordinator** — passcode protected, because those screens show families' home
+  addresses and phone numbers. The passcode is in `backend/config.py`; for now it is
+  **`wishingtree-demo`**.
+
+There are no passwords otherwise. Signing up creates the record and gives you an alias
+like `Family A59`; this browser remembers the alias so you come back to the same account.
+
+**Continue as…** on the landing page lists every existing family and donor by alias, so
+you can switch accounts without typing anything. It is a demo shortcut and is labelled as
+one. It shows aliases and zips only — never an address or a phone number.
+
+---
+
 ## Check it is working
 
 ```bash

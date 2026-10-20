@@ -133,3 +133,23 @@ Three judgement calls I made rather than stopping to ask, all easy to change:
 the 20 retailers on the allowlist (a config value); four pledged wishes seeded
 so the coordinator's run sheet has rows; and `/api/health` as the only endpoint,
 since the problem asked for no features yet.
+
+### Prompt 2
+
+> Before we move on, one addition to Problem 2. Update the landing page so it has three entry points: "I need help" (family sign-up), "I want to give" (donor sign-up), and "Coordinator." Signing up creates the family or donor record and remembers them in this browser so they can come back later. Also add a "Continue as…" option on the landing page that lists existing families and donors by alias, clearly labeled as a demo shortcut, so testers can switch into any account without typing. The Coordinator entry requires a simple passcode stored in config.py (use "wishingtree-demo" for now) because those screens will show home addresses and phone numbers. There are no other passwords in the MVP. Keep each page as a placeholder for now, and update harness.md.
+
+**Why a follow-up was needed:** _(waiting on Kelly's one sentence — to be filled in)_
+
+**Outcome:** The landing page now has the three real entry points, and the screens
+behind them are still placeholders.
+
+- **Sign-up endpoints.** `POST /api/families` and `POST /api/donors` create the record, assign the next alias (`Family A59`, `Donor D09`), and return the alias and zip only — never the address or phone that was just typed. Both refuse a zip outside a configured region with a message naming where Wishing Tree operates.
+- **Remembered in the browser.** `{role, alias, zip}` goes into `localStorage`. The landing page shows a "This browser is signed in as Family A04" strip with Continue and Sign out; a full reload keeps it.
+- **"Continue as…"** lists all 15 families and 8 donors by alias with their zip and a count ("3 wishes", "$75 budget"), labelled *Demo shortcut — not part of the real product*. `GET /api/accounts` returns alias-and-zip shapes only, and a test asserts no seeded address or phone appears in the response.
+- **Coordinator passcode** in `config.COORDINATOR_PASSCODE` (`wishingtree-demo`), checked server-side by `POST /api/coordinator/unlock`. A test greps the whole built frontend to prove the passcode never ships to the browser. Unlock is kept in `sessionStorage`, so closing the tab re-locks it.
+- **53 tests pass** (16 new). Screenshots of all four screens, plus the passcode refusing a wrong value, are in `screenshots/`.
+
+One judgement call: the coordinator gate uses `sessionStorage` rather than
+`localStorage`, so it does not persist the way a family or donor session does.
+Those screens show home addresses, so re-entering the passcode in a new tab
+seemed right. Easy to change.

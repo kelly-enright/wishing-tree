@@ -15,11 +15,19 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend import config, db, seed
+from backend.models import (
+    AccountSummary,
+    CoordinatorUnlock,
+    Donor,
+    DonorSignUp,
+    Family,
+    FamilySignUp,
+)
 
 STARTUP: dict[str, object] = {}
 
@@ -62,6 +70,111 @@ def health() -> dict:
         },
         "frontend_built": config.FRONTEND_DIST.joinpath("index.html").exists(),
     }
+
+
+# --------------------------------------------------------------------------
+# Sign-up — the three ways into the app
+# --------------------------------------------------------------------------
+# There are no passwords in the MVP. Signing up creates the record and returns
+# the alias; the browser remembers that alias so the person can come back.
+# Addresses and phone numbers arrive here through a plain form and go straight
+# to the database for the coordinator. They are never sent to a model.
+
+
+def _check_region(zip_code: str) -> None:
+    if config.region_for_zip(zip_code) is None:
+        active = ", ".join(r.name for r in config.active_regions())
+        raise HTTPException(
+            status_code=400,
+            detail=f"Wishing Tree is not in {zip_code} yet. Right now we cover {active}.",
+        )
+
+
+@app.post("/api/families", status_code=201)
+def create_family(form: FamilySignUp) -> dict:
+    _check_region(form.zip)
+    region = config.region_for_zip(form.zip)
+    with db.connect() as conn:
+        family = Family(
+            alias=db.next_family_alias(conn),
+            zip=form.zip,
+            region_slug=region.slug,
+            contact_address=form.contact_address,
+            contact_phone=form.contact_phone,
+        )
+        db.insert_family(family, conn)
+        conn.commit()
+    return {"role": "family", **family.public_view()}
+
+
+@app.post("/api/donors", status_code=201)
+def create_donor(form: DonorSignUp) -> dict:
+    _check_region(form.zip)
+    region = config.region_for_zip(form.zip)
+    with db.connect() as conn:
+        donor = Donor(
+            alias=db.next_donor_alias(conn),
+            zip=form.zip,
+            region_slug=region.slug,
+            contact_address=form.contact_address,
+            contact_phone=form.contact_phone,
+            budget_usd=form.budget_usd,
+            preferred_categories=form.preferred_categories,
+            preference=form.preference,
+        )
+        db.insert_donor(donor, conn)
+        conn.commit()
+    return {"role": "donor", **donor.public_view()}
+
+
+@app.get("/api/accounts")
+def list_accounts() -> dict[str, list[AccountSummary]]:
+    """The demo "Continue as..." list: aliases and zips only.
+
+    Deliberately returns public_view() shapes. No street address and no phone
+    number can reach this endpoint, which is what makes an open list of
+    accounts safe to show a tester.
+    """
+    with db.connect() as conn:
+        wishes = db.wish_counts_by_family(conn)
+        families = [
+            AccountSummary(
+                role="family",
+                alias=f.alias,
+                zip=f.zip,
+                detail=f"{wishes.get(f.alias, 0)} wishes",
+            )
+            for f in db.list_families(conn)
+        ]
+        donors = [
+            AccountSummary(
+                role="donor",
+                alias=d.alias,
+                zip=d.zip,
+                detail=f"${d.budget_usd:,.0f} budget",
+            )
+            for d in db.list_donors(conn)
+        ]
+    return {"families": families, "donors": donors}
+
+
+@app.get("/api/accounts/{role}/{alias}")
+def get_account(role: str, alias: str) -> dict:
+    """Confirm a remembered alias still exists when the browser comes back."""
+    with db.connect() as conn:
+        record = db.get_family(conn, alias) if role == "family" else db.get_donor(conn, alias)
+    if record is None:
+        raise HTTPException(status_code=404, detail=f"No {role} with alias {alias!r}.")
+    return {"role": role, **record.public_view()}
+
+
+@app.post("/api/coordinator/unlock")
+def coordinator_unlock(body: CoordinatorUnlock) -> dict:
+    """The coordinator screens show addresses and phone numbers, so they are
+    behind a shared passcode. Checked here on the server, never in the browser."""
+    if body.passcode.strip() != config.COORDINATOR_PASSCODE:
+        raise HTTPException(status_code=401, detail="That passcode is not right.")
+    return {"role": "coordinator", "unlocked": True}
 
 
 # --------------------------------------------------------------------------

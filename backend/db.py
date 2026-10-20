@@ -244,3 +244,44 @@ def counts(conn: sqlite3.Connection) -> dict[str, int]:
     for table in ("families", "donors", "requests", "pledges"):
         out[table] = conn.execute(f"SELECT COUNT(*) AS n FROM {table}").fetchone()["n"]
     return out
+
+
+# --------------------------------------------------------------------------
+# Aliases and lookups (sign-up)
+# --------------------------------------------------------------------------
+
+def _next_alias(conn: sqlite3.Connection, table: str, prefix: str) -> str:
+    """Next free alias, e.g. 'Family A59'. Aliases are the only public names."""
+    rows = conn.execute(f"SELECT alias FROM {table}").fetchall()
+    highest = 0
+    for row in rows:
+        tail = row["alias"].rsplit(" ", 1)[-1]
+        if tail.startswith(prefix) and tail[len(prefix):].isdigit():
+            highest = max(highest, int(tail[len(prefix):]))
+    label = "Family" if table == "families" else "Donor"
+    return f"{label} {prefix}{highest + 1:02d}"
+
+
+def next_family_alias(conn: sqlite3.Connection) -> str:
+    return _next_alias(conn, "families", "A")
+
+
+def next_donor_alias(conn: sqlite3.Connection) -> str:
+    return _next_alias(conn, "donors", "D")
+
+
+def get_family(conn: sqlite3.Connection, alias: str) -> Family | None:
+    row = conn.execute("SELECT * FROM families WHERE alias = ?", (alias,)).fetchone()
+    return _family(row) if row else None
+
+
+def get_donor(conn: sqlite3.Connection, alias: str) -> Donor | None:
+    row = conn.execute("SELECT * FROM donors WHERE alias = ?", (alias,)).fetchone()
+    return _donor(row) if row else None
+
+
+def wish_counts_by_family(conn: sqlite3.Connection) -> dict[str, int]:
+    rows = conn.execute(
+        "SELECT family_alias, COUNT(*) AS n FROM requests GROUP BY family_alias"
+    ).fetchall()
+    return {r["family_alias"]: r["n"] for r in rows}

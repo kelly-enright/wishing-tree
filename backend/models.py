@@ -335,3 +335,55 @@ class AgentCallLog(BaseModel):
     @property
     def total_tokens(self) -> int:
         return self.input_tokens + self.cached_input_tokens + self.output_tokens
+
+
+# --------------------------------------------------------------------------
+# Sign-up and session types
+# --------------------------------------------------------------------------
+# A family's and a donor's address and phone arrive through these plain forms.
+# They are stored for the coordinator and never sent to a model.
+
+class FamilySignUp(BaseModel):
+    zip: str
+    contact_address: str = Field(min_length=4)
+    contact_phone: str = Field(min_length=7)
+
+    @field_validator("zip")
+    @classmethod
+    def _five_digit_zip(cls, z: str) -> str:
+        if not (len(z) == 5 and z.isdigit()):
+            raise ValueError("zip code must be five digits")
+        return z
+
+
+class DonorSignUp(BaseModel):
+    zip: str
+    contact_address: str = Field(min_length=4)
+    contact_phone: str = Field(min_length=7)
+    budget_usd: float = Field(ge=0)
+    preferred_categories: list[Category] = Field(default_factory=list)
+    preference: DonorPreference = DonorPreference.EITHER
+
+    @field_validator("zip")
+    @classmethod
+    def _five_digit_zip(cls, z: str) -> str:
+        if not (len(z) == 5 and z.isdigit()):
+            raise ValueError("zip code must be five digits")
+        return z
+
+
+class CoordinatorUnlock(BaseModel):
+    passcode: str
+
+
+class AccountSummary(BaseModel):
+    """One row of the demo "Continue as..." list.
+
+    Aliases and zips only. Contact details never appear in this shape, which is
+    what lets the list be public in the demo without leaking anything.
+    """
+
+    role: str          # "family" | "donor"
+    alias: str
+    zip: str
+    detail: str = ""   # e.g. "3 wishes" or "$75 budget"

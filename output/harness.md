@@ -59,6 +59,9 @@ project defines a shape anywhere else.
 | `Donor` | alias, zip, contact details, budget, preferred categories, preference | Also has `public_view()`. |
 | `Pledge` | request, donor, drop-off date, delivery date, family confirmation, status | One per claimed wish. |
 | `AgentCallLog` | agent, model, operation, input / cached input / output tokens, latency, ok, error, cost | One row per model call; the evidence for tokenomics. |
+| `FamilySignUp` / `DonorSignUp` | what the sign-up forms send | Address and phone arrive through these plain forms and go straight to the database. They are never sent to a model. |
+| `CoordinatorUnlock` | passcode | Checked on the server. |
+| `AccountSummary` | role, alias, zip, detail | The shape of the demo "Continue as…" list. Carries no contact details by construction. |
 
 ### Vocabulary
 
@@ -104,7 +107,38 @@ A second city needs one more `Region` entry and no code change anywhere.
 555-01xx fiction range, and all 19 product links point at allowlisted retailers
 with made-up product paths. Tests assert all three.
 
-## 7. Safety measures so far
+## 7. Entry points and sessions
+
+Three ways into the app, from the landing page.
+
+| Entry | Route | What happens |
+|---|---|---|
+| **I need help** | `/family/signup` | A plain form takes zip, delivery address and phone. `POST /api/families` creates the record, assigns the next alias (`Family A59`), and returns alias and zip only. |
+| **I want to give** | `/donor/signup` | Zip, address, phone, budget, categories and specific/flexible preference. `POST /api/donors` returns alias and zip only. |
+| **Coordinator** | `/coordinator` | A shared passcode, checked by `POST /api/coordinator/unlock`. |
+
+**No passwords.** There are no user accounts with credentials in the MVP.
+Signing up creates the record and returns an alias; the browser keeps
+`{role, alias, zip}` in `localStorage` under `wishingtree.session`, so the
+person comes back to the same account. Nothing sensitive is stored in the
+browser — the alias is already public.
+
+**"Continue as…"** on the landing page lists every existing family and donor by
+alias so a tester can switch accounts without typing. It is labelled *Demo
+shortcut — not part of the real product*. It is safe to leave open because
+`GET /api/accounts` returns `AccountSummary` rows: alias, zip, and a count
+("3 wishes", "$75 budget"). A street address or phone number cannot reach that
+endpoint, and a test asserts the response contains neither.
+
+**The coordinator is the exception**, because those screens are the only ones
+that show a family's home address and phone number. The passcode lives in
+`config.COORDINATOR_PASSCODE` (`wishingtree-demo` for now) and is compared on
+the server. It is never shipped to the browser — a test greps the whole built
+frontend to prove it. Success is remembered in `sessionStorage`, not
+`localStorage`, so closing the tab re-locks it. This is a demo gate, not
+authentication: it stops a casual visitor browsing addresses, and nothing more.
+
+## 8. Safety measures so far
 
 Agents arrive in later problems; these are the ones already standing.
 
@@ -116,16 +150,21 @@ Agents arrive in later problems; these are the ones already standing.
 | Nothing is public by default | `RequestStatus.DRAFT` default | A drafted wish going public before the family approves it. |
 | Placeholder prices cannot pass as real | `PRICES_ARE_PLACEHOLDERS` + test | A made-up cost reaching the report. |
 | Token budgets declared | `config.py` | Groundwork for the overspending guard: per-session, per-review, per-match-run and daily caps. |
+| Coordinator passcode | `config.COORDINATOR_PASSCODE`, checked in `POST /api/coordinator/unlock` | A casual visitor opening the only screens that show home addresses. Checked server-side; a test proves the passcode is absent from the built frontend. |
+| Sign-up responses echo nothing | `create_family` / `create_donor` return `public_view()` | The address and phone a family just typed coming back out of the API. Tested. |
+| Demo account list is alias-only | `GET /api/accounts` returns `AccountSummary` | An open testing convenience turning into a directory of addresses. Tested against every seeded record. |
+| Sign-up is region-gated | `_check_region()` | Accounts outside a configured region, with a message naming where Wishing Tree actually operates. |
 
-## 8. Tests
+## 9. Tests
 
-`./.venv/bin/python -m pytest tests -q` — **37 passing**.
+`./.venv/bin/python -m pytest tests -q` — **53 passing**.
 
 - `test_config.py` — the .env lookup in all four cases, region config, allowlist accept/reject, placeholder prices
 - `test_models.py` — every validator, and that `public_view()` drops contact details
 - `test_seed.py` — counts, category and occasion coverage, specific/flexible balance, all links allowlisted, fiction-range phone numbers, re-seeding does not duplicate
+- `test_api.py` — sign-up creates records and assigns aliases, responses never echo contact details, the accounts list leaks no address or phone, out-of-region and malformed zips are refused, the passcode accepts only the right value and never ships to the browser
 
-## 9. Specs
+## 10. Specs
 
 _Filled in as the agents are built._
 
