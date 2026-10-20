@@ -138,7 +138,7 @@ since the problem asked for no features yet.
 
 > Before we move on, one addition to Problem 2. Update the landing page so it has three entry points: "I need help" (family sign-up), "I want to give" (donor sign-up), and "Coordinator." Signing up creates the family or donor record and remembers them in this browser so they can come back later. Also add a "Continue as…" option on the landing page that lists existing families and donors by alias, clearly labeled as a demo shortcut, so testers can switch into any account without typing. The Coordinator entry requires a simple passcode stored in config.py (use "wishingtree-demo" for now) because those screens will show home addresses and phone numbers. There are no other passwords in the MVP. Keep each page as a placeholder for now, and update harness.md.
 
-**Why a follow-up was needed:** _(waiting on Kelly's one sentence — to be filled in)_
+**Why a follow-up was needed:** My first prompt didn't cover how families and donors come back to the app later, or protecting the coordinator screens that show home addresses.
 
 **Outcome:** The landing page now has the three real entry points, and the screens
 behind them are still placeholders.
@@ -153,3 +153,51 @@ One judgement call: the coordinator gate uses `sessionStorage` rather than
 `localStorage`, so it does not persist the way a family or donor session does.
 Those screens show home addresses, so re-entering the passcode in a new tab
 seemed right. Easy to change.
+
+---
+
+## Problem 3 — Intake Agent and Token Logging
+
+### Prompt 1
+
+> Problem 3: "Intake agent and token logging"
+>
+> Now the family side: a family describes their situation in a chat, and the Intake agent drafts their wishes. Token logging starts here because every later problem depends on it.
+>
+> a.) Family sign-up form: zip, address and phone. The address and phone are saved to the database but must never be sent to any agent.
+> b.) Intake agent (PydanticAI, gpt-6-luna), system prompt in prompts/intake_agent.md. It chats in English, asks only necessary follow-up questions, and returns a list of draft Requests as structured output (Pydantic). Wishes are written in a neutral, standard format, so how well someone tells their story doesn't affect how their wish reads.
+> c.) Give the Intake agent these PydanticAI tools: get_categories_and_occasions() so it uses only the allowed values; check_open_wish_count(family_id) so it knows how many more wishes the family can add; and estimate_cost(category, item) that looks up a small price guide in data/price_guide.json (typical costs for common items like a children's winter coat, diapers, a school backpack).
+> d.) It must not invent details. If something is unknown (size, deadline), it asks or leaves the field empty.
+> e.) Limits from config.py: a maximum of 20 chat turns per intake and 5 open wishes per family. When a limit is hit, show a friendly message.
+> f.) An approval screen where the family sees each drafted wish and can edit, delete or approve it. Approved wishes get status pending_review. Nothing goes public in this problem.
+> g.) Log every agent call and tool call to output/audit_trail.json and the AgentCallLog table: timestamp, agent name, tools called, session ID, model, input tokens, cached input tokens, output tokens, latency, cost (from the config prices), and outcome. Also record how long each intake took, from the first message to approval.
+> h.) A small token-usage panel in the app that shows tokens and cost for the current session.
+> i.) Cache the system prompt where the API supports it, so cached input tokens show up in the logs.
+> j.) Test two different intakes end to end (one specific item, one flexible need), save screenshots to screenshots/, and update harness.md.
+>
+> Ask any questions you have before starting.
+
+**Outcome:** The family side works end to end, against the real model.
+
+- **The agent** is a PydanticAI agent on gpt-6-luna, prompt in `prompts/intake_agent.md` (~1,750 tokens, version `f07555b94010`), returning `IntakeReply` — a message, the full draft list, and a done flag.
+- **All three tools** built and used in the real runs. `estimate_cost` reads the 37-entry `data/price_guide.json` and matches on word overlap with a synonym map, so "boys winter coat" finds "children's winter coat" where plain string similarity picked "adult winter coat".
+- **`check_open_wish_count(family_id)` does not trust the id it is given** — the count always comes from the session's own family, and a mismatch is recorded as a blocked lookup.
+- **The agent is never given contact details.** `IntakeDeps` has four fields and none of them can hold an address or phone; a test asserts the field names. When a test family volunteered a name and street address in the chat, the agent replied "You don't need to share your name or address here" and kept both out of the wishes.
+- **Limits run before the model call**, so hitting the 20-turn cap costs zero tokens. The 5-wish cap is checked at the start of an intake and again at approval.
+- **Approval screen** with per-wish editing, deletion, and approval; approved wishes are stored `pending_review`, and nothing reaches the wish wall.
+- **Every call is logged twice** — append-only JSON Lines in `output/audit_trail.json` and a row in `agent_calls`. Uncached and cached input tokens are stored separately, because they are priced separately.
+- **Prompt caching works:** 64% of all input tokens across the seven calls were served from cache. Nothing requests caching; the prompt is simply ordered so the long stable part comes first.
+- **Token panel** beside the chat shows calls, input, cached input, output, total and cost, plus the cached share.
+- **Two end-to-end runs** recorded in `harness.md` with full token counts: a flexible one (electric bill + groceries, 2 calls, 13,015 tokens, 48 seconds) and a specific one (a backpack with a product link, 1 call, 9,133 tokens, 35 seconds). Six screenshots in `screenshots/`.
+- **77 tests pass.** The suite stubs the model, so it is fast and free.
+
+Known gap, written up in `harness.md` rather than hidden: the agent calls
+`estimate_cost` but does not always copy the returned range into the draft. Any
+wish still missing a cost gets the price guide's category range on approval, and
+a missing deadline becomes 30 days out — both visible and editable by the family
+first.
+
+The three token prices in `config.py` are still placeholders, so every cost in
+the app and the trail reads `0.00` and the panel says "price not set". The token
+counts are real, so filling in those three numbers re-costs every run already
+recorded.

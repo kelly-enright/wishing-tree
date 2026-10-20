@@ -14,8 +14,10 @@ from pathlib import Path
 
 from backend import config
 from backend.models import (
+    AgentCallLog,
     Donor,
     Family,
+    IntakeSession,
     Pledge,
     PledgeStatus,
     Request,
@@ -79,6 +81,36 @@ CREATE TABLE IF NOT EXISTS pledges (
     created_at                TEXT    NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS intake_sessions (
+    session_id       TEXT    PRIMARY KEY,
+    family_alias     TEXT    NOT NULL REFERENCES families(alias),
+    started_at       TEXT    NOT NULL,
+    approved_at      TEXT,
+    turns            INTEGER NOT NULL DEFAULT 0,
+    status           TEXT    NOT NULL,
+    duration_seconds REAL
+);
+
+CREATE TABLE IF NOT EXISTS agent_calls (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp           TEXT    NOT NULL,
+    session_id          TEXT,
+    agent               TEXT    NOT NULL,
+    model               TEXT    NOT NULL,
+    operation           TEXT    NOT NULL,
+    tools_called        TEXT    NOT NULL DEFAULT '',
+    input_tokens        INTEGER NOT NULL DEFAULT 0,
+    cached_input_tokens INTEGER NOT NULL DEFAULT 0,
+    output_tokens       INTEGER NOT NULL DEFAULT 0,
+    latency_ms          INTEGER NOT NULL DEFAULT 0,
+    estimated_cost_usd  REAL,
+    ok                  INTEGER NOT NULL DEFAULT 1,
+    error               TEXT,
+    request_id          INTEGER,
+    prompt_version      TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_calls_session     ON agent_calls(session_id);
 CREATE INDEX IF NOT EXISTS idx_requests_status   ON requests(status);
 CREATE INDEX IF NOT EXISTS idx_requests_zip      ON requests(zip);
 CREATE INDEX IF NOT EXISTS idx_requests_deadline ON requests(deadline);
@@ -285,3 +317,93 @@ def wish_counts_by_family(conn: sqlite3.Connection) -> dict[str, int]:
         "SELECT family_alias, COUNT(*) AS n FROM requests GROUP BY family_alias"
     ).fetchall()
     return {r["family_alias"]: r["n"] for r in rows}
+
+
+# --------------------------------------------------------------------------
+# Intake sessions and agent-call logging
+# --------------------------------------------------------------------------
+# Wishes that count against a family's cap: submitted but not yet claimed by a
+# donor. A draft is not submitted, and a granted wish already has a donor.
+
+OPEN_STATUSES = (RequestStatus.PENDING_REVIEW.value, RequestStatus.OPEN.value)
+
+
+def open_wish_count(conn: sqlite3.Connection, family_alias: str) -> int:
+    placeholders = ",".join("?" for _ in OPEN_STATUSES)
+    row = conn.execute(
+        f"SELECT COUNT(*) AS n FROM requests "
+        f"WHERE family_alias = ? AND status IN ({placeholders})",
+        (family_alias, *OPEN_STATUSES),
+    ).fetchone()
+    return row["n"]
+
+
+def insert_intake_session(session: IntakeSession, conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """INSERT INTO intake_sessions (session_id, family_alias, started_at,
+                                        approved_at, turns, status, duration_seconds)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (session.session_id, session.family_alias, _iso(session.started_at),
+         _iso(session.approved_at) if session.approved_at else None,
+         session.turns, session.status.value, session.duration_seconds),
+    )
+
+
+def update_intake_session(session: IntakeSession, conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """UPDATE intake_sessions
+              SET approved_at = ?, turns = ?, status = ?, duration_seconds = ?
+            WHERE session_id = ?""",
+        (_iso(session.approved_at) if session.approved_at else None,
+         session.turns, session.status.value, session.duration_seconds,
+         session.session_id),
+    )
+
+
+def get_intake_session(conn: sqlite3.Connection, session_id: str) -> IntakeSession | None:
+    row = conn.execute(
+        "SELECT * FROM intake_sessions WHERE session_id = ?", (session_id,)
+    ).fetchone()
+    return IntakeSession(**dict(row)) if row else None
+
+
+def insert_agent_call(call: AgentCallLog, conn: sqlite3.Connection) -> int:
+    cur = conn.execute(
+        """INSERT INTO agent_calls (timestamp, session_id, agent, model, operation,
+                                    tools_called, input_tokens, cached_input_tokens,
+                                    output_tokens, latency_ms, estimated_cost_usd,
+                                    ok, error, request_id, prompt_version)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (_iso(call.timestamp), call.session_id, call.agent, call.model, call.operation,
+         ",".join(call.tools_called), call.input_tokens, call.cached_input_tokens,
+         call.output_tokens, call.latency_ms, call.estimated_cost_usd,
+         int(call.ok), call.error, call.request_id, call.prompt_version),
+    )
+    return int(cur.lastrowid)
+
+
+def session_usage(conn: sqlite3.Connection, session_id: str) -> dict:
+    """Totals for the token panel: this session's tokens, cost and calls."""
+    row = conn.execute(
+        """SELECT COUNT(*)                      AS calls,
+                  COALESCE(SUM(input_tokens), 0)        AS input_tokens,
+                  COALESCE(SUM(cached_input_tokens), 0) AS cached_input_tokens,
+                  COALESCE(SUM(output_tokens), 0)       AS output_tokens,
+                  COALESCE(SUM(estimated_cost_usd), 0)  AS cost_usd,
+                  COALESCE(SUM(latency_ms), 0)          AS latency_ms
+             FROM agent_calls WHERE session_id = ?""",
+        (session_id,),
+    ).fetchone()
+    return dict(row)
+
+
+def list_agent_calls(
+    conn: sqlite3.Connection, session_id: str | None = None
+) -> list[dict]:
+    if session_id is None:
+        rows = conn.execute("SELECT * FROM agent_calls ORDER BY id")
+    else:
+        rows = conn.execute(
+            "SELECT * FROM agent_calls WHERE session_id = ? ORDER BY id", (session_id,)
+        )
+    return [dict(r) for r in rows]

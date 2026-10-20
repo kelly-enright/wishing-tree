@@ -62,6 +62,9 @@ project defines a shape anywhere else.
 | `FamilySignUp` / `DonorSignUp` | what the sign-up forms send | Address and phone arrive through these plain forms and go straight to the database. They are never sent to a model. |
 | `CoordinatorUnlock` | passcode | Checked on the server. |
 | `AccountSummary` | role, alias, zip, detail | The shape of the demo "Continue as…" list. Carries no contact details by construction. |
+| `DraftWish` | a wish as the Intake agent drafts it | Looser than `Request` on purpose — a draft may have gaps, because the agent is told to leave a field empty rather than invent a value. |
+| `IntakeReply` | message, draft_wishes, done | The agent's structured output on every turn. |
+| `IntakeSession` | session id, family, turns, status, duration | One intake from first message to approval. |
 
 ### Vocabulary
 
@@ -138,7 +141,129 @@ frontend to prove it. Success is remembered in `sessionStorage`, not
 `localStorage`, so closing the tab re-locks it. This is a demo gate, not
 authentication: it stops a casual visitor browsing addresses, and nothing more.
 
-## 8. Safety measures so far
+## 8. The Intake agent
+
+**Model:** gpt-6-luna through Portkey, the only model in this project.
+**Prompt:** `prompts/intake_agent.md`, version `f07555b94010` (first 12 hex of
+its SHA-256; every audit record names the version that produced it).
+
+### What it does
+
+A family types in plain English. The agent asks only the follow-up questions
+that change what a donor would buy, then returns `IntakeReply` — a message for
+the family, the full list of drafted wishes, and whether it is finished. The
+family approves on the next screen. Nothing is public at the end of this: an
+approved wish is `pending_review`, waiting for the Privacy & Safety agent.
+
+### The house style, and why it exists
+
+The prompt makes the agent rewrite every need into the same neutral two-sentence
+shape, whatever the family's own words were. This is a fairness mechanism, not a
+style preference: the Matchmaker ranks these descriptions later, and donors read
+them. A family that writes movingly should not out-compete a family that writes
+three blunt words. Both of the end-to-end runs below show it working — a long,
+emotional message came back as *"Help with one electric bill for the household,
+paid directly to United Illuminating by November 3, 2026."*
+
+### Its three tools
+
+| Tool | What it returns | Why |
+|---|---|---|
+| `get_categories_and_occasions()` | the enum values | Stops the agent inventing a category. Everything it writes has to come from this list. |
+| `check_open_wish_count(family_id)` | open wishes, cap, remaining | So it does not draft more wishes than the family can post. In run A it told the family "I can help add up to two wishes right now" — correct, as that family already had three open. |
+| `estimate_cost(category, item)` | closest price-guide entry plus two alternatives | Fills a budget range from `data/price_guide.json` (37 entries) instead of guessing. Matching is word-overlap with a synonym map, so "boys winter coat" finds "children's winter coat"; plain string similarity matched "adult winter coat" instead. |
+
+### The family_id a tool cannot be lied to about
+
+`check_open_wish_count` takes a `family_id`, because the agent is told to pass
+one. It is not trusted. The count always comes from the family whose session it
+is, and a mismatch is recorded on `IntakeDeps.blocked_lookups` and returned to
+the client. An agent that tries to ask about another family gets its own
+family's numbers.
+
+### What the agent is never given
+
+`IntakeDeps` has four fields: family alias, family id, session id, and the
+blocked-lookup list. There is nowhere to put a street address or a phone
+number, so none can be passed by accident. The sign-up form writes both
+straight to the database for the coordinator, and no code path moves them into
+a prompt. A test asserts the dataclass's field names, so adding a field is a
+deliberate act someone has to justify.
+
+The prompt also handles what the *family* volunteers. Told "My name is Maria
+Delgado and we live at 9 Tannery Row", the agent replied "You don't need to
+share your name or address here" and carried on without putting either in a
+wish (`screenshots/p3-intake-refuses-volunteered-pii.jpg`).
+
+### Limits, enforced in code and not by the prompt
+
+- **20 family messages per intake** (`config.MAX_INTAKE_TURNS`). Checked before
+  any model call, so hitting the cap costs nothing.
+- **5 open wishes per family** (`config.MAX_OPEN_WISHES_PER_FAMILY`). Checked
+  when an intake starts and again when wishes are approved.
+- **2,000 characters per message** (`config.MAX_MESSAGE_CHARS`).
+
+## 9. Token logging and the audit trail
+
+Every model call is written twice: one JSON object per line in
+`output/audit_trail.json`, and one row in the `agent_calls` table. The file is
+append-only — opened in append mode, never in write mode — so a run can record
+without rewriting anything before it. The table is what the in-app token panel
+totals, without reading the file.
+
+Each record carries: timestamp, session id, agent, model, operation, which
+tools were called, input tokens, cached input tokens, output tokens, latency,
+cost, outcome, and the prompt version.
+
+**Input tokens are split, not summed.** The API reports total input tokens and,
+separately, how many were served from cache. Cached input is priced differently
+from fresh input, so the trail stores *uncached* input in `input_tokens` and the
+cached part in `cached_input_tokens`. Each number is priced once.
+
+**Prompt caching.** Nothing asks for caching explicitly — the provider caches a
+long-enough prefix on its own. What this project does is make the prefix worth
+caching: the system prompt is ~1,750 tokens and comes first, the dynamic part
+(today's date, the family alias) is appended after it, and the changing
+conversation comes last. Measured across the seven calls so far: **64% of all
+input tokens were served from cache.**
+
+**Cost.** Computed from `config.estimate_cost_usd()` on every call and stored
+per record. The three prices are still placeholders, so every cost reads
+`0.00` and the token panel shows "price not set" rather than a fake number.
+Filling in the three constants in `config.py` makes every number real — the
+token counts are already recorded, so past runs can be re-costed.
+
+**Intake duration** is recorded per session, from the family's first message to
+approval. The two runs below took 48 and 35 seconds.
+
+### Measured: two end-to-end intakes
+
+| | Run A — flexible | Run B — specific |
+|---|---|---|
+| Family | A12 | A04 |
+| What was said | shutoff notice on an electric bill, due the 3rd of next month, plus groceries for four — with a name and street address volunteered | a backpack, with a Target product link, blue, 4th grader |
+| Family messages | 2 | 1 |
+| Model calls | 2 | 1 |
+| Input / cached / output tokens | 3,859 / 8,283 / 873 | 3,228 / 5,308 / 597 |
+| Total tokens | 13,015 | 9,133 |
+| Cached share of input | 64% | 58% |
+| Wall clock, first message to approval | 48 s | 35 s |
+| Wishes drafted | 2 (both flexible) | 1 (specific, link kept) |
+
+Whole-project totals so far: **7 calls, 47,007 tokens, 64% of input cached.**
+
+### One thing that does not work reliably yet
+
+The agent calls `estimate_cost` as instructed, but does not always write the
+returned range into the draft — in run A it filled the electric bill's range
+(90–250) and left the groceries wish empty; in run B it left the backpack's
+cost empty and the family typed $30 on the approval screen. The gap is covered
+deterministically rather than papered over: on approval, any wish still missing
+a cost gets the price guide's range for its category, and any wish missing a
+deadline gets 30 days out. Both are visible and editable by the family first.
+Worth a line in the report's limits section.
+
+## 10. Safety measures so far
 
 Agents arrive in later problems; these are the ones already standing.
 
@@ -154,22 +279,34 @@ Agents arrive in later problems; these are the ones already standing.
 | Sign-up responses echo nothing | `create_family` / `create_donor` return `public_view()` | The address and phone a family just typed coming back out of the API. Tested. |
 | Demo account list is alias-only | `GET /api/accounts` returns `AccountSummary` | An open testing convenience turning into a directory of addresses. Tested against every seeded record. |
 | Sign-up is region-gated | `_check_region()` | Accounts outside a configured region, with a message naming where Wishing Tree actually operates. |
+| The agent cannot see contact details | `IntakeDeps` has four fields, none of them an address or phone | A street address reaching a model, by accident or by prompt injection. Tested structurally. |
+| The agent refuses volunteered PII | `prompts/intake_agent.md` | A family pasting their name and address into the chat and it ending up in a public wish. Demonstrated in `screenshots/p3-intake-refuses-volunteered-pii.jpg`. |
+| Tool arguments are not trusted | `check_open_wish_count` ignores the passed `family_id` | An agent reading another family's numbers. Mismatches are recorded as `blocked_lookups`. |
+| Turn and wish caps run before the model | `intake_api.intake_message` | Runaway token spend. Hitting the cap costs zero tokens. |
+| No wish is public from intake | approval writes `pending_review` | An unreviewed wish reaching the wish wall. |
 
-## 9. Tests
+## 11. Tests
 
-`./.venv/bin/python -m pytest tests -q` — **53 passing**.
+`./.venv/bin/python -m pytest tests -q` — **77 passing**.
 
 - `test_config.py` — the .env lookup in all four cases, region config, allowlist accept/reject, placeholder prices
 - `test_models.py` — every validator, and that `public_view()` drops contact details
 - `test_seed.py` — counts, category and occasion coverage, specific/flexible balance, all links allowlisted, fiction-range phone numbers, re-seeding does not duplicate
 - `test_api.py` — sign-up creates records and assigns aliases, responses never echo contact details, the accounts list leaks no address or phone, out-of-region and malformed zips are refused, the passcode accepts only the right value and never ships to the browser
+- `test_intake.py` — the agent's deps carry no contact details, turn and wish caps (the turn cap spending zero calls), approval storing `pending_review` and nothing public, draft-to-request conversion, price-guide matching, and the audit trail recording to both the file and the table with cached input kept separate. The model is stubbed, so the suite is fast and free; the two real runs are the table above.
 
-## 10. Specs
+## 12. Specs
 
 _Filled in as the agents are built._
 
 ### Agents
-_Not built yet._
+
+| Agent | Status | Prompt | Tools |
+|---|---|---|---|
+| Intake | built | `prompts/intake_agent.md` | `get_categories_and_occasions`, `check_open_wish_count`, `estimate_cost` |
+| Privacy & Safety | not built | `prompts/safety_agent.md` | — |
+| Matchmaker | not built | `prompts/matchmaker_agent.md` | — |
 
 ### Tools
-_Not built yet._
+
+See the Intake agent's table in section 8. Tools for the other two agents arrive with them.

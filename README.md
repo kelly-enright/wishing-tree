@@ -68,6 +68,22 @@ one. It shows aliases and zips only — never an address or a phone number.
 
 ---
 
+## The Intake agent
+
+Sign in as a family (or use **Continue as…**) and open *I need help*. You chat in
+plain English; the Intake agent asks only the follow-ups that matter, drafts your
+wishes in a neutral standard format, and you edit, delete or approve each one.
+Approved wishes are saved as `pending_review` — nothing is public yet.
+
+A panel beside the chat shows what the session has cost in tokens: input, cached
+input, output, and dollars. Costs read "price not set" until the three prices in
+`backend/config.py` are filled in; the token counts are real either way.
+
+Every model call is logged to `output/audit_trail.json` (one JSON object per line)
+and to the `agent_calls` table.
+
+---
+
 ## Check it is working
 
 ```bash

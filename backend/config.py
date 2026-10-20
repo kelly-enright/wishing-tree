@@ -34,6 +34,7 @@ SCREENSHOTS_DIR = PROJECT_ROOT / "screenshots"
 FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
 
 DB_PATH = DATA_DIR / "wishing_tree.db"
+PRICE_GUIDE_PATH = DATA_DIR / "price_guide.json"
 AUDIT_PATH = OUTPUT_DIR / "audit_trail.json"
 HARNESS_PATH = OUTPUT_DIR / "harness.md"
 
@@ -201,8 +202,9 @@ COORDINATOR_PASSCODE = "wishingtree-demo"
 # --------------------------------------------------------------------------
 
 MAX_OPEN_WISHES_PER_FAMILY = 5     # stops one family filling the wall
-MAX_INTAKE_TURNS = 12              # intake chat turns before the agent must wrap up
+MAX_INTAKE_TURNS = 20              # family messages in one intake before it must wrap up
 MAX_WISHES_PER_INTAKE = 5          # wishes the intake agent may draft in one session
+INTAKE_SESSION_PREFIX = "intake"   # session ids look like intake-20261020-a3f9c1
 MAX_MATCHES_RETURNED = 10          # ranked wishes the matchmaker returns to a donor
 MAX_MESSAGE_CHARS = 2_000          # longest family message accepted into intake
 MAX_DESCRIPTION_CHARS = 400        # longest wish description shown publicly

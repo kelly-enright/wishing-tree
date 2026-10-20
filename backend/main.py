@@ -20,6 +20,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend import config, db, seed
+from backend.intake_api import router as intake_router
 from backend.models import (
     AccountSummary,
     CoordinatorUnlock,
@@ -41,6 +42,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Wishing Tree", version="0.1.0", lifespan=lifespan)
+app.include_router(intake_router)
 
 
 # --------------------------------------------------------------------------

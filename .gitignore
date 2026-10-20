@@ -15,4 +15,5 @@ frontend/node_modules/
 .DS_Store
 
 # The database is rebuilt from backend/seed.py; it is not source.
+# data/price_guide.json IS source and is committed.
 data/*.db

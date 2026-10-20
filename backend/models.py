@@ -328,6 +328,8 @@ class AgentCallLog(BaseModel):
     latency_ms: int = 0
     ok: bool = True
     error: str | None = None
+    session_id: str | None = None
+    tools_called: list[str] = Field(default_factory=list)
     request_id: int | None = None
     prompt_version: str | None = None
     estimated_cost_usd: float | None = None
@@ -387,3 +389,62 @@ class AccountSummary(BaseModel):
     alias: str
     zip: str
     detail: str = ""   # e.g. "3 wishes" or "$75 budget"
+
+
+# --------------------------------------------------------------------------
+# Intake — what the agent returns, and the session it runs in
+# --------------------------------------------------------------------------
+
+class DraftWish(BaseModel):
+    """One wish as the Intake agent drafts it, before the family approves.
+
+    Looser than `Request` on purpose: a draft is allowed to have gaps. The
+    agent is told to leave a field empty rather than invent a value, so empty
+    fields here are a feature. The gaps are filled on the approval screen,
+    by the family, and only then does this become a `Request`.
+    """
+
+    category: Category
+    request_type: RequestType = RequestType.FLEXIBLE
+    item_description: str = Field(max_length=400)  # mirrors config.MAX_DESCRIPTION_CHARS
+    occasion: Occasion = Occasion.EVERYDAY
+
+    deadline: date | None = None
+    estimated_cost_usd: float | None = Field(default=None, ge=0)
+    budget_min_usd: float | None = Field(default=None, ge=0)
+    budget_max_usd: float | None = Field(default=None, ge=0)
+
+    product_link: str | None = None
+    brand: str | None = None
+    size: str | None = None
+    color: str | None = None
+    open_to_substitute: bool = True
+
+    size_preferences: str | None = None
+
+
+class IntakeReply(BaseModel):
+    """The Intake agent's structured answer on every turn."""
+
+    message: str = Field(description="what the family sees in the chat")
+    draft_wishes: list[DraftWish] = Field(default_factory=list)
+    done: bool = False
+
+
+class IntakeStatus(str, Enum):
+    ACTIVE = "active"
+    APPROVED = "approved"
+    LIMIT_REACHED = "limit_reached"
+    ABANDONED = "abandoned"
+
+
+class IntakeSession(BaseModel):
+    """One family's intake chat, from first message to approval."""
+
+    session_id: str
+    family_alias: str
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    approved_at: datetime | None = None
+    turns: int = 0
+    status: IntakeStatus = IntakeStatus.ACTIVE
+    duration_seconds: float | None = None
