@@ -442,3 +442,62 @@ caught the ten-second message live during a real three-wish safety review —
 
 One note: this palette supersedes the generic blue-and-green rule in the course
 `AGENTS.md` for this project, on your instruction.
+
+---
+
+## Problem 8 — Safety Tests and Token Measurement
+
+### Prompt 1
+
+> Problem 8: "Safety tests and token measurement"
+>
+> The report needs proof, not descriptions. This problem produces that evidence. Everything in this problem must run against the real gpt-6-luna model, not stubs, because these results go into my report. The costs are tiny, so that's fine.
+>
+> a.) Safety tests (pytest, marked so they can run separately from the fast stubbed suite) that run real attacks through the app and save the results to output/safety_test_results.json: [nine attacks]
+> b.) Token measurement script: run 10 typical intakes (mix of specific and flexible wishes), 10 safety reviews and 10 matchmaker runs, then write output/tokenomics.md with average input, cached input, cache write and output tokens and cost per run for each agent, cost per full family journey and per donor journey, and estimated monthly cost for 100 and 10,000 users. State assumptions clearly.
+> c.) Run the matchmaker with the candidate limit set to 15 and set to all open wishes, on the same donors, and record the token cost and whether the top-5 matches changed.
+> d.) Since output tokens drive our bill most, add a max output tokens per reply setting for each agent in config.py. Run the 10 intakes with and without a tighter cap, and record the cost difference and whether wish quality got worse (missing fields, cut-off replies, extra follow-up turns). Keep whichever setting is better and explain why.
+> e.) Save screenshots of the defenses working, and update harness.md.
+>
+> Ask any questions you have before starting.
+
+**Outcome:** All ten attacks held, and the measurement produced three findings
+worth putting in the report.
+
+- **`tests/test_safety_live.py`**, marked `live` and excluded by `pytest.ini` from the default suite. All ten defended, for **$0.0031 and 7 model calls**. Results in `output/safety_test_results.json` with the tokens each defence spent.
+- **`backend/measure.py`** ran 10 intakes, 10 safety reviews and 20 matchmaker runs, and **`backend/tokenomics_report.py`** turned them into `output/tokenomics.md`. The report writer is separate from the runner, so the write-up can be regenerated without spending tokens again.
+- **`MAX_OUTPUT_TOKENS_*`** added per agent in `config.py`.
+- **190 fast tests still pass.** Two defence screenshots in the current design.
+
+**The numbers:** a whole family journey costs **$0.00124**, a donor journey
+**$0.00053**, and 10,000 users on the stated assumptions come to **$11 a
+month**. The binding constraint on this project is the coordinator's Saturday,
+not the token budget.
+
+**Experiment C:** at a candidate limit of 15 and with no limit, all five donors
+got the **same five wishes in the same order**, for 4% more cost with no limit.
+Keeping 15 — the cost grows with the size of the wall while the answer does not.
+
+**Experiment D is the one I'd lead with.** My first "tighter" cap of 700 never
+actually bound — mean output is ~405 tokens a call — so the lower bill in that
+sample was variance, not a saving. I caught it, re-ran at 300, and that cap
+does bind: **3 of 10 intakes failed outright**, the structured reply never
+produced. The 7 survivors were 30% cheaper, which is 30% of a tenth of a cent,
+against a 30% chance that a family who has just typed out what their children
+need gets an error. Keeping 1,600.
+
+**Three things I had to fix to get these results at all**, all recorded in
+`harness.md`:
+
+1. The gateway's **own content filter** rejected my first injection string
+   (classic jailbreak phrasing) with a 400 before the model saw it. That is a
+   real defence layer this project does not control, so I recorded it as test
+   10 and used wording that does reach the agent, so our own defence is what
+   gets measured.
+2. Half the live tests drive agents directly and half go through `TestClient`,
+   which runs the app on its own event loop. A cached `AsyncOpenAI` client
+   belongs to the loop that opened its connections, so it cannot be shared —
+   each test now gets a fresh one.
+3. The benchmark needed its own database and a raised daily cap, or a
+   sixty-call burst would have tripped the app's own overspending guard
+   partway through. The app's cap is unchanged.

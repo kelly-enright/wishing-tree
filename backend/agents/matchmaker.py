@@ -24,6 +24,7 @@ from functools import lru_cache
 
 from pydantic_ai import Agent, CachePoint, RunContext
 from pydantic_ai.messages import ModelMessage, ToolCallPart
+from pydantic_ai.settings import ModelSettings
 
 from backend import config, db, scheduling, text
 from backend.agents import audit, budget
@@ -68,6 +69,7 @@ def matchmaker_agent() -> Agent:
         output_type=MatchmakerResult,
         deps_type=MatchDeps,
         system_prompt=system_prompt(),
+        model_settings=ModelSettings(max_tokens=config.MAX_OUTPUT_TOKENS_MATCHMAKER),
         retries=2,
     )
 

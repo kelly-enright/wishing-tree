@@ -220,3 +220,26 @@ on the wall for another donor.
 Contact details appear on the run sheet and nowhere else. A test walks every
 seeded family and donor and checks their real address and phone against the
 raw body of every endpoint a visitor, family or donor can reach.
+
+---
+
+## Evidence
+
+Two suites and two reports, all produced by running the real thing:
+
+```bash
+./.venv/bin/python -m pytest            # 190 tests, agents stubbed, free
+./.venv/bin/python -m pytest -m live    # 10 real attacks against gpt-6-luna
+./.venv/bin/python -m backend.measure   # token measurement, writes output/tokenomics.md
+```
+
+- `output/safety_test_results.json` — ten real attacks and how each was held,
+  with the tokens and cost each defence spent
+- `output/tokenomics.md` — cost per agent, per journey, and at 100 and 10,000
+  users, plus two experiments: whether the matchmaker needs more candidates,
+  and whether capping output saves money
+- `output/audit_trail.json` — every model call ever made by this project
+- `output/harness.md` — how the whole thing is built
+
+`backend/measure.py` runs against its own database with a raised daily cap, so
+benchmarking never spends the operational token budget or touches real data.

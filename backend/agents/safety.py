@@ -28,6 +28,7 @@ from functools import lru_cache
 
 from pydantic_ai import Agent, CachePoint, RunContext
 from pydantic_ai.messages import ModelMessage, ToolCallPart
+from pydantic_ai.settings import ModelSettings
 
 from backend import config, safety_checks, text
 from backend.agents import audit, budget
@@ -73,6 +74,7 @@ def safety_agent() -> Agent:
         output_type=SafetyReview,
         deps_type=SafetyDeps,
         system_prompt=system_prompt(),
+        model_settings=ModelSettings(max_tokens=config.MAX_OUTPUT_TOKENS_SAFETY),
         retries=2,
     )
 

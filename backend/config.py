@@ -239,6 +239,20 @@ def wish_value_cap(category: str) -> float:
 
 
 # --------------------------------------------------------------------------
+# Output caps
+# --------------------------------------------------------------------------
+# Output is the dearest bucket by a distance: $0.50/M against $0.10/M for
+# fresh input and $0.01/M for cached. A cap per reply is therefore the most
+# direct lever on the bill — but too tight a cap truncates structured output,
+# PydanticAI retries, and a run costs more than it saved. These values were
+# chosen by measurement, not by guessing; see output/tokenomics.md.
+
+MAX_OUTPUT_TOKENS_INTAKE = 1_600      # several drafted wishes in one reply
+MAX_OUTPUT_TOKENS_SAFETY = 1_200      # a cleaned wish plus flags and a note
+MAX_OUTPUT_TOKENS_MATCHMAKER = 1_200  # five matches, each with a reason
+
+
+# --------------------------------------------------------------------------
 # Token budgets — the overspending guard
 # --------------------------------------------------------------------------
 

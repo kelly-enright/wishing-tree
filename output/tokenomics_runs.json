@@ -1,0 +1,2066 @@
+{
+  "intakes_default": [
+    {
+      "scenario": "coat",
+      "kind": "flexible",
+      "turns": 2,
+      "wishes": 1,
+      "done": false,
+      "reply_chars": 73,
+      "wishes_with_cost": 1,
+      "wishes_with_size": 1,
+      "wishes_with_deadline": 0,
+      "descriptions": [
+        "Winter coat for an 8-year-old, for wearing to school."
+      ],
+      "drafts": [
+        {
+          "category": "clothing",
+          "request_type": "flexible",
+          "item_description": "Winter coat for an 8-year-old, for wearing to school.",
+          "occasion": "everyday",
+          "deadline": null,
+          "estimated_cost_usd": null,
+          "budget_min_usd": 30.0,
+          "budget_max_usd": 70.0,
+          "product_link": null,
+          "brand": null,
+          "size": "Boys size 8",
+          "color": null,
+          "open_to_substitute": true,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 4949,
+          "cache_write_tokens": 243,
+          "output_tokens": 268,
+          "total_tokens": 5712,
+          "latency_ms": 9170,
+          "cost_usd": 0.000239065
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5596,
+          "cache_write_tokens": 324,
+          "output_tokens": 271,
+          "total_tokens": 6443,
+          "latency_ms": 7142,
+          "cost_usd": 0.00025716
+        }
+      ],
+      "cost_usd": 0.000496225,
+      "total_tokens": 12155,
+      "output_tokens": 539
+    },
+    {
+      "scenario": "backpack",
+      "kind": "specific",
+      "turns": 2,
+      "wishes": 1,
+      "done": true,
+      "reply_chars": 143,
+      "wishes_with_cost": 1,
+      "wishes_with_size": 0,
+      "wishes_with_deadline": 0,
+      "descriptions": [
+        "Blue 17-inch backpack for a 4th-grade student, for carrying school supplies."
+      ],
+      "drafts": [
+        {
+          "category": "school_supplies",
+          "request_type": "specific",
+          "item_description": "Blue 17-inch backpack for a 4th-grade student, for carrying school supplies.",
+          "occasion": "back_to_school",
+          "deadline": null,
+          "estimated_cost_usd": 30.0,
+          "budget_min_usd": null,
+          "budget_max_usd": null,
+          "product_link": "https://www.target.com/p/kids-backpack-17in/-/A-54110298",
+          "brand": null,
+          "size": null,
+          "color": "blue",
+          "open_to_substitute": false,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 378,
+          "cached_input_tokens": 5277,
+          "cache_write_tokens": 2981,
+          "output_tokens": 563,
+          "total_tokens": 9199,
+          "latency_ms": 18306,
+          "cost_usd": 0.000744695
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 126,
+          "cached_input_tokens": 2981,
+          "cache_write_tokens": 310,
+          "output_tokens": 185,
+          "total_tokens": 3602,
+          "latency_ms": 5167,
+          "cost_usd": 0.00017366
+        }
+      ],
+      "cost_usd": 0.0009183549999999999,
+      "total_tokens": 12801,
+      "output_tokens": 748
+    },
+    {
+      "scenario": "groceries",
+      "kind": "flexible",
+      "turns": 2,
+      "wishes": 1,
+      "done": true,
+      "reply_chars": 71,
+      "wishes_with_cost": 0,
+      "wishes_with_size": 0,
+      "wishes_with_deadline": 0,
+      "descriptions": [
+        "Groceries for a household of four this month, with no pork."
+      ],
+      "drafts": [
+        {
+          "category": "food",
+          "request_type": "flexible",
+          "item_description": "Groceries for a household of four this month, with no pork.",
+          "occasion": "everyday",
+          "deadline": null,
+          "estimated_cost_usd": null,
+          "budget_min_usd": null,
+          "budget_max_usd": null,
+          "product_link": null,
+          "brand": null,
+          "size": null,
+          "color": null,
+          "open_to_substitute": true,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 2483,
+          "cache_write_tokens": 2688,
+          "output_tokens": 250,
+          "total_tokens": 5673,
+          "latency_ms": 9110,
+          "cost_usd": 0.00051103
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5556,
+          "cache_write_tokens": 335,
+          "output_tokens": 341,
+          "total_tokens": 6484,
+          "latency_ms": 8311,
+          "cost_usd": 0.000293135
+        }
+      ],
+      "cost_usd": 0.0008041649999999999,
+      "total_tokens": 12157,
+      "output_tokens": 591
+    },
+    {
+      "scenario": "shoes",
+      "kind": "specific",
+      "turns": 2,
+      "wishes": 1,
+      "done": false,
+      "reply_chars": 106,
+      "wishes_with_cost": 1,
+      "wishes_with_size": 1,
+      "wishes_with_deadline": 1,
+      "descriptions": [
+        "Non-slip work shoes for the person starting a kitchen job."
+      ],
+      "drafts": [
+        {
+          "category": "clothing",
+          "request_type": "specific",
+          "item_description": "Non-slip work shoes for the person starting a kitchen job.",
+          "occasion": "everyday",
+          "deadline": "2026-11-10",
+          "estimated_cost_usd": 40.0,
+          "budget_min_usd": null,
+          "budget_max_usd": null,
+          "product_link": "https://www.walmart.com/ip/slip-resistant-work-shoe/118920334",
+          "brand": null,
+          "size": "Women's 9",
+          "color": null,
+          "open_to_substitute": false,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 2504,
+          "cache_write_tokens": 2727,
+          "output_tokens": 458,
+          "total_tokens": 5941,
+          "latency_ms": 11827,
+          "cost_usd": 0.000620115
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5829,
+          "cache_write_tokens": 716,
+          "output_tokens": 633,
+          "total_tokens": 7430,
+          "latency_ms": 11773,
+          "cost_usd": 0.00048949
+        }
+      ],
+      "cost_usd": 0.001109605,
+      "total_tokens": 13371,
+      "output_tokens": 1091
+    },
+    {
+      "scenario": "electric",
+      "kind": "flexible",
+      "turns": 2,
+      "wishes": 1,
+      "done": true,
+      "reply_chars": 71,
+      "wishes_with_cost": 0,
+      "wishes_with_size": 0,
+      "wishes_with_deadline": 1,
+      "descriptions": [
+        "Help with an electric bill from United Illuminating for the household, paid directly to the utility company in response to a shutoff notice."
+      ],
+      "drafts": [
+        {
+          "category": "rent_utilities",
+          "request_type": "flexible",
+          "item_description": "Help with an electric bill from United Illuminating for the household, paid directly to the utility company in response to a shutoff notice.",
+          "occasion": "emergency",
+          "deadline": "2026-11-03",
+          "estimated_cost_usd": null,
+          "budget_min_usd": null,
+          "budget_max_usd": null,
+          "product_link": null,
+          "brand": null,
+          "size": null,
+          "color": null,
+          "open_to_substitute": true,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 378,
+          "cached_input_tokens": 5230,
+          "cache_write_tokens": 2873,
+          "output_tokens": 541,
+          "total_tokens": 9022,
+          "latency_ms": 15470,
+          "cost_usd": 0.000719725
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 126,
+          "cached_input_tokens": 2873,
+          "cache_write_tokens": 333,
+          "output_tokens": 223,
+          "total_tokens": 3555,
+          "latency_ms": 4267,
+          "cost_usd": 0.00019445499999999998
+        }
+      ],
+      "cost_usd": 0.00091418,
+      "total_tokens": 12577,
+      "output_tokens": 764
+    },
+    {
+      "scenario": "uniform",
+      "kind": "flexible",
+      "turns": 2,
+      "wishes": 0,
+      "done": false,
+      "reply_chars": 33,
+      "wishes_with_cost": 0,
+      "wishes_with_size": 0,
+      "wishes_with_deadline": 0,
+      "descriptions": [],
+      "drafts": [],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 2481,
+          "cache_write_tokens": 2694,
+          "output_tokens": 259,
+          "total_tokens": 5686,
+          "latency_ms": 6103,
+          "cost_usd": 0.0005162599999999999
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5570,
+          "cache_write_tokens": 427,
+          "output_tokens": 380,
+          "total_tokens": 6629,
+          "latency_ms": 10536,
+          "cost_usd": 0.00032427499999999995
+        }
+      ],
+      "cost_usd": 0.0008405349999999999,
+      "total_tokens": 12315,
+      "output_tokens": 639
+    },
+    {
+      "scenario": "blazer",
+      "kind": "specific",
+      "turns": 2,
+      "wishes": 0,
+      "done": false,
+      "reply_chars": 22,
+      "wishes_with_cost": 0,
+      "wishes_with_size": 0,
+      "wishes_with_deadline": 0,
+      "descriptions": [],
+      "drafts": [],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 378,
+          "cached_input_tokens": 5223,
+          "cache_write_tokens": 2855,
+          "output_tokens": 278,
+          "total_tokens": 8734,
+          "latency_ms": 8442,
+          "cost_usd": 0.000585905
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5819,
+          "cache_write_tokens": 538,
+          "output_tokens": 406,
+          "total_tokens": 7015,
+          "latency_ms": 8521,
+          "cost_usd": 0.00035364
+        }
+      ],
+      "cost_usd": 0.000939545,
+      "total_tokens": 15749,
+      "output_tokens": 684
+    },
+    {
+      "scenario": "diapers",
+      "kind": "flexible",
+      "turns": 2,
+      "wishes": 2,
+      "done": false,
+      "reply_chars": 107,
+      "wishes_with_cost": 2,
+      "wishes_with_size": 1,
+      "wishes_with_deadline": 0,
+      "descriptions": [
+        "Diapers for a 14-month-old.",
+        "Wipes for a 14-month-old."
+      ],
+      "drafts": [
+        {
+          "category": "essentials",
+          "request_type": "flexible",
+          "item_description": "Diapers for a 14-month-old.",
+          "occasion": "everyday",
+          "deadline": null,
+          "estimated_cost_usd": null,
+          "budget_min_usd": 40.0,
+          "budget_max_usd": 80.0,
+          "product_link": null,
+          "brand": null,
+          "size": "4",
+          "color": null,
+          "open_to_substitute": true,
+          "size_preferences": null
+        },
+        {
+          "category": "essentials",
+          "request_type": "flexible",
+          "item_description": "Wipes for a 14-month-old.",
+          "occasion": "everyday",
+          "deadline": null,
+          "estimated_cost_usd": null,
+          "budget_min_usd": 12.0,
+          "budget_max_usd": 30.0,
+          "product_link": null,
+          "brand": null,
+          "size": null,
+          "color": null,
+          "open_to_substitute": true,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 504,
+          "cached_input_tokens": 8177,
+          "cache_write_tokens": 3188,
+          "output_tokens": 762,
+          "total_tokens": 12631,
+          "latency_ms": 24010,
+          "cost_usd": 0.0009116700000000001
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 126,
+          "cached_input_tokens": 3188,
+          "cache_write_tokens": 372,
+          "output_tokens": 229,
+          "total_tokens": 3915,
+          "latency_ms": 4957,
+          "cost_usd": 0.00020548000000000002
+        }
+      ],
+      "cost_usd": 0.0011171500000000001,
+      "total_tokens": 16546,
+      "output_tokens": 991
+    },
+    {
+      "scenario": "supplies",
+      "kind": "specific",
+      "turns": 2,
+      "wishes": 1,
+      "done": true,
+      "reply_chars": 221,
+      "wishes_with_cost": 0,
+      "wishes_with_size": 0,
+      "wishes_with_deadline": 0,
+      "descriptions": [
+        "School supply set for a 6th grader, covering the grade\u2019s supply list."
+      ],
+      "drafts": [
+        {
+          "category": "school_supplies",
+          "request_type": "specific",
+          "item_description": "School supply set for a 6th grader, covering the grade\u2019s supply list.",
+          "occasion": "back_to_school",
+          "deadline": null,
+          "estimated_cost_usd": null,
+          "budget_min_usd": null,
+          "budget_max_usd": null,
+          "product_link": "https://www.staples.com/kindergarten-supply-bundle/product_24119087",
+          "brand": null,
+          "size": null,
+          "color": null,
+          "open_to_substitute": false,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 2505,
+          "cache_write_tokens": 2890,
+          "output_tokens": 375,
+          "total_tokens": 6022,
+          "latency_ms": 8245,
+          "cost_usd": 0.000599
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5987,
+          "cache_write_tokens": 874,
+          "output_tokens": 1061,
+          "total_tokens": 8174,
+          "latency_ms": 16241,
+          "cost_usd": 0.0007248199999999999
+        }
+      ],
+      "cost_usd": 0.0013238199999999999,
+      "total_tokens": 14196,
+      "output_tokens": 1436
+    },
+    {
+      "scenario": "meals",
+      "kind": "flexible",
+      "turns": 2,
+      "wishes": 1,
+      "done": true,
+      "reply_chars": 71,
+      "wishes_with_cost": 0,
+      "wishes_with_size": 0,
+      "wishes_with_deadline": 0,
+      "descriptions": [
+        "Soft foods that require little or no cooking for an adult recovering from surgery."
+      ],
+      "drafts": [
+        {
+          "category": "food",
+          "request_type": "flexible",
+          "item_description": "Soft foods that require little or no cooking for an adult recovering from surgery.",
+          "occasion": "everyday",
+          "deadline": null,
+          "estimated_cost_usd": null,
+          "budget_min_usd": null,
+          "budget_max_usd": null,
+          "product_link": null,
+          "brand": null,
+          "size": null,
+          "color": null,
+          "open_to_substitute": true,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 2481,
+          "cache_write_tokens": 2678,
+          "output_tokens": 221,
+          "total_tokens": 5632,
+          "latency_ms": 5653,
+          "cost_usd": 0.00049526
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5513,
+          "cache_write_tokens": 359,
+          "output_tokens": 389,
+          "total_tokens": 6513,
+          "latency_ms": 10645,
+          "cost_usd": 0.00031970500000000004
+        }
+      ],
+      "cost_usd": 0.000814965,
+      "total_tokens": 12145,
+      "output_tokens": 610
+    }
+  ],
+  "reviews": [
+    {
+      "request_id": 4,
+      "category": "other",
+      "approved": false,
+      "removed": 2,
+      "flags": [
+        "cash_request"
+      ],
+      "code_pass_changes": 0,
+      "agent": "safety",
+      "input_tokens": 252,
+      "cached_input_tokens": 3704,
+      "cache_write_tokens": 739,
+      "output_tokens": 847,
+      "total_tokens": 5542,
+      "latency_ms": 14020,
+      "cost_usd": 0.000578115
+    },
+    {
+      "request_id": 11,
+      "category": "clothing",
+      "approved": true,
+      "removed": 0,
+      "flags": [],
+      "code_pass_changes": 0,
+      "agent": "safety",
+      "input_tokens": 252,
+      "cached_input_tokens": 3717,
+      "cache_write_tokens": 427,
+      "output_tokens": 283,
+      "total_tokens": 4679,
+      "latency_ms": 9913,
+      "cost_usd": 0.000257245
+    },
+    {
+      "request_id": 8,
+      "category": "rent_utilities",
+      "approved": true,
+      "removed": 0,
+      "flags": [],
+      "code_pass_changes": 0,
+      "agent": "safety",
+      "input_tokens": 252,
+      "cached_input_tokens": 3713,
+      "cache_write_tokens": 393,
+      "output_tokens": 373,
+      "total_tokens": 4731,
+      "latency_ms": 14013,
+      "cost_usd": 0.00029795500000000003
+    },
+    {
+      "request_id": 19,
+      "category": "clothing",
+      "approved": true,
+      "removed": 0,
+      "flags": [],
+      "code_pass_changes": 0,
+      "agent": "safety",
+      "input_tokens": 252,
+      "cached_input_tokens": 3716,
+      "cache_write_tokens": 482,
+      "output_tokens": 343,
+      "total_tokens": 4793,
+      "latency_ms": 6586,
+      "cost_usd": 0.00029411
+    },
+    {
+      "request_id": 2,
+      "category": "food",
+      "approved": false,
+      "removed": 0,
+      "flags": [
+        "cash_request"
+      ],
+      "code_pass_changes": 0,
+      "agent": "safety",
+      "input_tokens": 252,
+      "cached_input_tokens": 3709,
+      "cache_write_tokens": 519,
+      "output_tokens": 637,
+      "total_tokens": 5117,
+      "latency_ms": 13032,
+      "cost_usd": 0.00044566500000000004
+    },
+    {
+      "request_id": 29,
+      "category": "clothing",
+      "approved": true,
+      "removed": 1,
+      "flags": [],
+      "code_pass_changes": 0,
+      "agent": "safety",
+      "input_tokens": 252,
+      "cached_input_tokens": 3723,
+      "cache_write_tokens": 452,
+      "output_tokens": 458,
+      "total_tokens": 4885,
+      "latency_ms": 7879,
+      "cost_usd": 0.00034793
+    },
+    {
+      "request_id": 18,
+      "category": "food",
+      "approved": true,
+      "removed": 0,
+      "flags": [],
+      "code_pass_changes": 0,
+      "agent": "safety",
+      "input_tokens": 252,
+      "cached_input_tokens": 3715,
+      "cache_write_tokens": 451,
+      "output_tokens": 437,
+      "total_tokens": 4855,
+      "latency_ms": 7785,
+      "cost_usd": 0.000337225
+    },
+    {
+      "request_id": 35,
+      "category": "rent_utilities",
+      "approved": true,
+      "removed": 0,
+      "flags": [],
+      "code_pass_changes": 0,
+      "agent": "safety",
+      "input_tokens": 252,
+      "cached_input_tokens": 3704,
+      "cache_write_tokens": 371,
+      "output_tokens": 265,
+      "total_tokens": 4592,
+      "latency_ms": 41220,
+      "cost_usd": 0.000241115
+    },
+    {
+      "request_id": 13,
+      "category": "other",
+      "approved": true,
+      "removed": 0,
+      "flags": [],
+      "code_pass_changes": 0,
+      "agent": "safety",
+      "input_tokens": 252,
+      "cached_input_tokens": 3698,
+      "cache_write_tokens": 379,
+      "output_tokens": 269,
+      "total_tokens": 4598,
+      "latency_ms": 6720,
+      "cost_usd": 0.000244055
+    },
+    {
+      "request_id": 5,
+      "category": "essentials",
+      "approved": true,
+      "removed": 0,
+      "flags": [],
+      "code_pass_changes": 0,
+      "agent": "safety",
+      "input_tokens": 252,
+      "cached_input_tokens": 3556,
+      "cache_write_tokens": 685,
+      "output_tokens": 521,
+      "total_tokens": 5014,
+      "latency_ms": 9483,
+      "cost_usd": 0.000406885
+    }
+  ],
+  "matches": [
+    {
+      "donor": "Donor D01",
+      "candidate_limit": 15,
+      "matches": [
+        11,
+        19,
+        29,
+        26,
+        1
+      ],
+      "match_count": 5,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 6030,
+      "cache_write_tokens": 2071,
+      "output_tokens": 644,
+      "total_tokens": 9123,
+      "latency_ms": 16161,
+      "cost_usd": 0.0006789750000000001
+    },
+    {
+      "donor": "Donor D02",
+      "candidate_limit": 15,
+      "matches": [
+        2,
+        9
+      ],
+      "match_count": 2,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 5297,
+      "cache_write_tokens": 841,
+      "output_tokens": 341,
+      "total_tokens": 6857,
+      "latency_ms": 8074,
+      "cost_usd": 0.000366395
+    },
+    {
+      "donor": "Donor D03",
+      "candidate_limit": 15,
+      "matches": [
+        18,
+        5,
+        32,
+        10
+      ],
+      "match_count": 4,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 5636,
+      "cache_write_tokens": 1548,
+      "output_tokens": 609,
+      "total_tokens": 8171,
+      "latency_ms": 13505,
+      "cost_usd": 0.00059216
+    },
+    {
+      "donor": "Donor D04",
+      "candidate_limit": 15,
+      "matches": [
+        11,
+        19,
+        29,
+        1,
+        6
+      ],
+      "match_count": 5,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 6367,
+      "cache_write_tokens": 2407,
+      "output_tokens": 655,
+      "total_tokens": 9807,
+      "latency_ms": 10513,
+      "cost_usd": 0.000729845
+    },
+    {
+      "donor": "Donor D05",
+      "candidate_limit": 15,
+      "matches": [
+        26,
+        3
+      ],
+      "match_count": 2,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 5309,
+      "cache_write_tokens": 874,
+      "output_tokens": 329,
+      "total_tokens": 6890,
+      "latency_ms": 8188,
+      "cost_usd": 0.00036464
+    },
+    {
+      "donor": "Donor D01",
+      "candidate_limit": 15,
+      "matches": [
+        11,
+        19,
+        29,
+        26,
+        1
+      ],
+      "match_count": 5,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 7172,
+      "cache_write_tokens": 926,
+      "output_tokens": 627,
+      "total_tokens": 9103,
+      "latency_ms": 8415,
+      "cost_usd": 0.0005387699999999999
+    },
+    {
+      "donor": "Donor D02",
+      "candidate_limit": 15,
+      "matches": [
+        2,
+        9
+      ],
+      "match_count": 2,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 5297,
+      "cache_write_tokens": 841,
+      "output_tokens": 341,
+      "total_tokens": 6857,
+      "latency_ms": 574,
+      "cost_usd": 0.000366395
+    },
+    {
+      "donor": "Donor D03",
+      "candidate_limit": 15,
+      "matches": [
+        18,
+        5,
+        32,
+        10
+      ],
+      "match_count": 4,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 5636,
+      "cache_write_tokens": 1548,
+      "output_tokens": 609,
+      "total_tokens": 8171,
+      "latency_ms": 577,
+      "cost_usd": 0.00059216
+    },
+    {
+      "donor": "Donor D04",
+      "candidate_limit": 15,
+      "matches": [
+        11,
+        19,
+        29,
+        1,
+        6
+      ],
+      "match_count": 5,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 6367,
+      "cache_write_tokens": 2407,
+      "output_tokens": 655,
+      "total_tokens": 9807,
+      "latency_ms": 791,
+      "cost_usd": 0.000729845
+    },
+    {
+      "donor": "Donor D05",
+      "candidate_limit": 15,
+      "matches": [
+        26,
+        3
+      ],
+      "match_count": 2,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 5309,
+      "cache_write_tokens": 874,
+      "output_tokens": 329,
+      "total_tokens": 6890,
+      "latency_ms": 1653,
+      "cost_usd": 0.00036464
+    }
+  ],
+  "limit_15": [
+    {
+      "donor": "Donor D01",
+      "candidate_limit": 15,
+      "matches": [
+        11,
+        19,
+        29,
+        26,
+        1
+      ],
+      "match_count": 5,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 7172,
+      "cache_write_tokens": 926,
+      "output_tokens": 627,
+      "total_tokens": 9103,
+      "latency_ms": 642,
+      "cost_usd": 0.0005387699999999999
+    },
+    {
+      "donor": "Donor D02",
+      "candidate_limit": 15,
+      "matches": [
+        2,
+        9
+      ],
+      "match_count": 2,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 5297,
+      "cache_write_tokens": 841,
+      "output_tokens": 341,
+      "total_tokens": 6857,
+      "latency_ms": 1465,
+      "cost_usd": 0.000366395
+    },
+    {
+      "donor": "Donor D03",
+      "candidate_limit": 15,
+      "matches": [
+        18,
+        5,
+        32,
+        10
+      ],
+      "match_count": 4,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 5636,
+      "cache_write_tokens": 1548,
+      "output_tokens": 609,
+      "total_tokens": 8171,
+      "latency_ms": 586,
+      "cost_usd": 0.00059216
+    },
+    {
+      "donor": "Donor D04",
+      "candidate_limit": 15,
+      "matches": [
+        11,
+        19,
+        29,
+        1,
+        6
+      ],
+      "match_count": 5,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 6367,
+      "cache_write_tokens": 2407,
+      "output_tokens": 655,
+      "total_tokens": 9807,
+      "latency_ms": 566,
+      "cost_usd": 0.000729845
+    },
+    {
+      "donor": "Donor D05",
+      "candidate_limit": 15,
+      "matches": [
+        26,
+        3
+      ],
+      "match_count": 2,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 5309,
+      "cache_write_tokens": 874,
+      "output_tokens": 329,
+      "total_tokens": 6890,
+      "latency_ms": 521,
+      "cost_usd": 0.00036464
+    }
+  ],
+  "limit_all": [
+    {
+      "donor": "Donor D01",
+      "candidate_limit": "all",
+      "matches": [
+        11,
+        19,
+        29,
+        26,
+        1
+      ],
+      "match_count": 5,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 6030,
+      "cache_write_tokens": 2054,
+      "output_tokens": 649,
+      "total_tokens": 9111,
+      "latency_ms": 10067,
+      "cost_usd": 0.00067935
+    },
+    {
+      "donor": "Donor D02",
+      "candidate_limit": "all",
+      "matches": [
+        2,
+        9
+      ],
+      "match_count": 2,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 5297,
+      "cache_write_tokens": 841,
+      "output_tokens": 358,
+      "total_tokens": 6874,
+      "latency_ms": 7445,
+      "cost_usd": 0.000374895
+    },
+    {
+      "donor": "Donor D03",
+      "candidate_limit": "all",
+      "matches": [
+        18,
+        5,
+        32,
+        10
+      ],
+      "match_count": 4,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 5636,
+      "cache_write_tokens": 1517,
+      "output_tokens": 578,
+      "total_tokens": 8109,
+      "latency_ms": 9002,
+      "cost_usd": 0.0005727849999999999
+    },
+    {
+      "donor": "Donor D04",
+      "candidate_limit": "all",
+      "matches": [
+        11,
+        19,
+        29,
+        1,
+        6
+      ],
+      "match_count": 5,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 6367,
+      "cache_write_tokens": 2417,
+      "output_tokens": 638,
+      "total_tokens": 9800,
+      "latency_ms": 9651,
+      "cost_usd": 0.000722595
+    },
+    {
+      "donor": "Donor D05",
+      "candidate_limit": "all",
+      "matches": [
+        26,
+        3
+      ],
+      "match_count": 2,
+      "code_pass_changes": 0,
+      "agent": "matchmaker",
+      "input_tokens": 378,
+      "cached_input_tokens": 5309,
+      "cache_write_tokens": 839,
+      "output_tokens": 301,
+      "total_tokens": 6827,
+      "latency_ms": 6534,
+      "cost_usd": 0.000346265
+    }
+  ],
+  "intakes_tight": [
+    {
+      "scenario": "coat",
+      "kind": "flexible",
+      "turns": 2,
+      "wishes": 1,
+      "done": false,
+      "reply_chars": 69,
+      "wishes_with_cost": 1,
+      "wishes_with_size": 1,
+      "wishes_with_deadline": 0,
+      "descriptions": [
+        "Winter coat for an 8-year-old, for wearing to school."
+      ],
+      "drafts": [
+        {
+          "category": "clothing",
+          "request_type": "flexible",
+          "item_description": "Winter coat for an 8-year-old, for wearing to school.",
+          "occasion": "everyday",
+          "deadline": null,
+          "estimated_cost_usd": null,
+          "budget_min_usd": 30.0,
+          "budget_max_usd": 70.0,
+          "product_link": null,
+          "brand": null,
+          "size": "Boys size 8",
+          "color": null,
+          "open_to_substitute": true,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 4966,
+          "cache_write_tokens": 232,
+          "output_tokens": 228,
+          "total_tokens": 5678,
+          "latency_ms": 8439,
+          "cost_usd": 0.00021786
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5562,
+          "cache_write_tokens": 294,
+          "output_tokens": 350,
+          "total_tokens": 6458,
+          "latency_ms": 6772,
+          "cost_usd": 0.00029256999999999997
+        }
+      ],
+      "cost_usd": 0.00051043,
+      "total_tokens": 12136,
+      "output_tokens": 578
+    },
+    {
+      "scenario": "groceries",
+      "kind": "flexible",
+      "turns": 2,
+      "wishes": 1,
+      "done": true,
+      "reply_chars": 144,
+      "wishes_with_cost": 0,
+      "wishes_with_size": 0,
+      "wishes_with_deadline": 0,
+      "descriptions": [
+        "Groceries for one month for a household of four, with no pork."
+      ],
+      "drafts": [
+        {
+          "category": "food",
+          "request_type": "flexible",
+          "item_description": "Groceries for one month for a household of four, with no pork.",
+          "occasion": "everyday",
+          "deadline": null,
+          "estimated_cost_usd": null,
+          "budget_min_usd": null,
+          "budget_max_usd": null,
+          "product_link": null,
+          "brand": null,
+          "size": null,
+          "color": null,
+          "open_to_substitute": true,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 4966,
+          "cache_write_tokens": 182,
+          "output_tokens": 188,
+          "total_tokens": 5588,
+          "latency_ms": 9428,
+          "cost_usd": 0.00019161000000000002
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5471,
+          "cache_write_tokens": 255,
+          "output_tokens": 310,
+          "total_tokens": 6288,
+          "latency_ms": 6293,
+          "cost_usd": 0.00026678499999999996
+        }
+      ],
+      "cost_usd": 0.000458395,
+      "total_tokens": 11876,
+      "output_tokens": 498
+    },
+    {
+      "scenario": "shoes",
+      "kind": "specific",
+      "turns": 2,
+      "wishes": 1,
+      "done": false,
+      "reply_chars": 70,
+      "wishes_with_cost": 1,
+      "wishes_with_size": 1,
+      "wishes_with_deadline": 1,
+      "descriptions": [
+        "Non-slip work shoes for a parent starting a kitchen job, needed by November 10."
+      ],
+      "drafts": [
+        {
+          "category": "clothing",
+          "request_type": "specific",
+          "item_description": "Non-slip work shoes for a parent starting a kitchen job, needed by November 10.",
+          "occasion": "everyday",
+          "deadline": "2026-11-10",
+          "estimated_cost_usd": 40.0,
+          "budget_min_usd": null,
+          "budget_max_usd": null,
+          "product_link": "https://www.walmart.com/ip/slip-resistant-work-shoe/118920334",
+          "brand": null,
+          "size": "Women's 9",
+          "color": null,
+          "open_to_substitute": false,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 378,
+          "cached_input_tokens": 7928,
+          "cache_write_tokens": 811,
+          "output_tokens": 566,
+          "total_tokens": 9683,
+          "latency_ms": 13341,
+          "cost_usd": 0.000501455
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 6707,
+          "cache_write_tokens": 381,
+          "output_tokens": 515,
+          "total_tokens": 7855,
+          "latency_ms": 10575,
+          "cost_usd": 0.000397395
+        }
+      ],
+      "cost_usd": 0.0008988500000000001,
+      "total_tokens": 17538,
+      "output_tokens": 1081
+    },
+    {
+      "scenario": "electric",
+      "kind": "flexible",
+      "turns": 2,
+      "wishes": 1,
+      "done": true,
+      "reply_chars": 125,
+      "wishes_with_cost": 1,
+      "wishes_with_size": 0,
+      "wishes_with_deadline": 1,
+      "descriptions": [
+        "Help with one month of electricity for the household, paid directly to United Illuminating to address a shutoff notice."
+      ],
+      "drafts": [
+        {
+          "category": "rent_utilities",
+          "request_type": "flexible",
+          "item_description": "Help with one month of electricity for the household, paid directly to United Illuminating to address a shutoff notice.",
+          "occasion": "emergency",
+          "deadline": "2026-11-03",
+          "estimated_cost_usd": null,
+          "budget_min_usd": 90.0,
+          "budget_max_usd": 250.0,
+          "product_link": null,
+          "brand": null,
+          "size": null,
+          "color": null,
+          "open_to_substitute": true,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 378,
+          "cached_input_tokens": 7717,
+          "cache_write_tokens": 460,
+          "output_tokens": 368,
+          "total_tokens": 8923,
+          "latency_ms": 11642,
+          "cost_usd": 0.00035647
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 126,
+          "cached_input_tokens": 2950,
+          "cache_write_tokens": 135,
+          "output_tokens": 227,
+          "total_tokens": 3438,
+          "latency_ms": 4293,
+          "cost_usd": 0.000172475
+        }
+      ],
+      "cost_usd": 0.0005289450000000001,
+      "total_tokens": 12361,
+      "output_tokens": 595
+    },
+    {
+      "scenario": "uniform",
+      "kind": "flexible",
+      "turns": 2,
+      "wishes": 0,
+      "done": false,
+      "reply_chars": 101,
+      "wishes_with_cost": 0,
+      "wishes_with_size": 0,
+      "wishes_with_deadline": 0,
+      "descriptions": [],
+      "drafts": [],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 2481,
+          "cache_write_tokens": 2671,
+          "output_tokens": 283,
+          "total_tokens": 5687,
+          "latency_ms": 13341,
+          "cost_usd": 0.000525385
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5571,
+          "cache_write_tokens": 511,
+          "output_tokens": 341,
+          "total_tokens": 6675,
+          "latency_ms": 7932,
+          "cost_usd": 0.00031528499999999995
+        }
+      ],
+      "cost_usd": 0.00084067,
+      "total_tokens": 12362,
+      "output_tokens": 624
+    },
+    {
+      "scenario": "diapers",
+      "kind": "flexible",
+      "turns": 2,
+      "wishes": 1,
+      "done": false,
+      "reply_chars": 90,
+      "wishes_with_cost": 0,
+      "wishes_with_size": 1,
+      "wishes_with_deadline": 0,
+      "descriptions": [
+        "Size 4 diapers and wipes for a 14-month-old, for everyday care."
+      ],
+      "drafts": [
+        {
+          "category": "essentials",
+          "request_type": "flexible",
+          "item_description": "Size 4 diapers and wipes for a 14-month-old, for everyday care.",
+          "occasion": "everyday",
+          "deadline": null,
+          "estimated_cost_usd": null,
+          "budget_min_usd": null,
+          "budget_max_usd": null,
+          "product_link": null,
+          "brand": null,
+          "size": "4",
+          "color": null,
+          "open_to_substitute": true,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 378,
+          "cached_input_tokens": 7854,
+          "cache_write_tokens": 686,
+          "output_tokens": 621,
+          "total_tokens": 9539,
+          "latency_ms": 16864,
+          "cost_usd": 0.00051259
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 6585,
+          "cache_write_tokens": 387,
+          "output_tokens": 363,
+          "total_tokens": 7587,
+          "latency_ms": 7701,
+          "cost_usd": 0.000320925
+        }
+      ],
+      "cost_usd": 0.0008335150000000001,
+      "total_tokens": 17126,
+      "output_tokens": 984
+    },
+    {
+      "scenario": "meals",
+      "kind": "flexible",
+      "turns": 2,
+      "wishes": 1,
+      "done": true,
+      "reply_chars": 76,
+      "wishes_with_cost": 0,
+      "wishes_with_size": 0,
+      "wishes_with_deadline": 0,
+      "descriptions": [
+        "Soft foods for a parent recovering from surgery."
+      ],
+      "drafts": [
+        {
+          "category": "food",
+          "request_type": "flexible",
+          "item_description": "Soft foods for a parent recovering from surgery.",
+          "occasion": "everyday",
+          "deadline": null,
+          "estimated_cost_usd": null,
+          "budget_min_usd": null,
+          "budget_max_usd": null,
+          "product_link": null,
+          "brand": null,
+          "size": null,
+          "color": null,
+          "open_to_substitute": true,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 4962,
+          "cache_write_tokens": 189,
+          "output_tokens": 200,
+          "total_tokens": 5603,
+          "latency_ms": 8453,
+          "cost_usd": 0.000198445
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5484,
+          "cache_write_tokens": 296,
+          "output_tokens": 334,
+          "total_tokens": 6366,
+          "latency_ms": 8296,
+          "cost_usd": 0.00028404
+        }
+      ],
+      "cost_usd": 0.000482485,
+      "total_tokens": 11969,
+      "output_tokens": 534
+    }
+  ],
+  "tight_cap": 300,
+  "default_cap": 1600,
+  "tight_failures": [
+    "UnexpectedModelBehavior: Model token limit (300) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+    "UnexpectedModelBehavior: Model token limit (300) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+    "UnexpectedModelBehavior: Model token limit (300) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit."
+  ],
+  "run_at": "2026-10-20T19:11:17+00:00",
+  "model": "gpt-6-luna",
+  "prices": {
+    "input": 0.1,
+    "cached_input": 0.01,
+    "cache_write": 0.125,
+    "output": 0.5
+  },
+  "intakes_cap700": [
+    {
+      "scenario": "coat",
+      "kind": "flexible",
+      "turns": 2,
+      "wishes": 1,
+      "done": false,
+      "reply_chars": 60,
+      "wishes_with_cost": 1,
+      "wishes_with_size": 1,
+      "wishes_with_deadline": 0,
+      "descriptions": [
+        "Winter coat for an 8-year-old, for wearing to school."
+      ],
+      "drafts": [
+        {
+          "category": "clothing",
+          "request_type": "flexible",
+          "item_description": "Winter coat for an 8-year-old, for wearing to school.",
+          "occasion": "everyday",
+          "deadline": null,
+          "estimated_cost_usd": null,
+          "budget_min_usd": 30.0,
+          "budget_max_usd": 70.0,
+          "product_link": null,
+          "brand": null,
+          "size": "Boys size 8",
+          "color": null,
+          "open_to_substitute": true,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 4966,
+          "cache_write_tokens": 350,
+          "output_tokens": 233,
+          "total_tokens": 5801,
+          "latency_ms": 5851,
+          "cost_usd": 0.00023511000000000002
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5773,
+          "cache_write_tokens": 352,
+          "output_tokens": 316,
+          "total_tokens": 6693,
+          "latency_ms": 8707,
+          "cost_usd": 0.00028493
+        }
+      ],
+      "cost_usd": 0.00052004,
+      "total_tokens": 12494,
+      "output_tokens": 549
+    },
+    {
+      "scenario": "backpack",
+      "kind": "specific",
+      "turns": 2,
+      "wishes": 1,
+      "done": true,
+      "reply_chars": 86,
+      "wishes_with_cost": 1,
+      "wishes_with_size": 0,
+      "wishes_with_deadline": 0,
+      "descriptions": [
+        "Blue 17-inch backpack for a 4th-grade student to carry school supplies."
+      ],
+      "drafts": [
+        {
+          "category": "school_supplies",
+          "request_type": "specific",
+          "item_description": "Blue 17-inch backpack for a 4th-grade student to carry school supplies.",
+          "occasion": "back_to_school",
+          "deadline": null,
+          "estimated_cost_usd": 30.0,
+          "budget_min_usd": null,
+          "budget_max_usd": null,
+          "product_link": "https://www.target.com/p/kids-backpack-17in/-/A-54110298",
+          "brand": null,
+          "size": null,
+          "color": "blue",
+          "open_to_substitute": false,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 378,
+          "cached_input_tokens": 7766,
+          "cache_write_tokens": 447,
+          "output_tokens": 656,
+          "total_tokens": 9247,
+          "latency_ms": 13140,
+          "cost_usd": 0.0004993350000000001
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 126,
+          "cached_input_tokens": 2959,
+          "cache_write_tokens": 425,
+          "output_tokens": 157,
+          "total_tokens": 3667,
+          "latency_ms": 2768,
+          "cost_usd": 0.000173815
+        }
+      ],
+      "cost_usd": 0.0006731500000000001,
+      "total_tokens": 12914,
+      "output_tokens": 813
+    },
+    {
+      "scenario": "groceries",
+      "kind": "flexible",
+      "turns": 2,
+      "wishes": 1,
+      "done": true,
+      "reply_chars": 71,
+      "wishes_with_cost": 0,
+      "wishes_with_size": 0,
+      "wishes_with_deadline": 0,
+      "descriptions": [
+        "Groceries for one month for a household of four, with no pork."
+      ],
+      "drafts": [
+        {
+          "category": "food",
+          "request_type": "flexible",
+          "item_description": "Groceries for one month for a household of four, with no pork.",
+          "occasion": "everyday",
+          "deadline": null,
+          "estimated_cost_usd": null,
+          "budget_min_usd": null,
+          "budget_max_usd": null,
+          "product_link": null,
+          "brand": null,
+          "size": null,
+          "color": null,
+          "open_to_substitute": true,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 4966,
+          "cache_write_tokens": 199,
+          "output_tokens": 185,
+          "total_tokens": 5602,
+          "latency_ms": 9650,
+          "cost_usd": 0.00019223500000000002
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5485,
+          "cache_write_tokens": 265,
+          "output_tokens": 286,
+          "total_tokens": 6288,
+          "latency_ms": 7848,
+          "cost_usd": 0.00025617500000000003
+        }
+      ],
+      "cost_usd": 0.00044841000000000005,
+      "total_tokens": 11890,
+      "output_tokens": 471
+    },
+    {
+      "scenario": "shoes",
+      "kind": "specific",
+      "turns": 2,
+      "wishes": 1,
+      "done": false,
+      "reply_chars": 91,
+      "wishes_with_cost": 1,
+      "wishes_with_size": 1,
+      "wishes_with_deadline": 1,
+      "descriptions": [
+        "Non-slip work shoes for an adult starting a kitchen job next month."
+      ],
+      "drafts": [
+        {
+          "category": "clothing",
+          "request_type": "specific",
+          "item_description": "Non-slip work shoes for an adult starting a kitchen job next month.",
+          "occasion": "everyday",
+          "deadline": "2026-11-10",
+          "estimated_cost_usd": 40.0,
+          "budget_min_usd": null,
+          "budget_max_usd": null,
+          "product_link": "https://www.walmart.com/ip/slip-resistant-work-shoe/118920334",
+          "brand": null,
+          "size": "Women's 9",
+          "color": null,
+          "open_to_substitute": false,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5008,
+          "cache_write_tokens": 349,
+          "output_tokens": 653,
+          "total_tokens": 6262,
+          "latency_ms": 17193,
+          "cost_usd": 0.00044540499999999995
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 6237,
+          "cache_write_tokens": 894,
+          "output_tokens": 469,
+          "total_tokens": 7852,
+          "latency_ms": 9441,
+          "cost_usd": 0.00043382
+        }
+      ],
+      "cost_usd": 0.000879225,
+      "total_tokens": 14114,
+      "output_tokens": 1122
+    },
+    {
+      "scenario": "electric",
+      "kind": "flexible",
+      "turns": 2,
+      "wishes": 1,
+      "done": true,
+      "reply_chars": 85,
+      "wishes_with_cost": 0,
+      "wishes_with_size": 0,
+      "wishes_with_deadline": 1,
+      "descriptions": [
+        "Help with the household\u2019s electric bill, paid directly to United Illuminating, to address a shutoff notice due November 3, 2026."
+      ],
+      "drafts": [
+        {
+          "category": "rent_utilities",
+          "request_type": "flexible",
+          "item_description": "Help with the household\u2019s electric bill, paid directly to United Illuminating, to address a shutoff notice due November 3, 2026.",
+          "occasion": "emergency",
+          "deadline": "2026-11-03",
+          "estimated_cost_usd": null,
+          "budget_min_usd": null,
+          "budget_max_usd": null,
+          "product_link": null,
+          "brand": null,
+          "size": null,
+          "color": null,
+          "open_to_substitute": true,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 378,
+          "cached_input_tokens": 7678,
+          "cache_write_tokens": 426,
+          "output_tokens": 350,
+          "total_tokens": 8832,
+          "latency_ms": 16787,
+          "cost_usd": 0.00034283
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5983,
+          "cache_write_tokens": 518,
+          "output_tokens": 606,
+          "total_tokens": 7359,
+          "latency_ms": 11884,
+          "cost_usd": 0.00045277999999999996
+        }
+      ],
+      "cost_usd": 0.00079561,
+      "total_tokens": 16191,
+      "output_tokens": 956
+    },
+    {
+      "scenario": "uniform",
+      "kind": "flexible",
+      "turns": 2,
+      "wishes": 0,
+      "done": false,
+      "reply_chars": 66,
+      "wishes_with_cost": 0,
+      "wishes_with_size": 0,
+      "wishes_with_deadline": 0,
+      "descriptions": [],
+      "drafts": [],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 4962,
+          "cache_write_tokens": 283,
+          "output_tokens": 472,
+          "total_tokens": 5969,
+          "latency_ms": 14923,
+          "cost_usd": 0.000346195
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5853,
+          "cache_write_tokens": 686,
+          "output_tokens": 425,
+          "total_tokens": 7216,
+          "latency_ms": 9801,
+          "cost_usd": 0.00038198
+        }
+      ],
+      "cost_usd": 0.000728175,
+      "total_tokens": 13185,
+      "output_tokens": 897
+    },
+    {
+      "scenario": "blazer",
+      "kind": "specific",
+      "turns": 2,
+      "wishes": 0,
+      "done": false,
+      "reply_chars": 46,
+      "wishes_with_cost": 0,
+      "wishes_with_size": 0,
+      "wishes_with_deadline": 0,
+      "descriptions": [],
+      "drafts": [],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5006,
+          "cache_write_tokens": 212,
+          "output_tokens": 387,
+          "total_tokens": 5857,
+          "latency_ms": 23980,
+          "cost_usd": 0.00029526
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5747,
+          "cache_write_tokens": 426,
+          "output_tokens": 519,
+          "total_tokens": 6944,
+          "latency_ms": 11236,
+          "cost_usd": 0.00039542
+        }
+      ],
+      "cost_usd": 0.0006906799999999999,
+      "total_tokens": 12801,
+      "output_tokens": 906
+    },
+    {
+      "scenario": "diapers",
+      "kind": "flexible",
+      "turns": 2,
+      "wishes": 2,
+      "done": false,
+      "reply_chars": 108,
+      "wishes_with_cost": 2,
+      "wishes_with_size": 1,
+      "wishes_with_deadline": 0,
+      "descriptions": [
+        "Size 4 diapers for a 14-month-old.",
+        "Baby wipes for a 14-month-old."
+      ],
+      "drafts": [
+        {
+          "category": "essentials",
+          "request_type": "flexible",
+          "item_description": "Size 4 diapers for a 14-month-old.",
+          "occasion": "everyday",
+          "deadline": null,
+          "estimated_cost_usd": null,
+          "budget_min_usd": 40.0,
+          "budget_max_usd": 80.0,
+          "product_link": null,
+          "brand": null,
+          "size": "4",
+          "color": null,
+          "open_to_substitute": true,
+          "size_preferences": null
+        },
+        {
+          "category": "essentials",
+          "request_type": "flexible",
+          "item_description": "Baby wipes for a 14-month-old.",
+          "occasion": "everyday",
+          "deadline": null,
+          "estimated_cost_usd": null,
+          "budget_min_usd": 12.0,
+          "budget_max_usd": 30.0,
+          "product_link": null,
+          "brand": null,
+          "size": null,
+          "color": null,
+          "open_to_substitute": true,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 4964,
+          "cache_write_tokens": 237,
+          "output_tokens": 270,
+          "total_tokens": 5723,
+          "latency_ms": 6699,
+          "cost_usd": 0.000239465
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 378,
+          "cached_input_tokens": 8643,
+          "cache_write_tokens": 827,
+          "output_tokens": 651,
+          "total_tokens": 10499,
+          "latency_ms": 12956,
+          "cost_usd": 0.000553105
+        }
+      ],
+      "cost_usd": 0.00079257,
+      "total_tokens": 16222,
+      "output_tokens": 921
+    },
+    {
+      "scenario": "supplies",
+      "kind": "specific",
+      "turns": 2,
+      "wishes": 1,
+      "done": true,
+      "reply_chars": 192,
+      "wishes_with_cost": 0,
+      "wishes_with_size": 0,
+      "wishes_with_deadline": 0,
+      "descriptions": [
+        "School supply bundle for a 6th grader, intended to cover the school supply list."
+      ],
+      "drafts": [
+        {
+          "category": "school_supplies",
+          "request_type": "specific",
+          "item_description": "School supply bundle for a 6th grader, intended to cover the school supply list.",
+          "occasion": "back_to_school",
+          "deadline": null,
+          "estimated_cost_usd": null,
+          "budget_min_usd": null,
+          "budget_max_usd": null,
+          "product_link": "https://www.staples.com/kindergarten-supply-bundle/product_24119087",
+          "brand": null,
+          "size": null,
+          "color": null,
+          "open_to_substitute": true,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5010,
+          "cache_write_tokens": 313,
+          "output_tokens": 391,
+          "total_tokens": 5966,
+          "latency_ms": 10612,
+          "cost_usd": 0.000309925
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 252,
+          "cached_input_tokens": 5883,
+          "cache_write_tokens": 670,
+          "output_tokens": 794,
+          "total_tokens": 7599,
+          "latency_ms": 12750,
+          "cost_usd": 0.00056478
+        }
+      ],
+      "cost_usd": 0.0008747049999999999,
+      "total_tokens": 13565,
+      "output_tokens": 1185
+    },
+    {
+      "scenario": "meals",
+      "kind": "flexible",
+      "turns": 2,
+      "wishes": 1,
+      "done": false,
+      "reply_chars": 83,
+      "wishes_with_cost": 0,
+      "wishes_with_size": 0,
+      "wishes_with_deadline": 0,
+      "descriptions": [
+        "Soft foods for an adult recovering from surgery, for meals while standing to cook is difficult."
+      ],
+      "drafts": [
+        {
+          "category": "food",
+          "request_type": "flexible",
+          "item_description": "Soft foods for an adult recovering from surgery, for meals while standing to cook is difficult.",
+          "occasion": "everyday",
+          "deadline": null,
+          "estimated_cost_usd": null,
+          "budget_min_usd": null,
+          "budget_max_usd": null,
+          "product_link": null,
+          "brand": null,
+          "size": null,
+          "color": null,
+          "open_to_substitute": true,
+          "size_preferences": null
+        }
+      ],
+      "calls": [
+        {
+          "agent": "intake",
+          "input_tokens": 504,
+          "cached_input_tokens": 10546,
+          "cache_write_tokens": 678,
+          "output_tokens": 656,
+          "total_tokens": 12384,
+          "latency_ms": 21592,
+          "cost_usd": 0.00056861
+        },
+        {
+          "agent": "intake",
+          "input_tokens": 882,
+          "cached_input_tokens": 25730,
+          "cache_write_tokens": 1117,
+          "output_tokens": 634,
+          "total_tokens": 28363,
+          "latency_ms": 26585,
+          "cost_usd": 0.000802125
+        }
+      ],
+      "cost_usd": 0.001370735,
+      "total_tokens": 40747,
+      "output_tokens": 1290
+    }
+  ],
+  "cap700_note": "a cap of 700 never bound: mean output per call is ~405"
+}
