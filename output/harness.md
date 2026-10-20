@@ -1058,7 +1058,76 @@ split a need that is genuinely one thing.
 
 **American spelling throughout** — 18 files, prompts included.
 
-## 23. Safety measures so far
+## 23. The Wish Tree, Monty, and Admin
+
+### The Wish Tree
+
+The first thing a donor sees. One SVG tree; every open wish is a leaf, colored
+by category and carrying its Lucide icon. Tapping a leaf opens that wish's
+card, with the same Grant button the list has.
+
+**The leaves are real HTML buttons positioned over the SVG**, not shapes inside
+it. That is deliberate: a button is focusable, has a proper hit area, reads to
+a screen reader, and can hold an icon without any of the contortions that
+putting interactive controls inside SVG requires. Each is 44px on desktop and
+46px on a phone — measured at **58px** in the live mobile layout.
+
+Positions are deterministic — four rings computed from a fixed formula — so the
+tree looks the same on every load rather than reshuffling under someone's
+finger.
+
+**Gold leaves** are wishes granted in the last `GRANTED_LEAF_DAYS` (30), so the
+tree visibly fills up as the month goes on. They carry only an id and a
+category: a granted wish is no longer anyone's to read.
+
+This surfaced a design bug worth recording. The food category was amber
+(`#A8763E`) and the gold leaves were `#E0A84B` — close enough on a phone that a
+food wish could read as already granted, quietly telling a donor not to bother
+with a wish that was still open. **Gold is now the only amber on the tree**;
+food is olive, and the gold leaves carry a gold ring as well.
+
+**The canopy holds 30 leaves.** Past that, the rest go to the list with a line
+saying how many and a link to switch. A tree that crams forty leaves into a
+space meant for thirty is worse than a list.
+
+### The list, still there
+
+`Tree | See as a list` toggles between them. Both views read the same filtered
+data, so filters and urgency badges work identically in each — the toggle
+changes how the wishes are drawn, not which ones there are. If anything about
+the tree ever misbehaves, the list is one tap away and unchanged.
+
+### Monty
+
+`frontend/src/components/Monty.tsx` — a Pembroke Welsh corgi, drawn from
+scratch in SVG: a red-fox coat, a white blaze and chest, big upright ears, and
+no tail, which is the Pembroke of it. Nothing traced or copied, and he inherits
+the palette so he sits in the page rather than on it.
+
+He has two moods, and the difference is only his eyes and tongue:
+
+- **happy** on the landing page and the donor side, where warmth is welcome —
+  and in the donor's thinking message, *"Monty is sniffing out wishes that fit
+  you."*
+- **calm** on the family side, beside "Tell us what you need" and in their
+  empty state. No jokes there. Someone who has just typed out what their
+  children need should not be met by a grinning dog.
+
+The tree logo is untouched.
+
+### Admin
+
+The staff role is now **Admin** everywhere a staff member sees it — the landing
+card, the page title, the passcode screen, the unlocked banner. The passcode
+field has a show/hide control, because this passcode is shared and often typed
+off a note: hiding it by default is right, refusing to ever show it is not.
+
+**"Coordinator" stays the job title in anything a family reads** — *"a
+coordinator will email you"* is warmer, and truer, than *"an admin will email
+you"*. Admin is what you sign in as; coordinator is who turns up with the
+delivery.
+
+## 24. Safety measures so far
 
 Agents arrive in later problems; these are the ones already standing.
 
@@ -1094,9 +1163,9 @@ Agents arrive in later problems; these are the ones already standing.
 | One family cannot answer for another | `respond_to_window` checks the pledge's family | Confirming or cancelling someone else's delivery. |
 | A missed drop-off reopens the wish | `set_pledge_status` | A family quietly going without because a donor did not turn up. |
 
-## 24. Tests
+## 25. Tests
 
-`./.venv/bin/python -m pytest` — **223 passing**, in under two seconds, every agent stubbed.
+`./.venv/bin/python -m pytest` — **228 passing**, in under two seconds, every agent stubbed.
 
 `./.venv/bin/python -m pytest -m live` — **10 more** against the real model, excluded by default because they spend tokens. Every agent is stubbed, so the suite is free to run.
 
@@ -1110,7 +1179,7 @@ Agents arrive in later problems; these are the ones already standing.
 - `test_safety.py` — the patterns (and what they must *not* match), the second pass narrowing in every direction it can, both token caps, and the activity feed refusing an unauthenticated request and carrying no contact details
 - `test_intake.py` — the agent's deps carry no contact details, turn and wish caps (the turn cap spending zero calls), approval storing `pending_review` and nothing public, draft-to-request conversion, price-guide matching, and the audit trail recording to both the file and the table with cached input kept separate. The model is stubbed, so the suite is fast and free; the two real runs are the table above.
 
-## 25. Specs
+## 26. Specs
 
 _Filled in as the agents are built._
 

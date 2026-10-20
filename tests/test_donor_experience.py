@@ -349,3 +349,66 @@ def test_someone_elses_calendar_is_refused(client):
         f"/api/pledges/{granted['pledge']['id']}/calendar.ics?donor_alias=Donor D02"
     )
     assert response.status_code == 403
+
+
+# --------------------------------------------------------------------------
+# The gold leaves
+# --------------------------------------------------------------------------
+
+def test_the_wall_reports_recently_granted_wishes(client):
+    body = client.get("/api/wishes").json()
+    assert body["granted_window_days"] == config.GRANTED_LEAF_DAYS
+    assert body["recently_granted"], "expected some gold leaves from the seed"
+
+
+def test_a_gold_leaf_carries_only_an_id_and_a_category(client):
+    """A granted wish is nobody's to read any more — the leaf is just a shape."""
+    body = client.get("/api/wishes").json()
+    for leaf in body["recently_granted"]:
+        assert set(leaf) == {"id", "category"}
+
+
+def test_granting_a_wish_turns_it_into_a_gold_leaf(client):
+    wish = client.get("/api/wishes").json()["wishes"][0]
+    before = {g["id"] for g in client.get("/api/wishes").json()["recently_granted"]}
+    client.post("/api/grant", json={"donor_alias": "Donor D01", "request_id": wish["id"]})
+
+    after = client.get("/api/wishes").json()
+    assert wish["id"] in {g["id"] for g in after["recently_granted"]}
+    assert wish["id"] not in {w["id"] for w in after["wishes"]}   # off the open list
+    assert wish["id"] not in before
+
+
+def test_old_grants_fall_off_the_tree(client):
+    """The tree remembers a month, not forever.
+
+    Ages one pledge past the window rather than moving the window, because
+    what matters is that an old grant drops off, not that a zero-day window
+    returns nothing.
+    """
+    wish = client.get("/api/wishes").json()["wishes"][0]
+    granted = client.post("/api/grant", json={
+        "donor_alias": "Donor D01", "request_id": wish["id"],
+    }).json()
+    pledge_id = granted["pledge"]["id"]
+
+    assert wish["id"] in {g["id"] for g in client.get("/api/wishes").json()["recently_granted"]}
+
+    old = (date.today() - timedelta(days=config.GRANTED_LEAF_DAYS + 1)).isoformat()
+    with db.connect(config.DB_PATH) as conn:
+        conn.execute("UPDATE pledges SET created_at = ? WHERE id = ?", (old, pledge_id))
+        conn.commit()
+
+    assert wish["id"] not in {g["id"] for g in client.get("/api/wishes").json()["recently_granted"]}
+
+
+def test_a_released_wish_is_not_a_gold_leaf(client):
+    wish = client.get("/api/wishes").json()["wishes"][0]
+    granted = client.post("/api/grant", json={
+        "donor_alias": "Donor D01", "request_id": wish["id"],
+    }).json()
+    client.post(f"/api/pledges/{granted['pledge']['id']}/release?donor_alias=Donor D01")
+
+    after = client.get("/api/wishes").json()
+    assert wish["id"] not in {g["id"] for g in after["recently_granted"]}
+    assert wish["id"] in {w["id"] for w in after["wishes"]}        # back on the tree

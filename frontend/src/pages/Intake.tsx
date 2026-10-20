@@ -7,6 +7,7 @@ import {
   userMessage,
 } from '../api'
 import HowItWorks from '../components/HowItWorks'
+import Monty from '../components/Monty'
 import Thinking from '../components/Thinking'
 import TokenPanel from '../components/TokenPanel'
 import { clearSession, getSession } from '../session'
@@ -133,7 +134,11 @@ export default function Intake() {
         <div className="intake__main">
           {phase === 'chat' && (
             <>
-              <h1 className="page__title">Tell us what you need</h1>
+              <div className="intake__title">
+                {/* Calm on this side: present, but not performing. */}
+                <Monty size={46} mood="calm" />
+                <h1 className="page__title">Tell us what you need</h1>
+              </div>
               {bubbles.length <= 1 && <HowItWorks compact />}
               <div className="transcript" ref={transcript}>
                 {bubbles.map((bubble, i) => (

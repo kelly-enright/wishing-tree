@@ -11,6 +11,8 @@ import DonorHowItWorks from '../components/DonorHowItWorks'
 import Thinking from '../components/Thinking'
 import TokenPanel from '../components/TokenPanel'
 import WishCard from '../components/WishCard'
+import WishTree from '../components/WishTree'
+import Monty, { MontySays } from '../components/Monty'
 import GrantConfirm from './GrantConfirm'
 import MyGranted from './MyGranted'
 import { clearSession, getSession } from '../session'
@@ -27,6 +29,9 @@ export default function Donor() {
   const [usage, setUsage] = useState<Usage | null>(null)
   const [granted, setGranted] = useState<GrantResponse | null>(null)
   const [confirming, setConfirming] = useState<Wish | null>(null)
+  const [view, setView] = useState<'tree' | 'list'>('tree')
+  const [gold, setGold] = useState<{ id: number; category: Category }[]>([])
+  const [goldDays, setGoldDays] = useState(30)
   const [busy, setBusy] = useState<'wall' | 'match' | number | null>('wall')
   const [error, setError] = useState<string | null>(null)
 
@@ -34,7 +39,12 @@ export default function Donor() {
     setBusy('wall')
     setError(null)
     getWishes(next)
-      .then((wall) => { setWishes(wall.wishes); setRegion(wall.region) })
+      .then((wall) => {
+        setWishes(wall.wishes)
+        setRegion(wall.region)
+        setGold(wall.recently_granted ?? [])
+        setGoldDays(wall.granted_window_days ?? 30)
+      })
       .catch((e) => setError(userMessage(e, 'We could not load the wish wall.')))
       .finally(() => setBusy(null))
   }
@@ -157,7 +167,23 @@ export default function Donor() {
 
       <MyGranted alias={session.alias} />
 
-      <h1 className="page__title">Wishes near you</h1>
+      <div className="donorhead">
+        <h1 className="page__title">The Wish Tree</h1>
+        <div className="viewtoggle" role="group" aria-label="How to see the wishes">
+          <button
+            type="button" className={`viewtoggle__btn${view === 'tree' ? ' viewtoggle__btn--on' : ''}`}
+            onClick={() => setView('tree')} aria-pressed={view === 'tree'}
+          >
+            Tree
+          </button>
+          <button
+            type="button" className={`viewtoggle__btn${view === 'list' ? ' viewtoggle__btn--on' : ''}`}
+            onClick={() => setView('list')} aria-pressed={view === 'list'}
+          >
+            See as a list
+          </button>
+        </div>
+      </div>
 
       <section className="filters" aria-label="Filter the wish wall">
         <div className="filters__row">
@@ -225,7 +251,7 @@ export default function Donor() {
       {error && <p className="form__error" role="alert">{error}</p>}
 
       {busy === 'match' && (
-        <Thinking label="Looking through the wall for wishes that fit you" />
+        <Thinking label="Monty is sniffing out wishes that fit you" />
       )}
 
       {matches && (
@@ -239,18 +265,37 @@ export default function Donor() {
 
       <div className="wall">
         <div className="wall__cards">
-          {busy === 'wall' && <p className="wall__empty">Loading wishes…</p>}
-          {busy !== 'wall' && showing.length === 0 && (
+          {view === 'tree' && busy !== 'wall' && (
+            <WishTree
+              wishes={showing}
+              granted={matches ? [] : gold}
+              grantedWindowDays={goldDays}
+              onGrant={openConfirmation}
+              granting={typeof busy === 'number' ? busy : null}
+              onSeeList={() => setView('list')}
+            />
+          )}
+
+          {view === 'tree' && busy !== 'wall' && showing.length === 0 && (
+            <MontySays>
+              Nothing matches those filters today. Monty says try taking one off —
+              new wishes go up every week.
+            </MontySays>
+          )}
+
+          {view === 'list' && busy === 'wall' && <p className="wall__empty">Loading wishes…</p>}
+          {view === 'list' && busy !== 'wall' && showing.length === 0 && (
             <div className="wall__empty">
+              <Monty size={64} />
               <p className="wall__empty-title">Nothing here right now</p>
               <p>
                 {matches
-                  ? 'Nothing on the wall fits those filters today. Try widening them, or browse the whole wall.'
+                  ? "Nothing fits those filters today. Monty suggests widening them, or looking at the whole tree."
                   : 'No open wishes match those filters today. Try removing a filter — new wishes go up every week.'}
               </p>
             </div>
           )}
-          {showing.map((wish) => (
+          {view === 'list' && showing.map((wish) => (
             <WishCard
               key={wish.id}
               wish={wish}

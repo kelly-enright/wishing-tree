@@ -244,15 +244,15 @@ def get_account(role: str, alias: str) -> dict:
 
 @app.post("/api/coordinator/unlock")
 def coordinator_unlock(body: CoordinatorUnlock) -> dict:
-    """The coordinator screens show addresses and phone numbers, so they are
-    behind a shared passcode, checked here on the server.
+    """The admin screens show addresses and phone numbers, so they are behind
+    a shared passcode, checked here on the server.
 
-    A correct passcode issues a token (see `coordinator_auth`). Coordinator
-    data is served against that token, so those endpoints are closed rather
-    than merely hidden.
+    A correct passcode issues a token (see `coordinator_auth`). Admin data
+    is served against that token, so those endpoints are closed rather than
+    merely hidden.
     """
     return {
-        "role": "coordinator",
+        "role": "admin",
         "unlocked": True,
         "token": issue_token(body.passcode),
     }

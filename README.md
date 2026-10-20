@@ -264,3 +264,23 @@ it anymore**, which puts the wish straight back on the tree. That's recorded as
 released rather than missed, and the family is only told it's still looking.
 
 You never see a family's name, address or contact, and they never see yours.
+
+---
+
+## The Wish Tree
+
+The donor's home screen is a tree: every open wish is a leaf, colored by
+category and carrying its icon. Tap a leaf to open the wish. Wishes granted in
+the last 30 days stay on as gold leaves, so the tree fills up over the month.
+
+`Tree | See as a list` switches views. Both read the same filtered data, so
+filters and badges work the same in each — and if anything about the tree ever
+misbehaves, the list is one tap away.
+
+**Monty** is the corgi. Drawn from scratch in SVG, cheerful on the donor side
+and calm on the family side.
+
+**Admin** is the staff role — the landing card, the passcode screen and the
+run sheet. The passcode (`wishingtree-demo`, in `backend/config.py`) has a
+show/hide control. "Coordinator" stays the job title in anything a family
+reads, because that's who turns up with the delivery.

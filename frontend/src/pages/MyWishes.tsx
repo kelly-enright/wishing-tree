@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getMyWishes, respondToWindow, userMessage, type WishProgress } from '../api'
+import { MontySays } from '../components/Monty'
 
 const ORDER: WishProgress['stage'][] = [
   'granted', 'on_its_way', 'being_checked', 'on_the_tree', 'not_posted', 'delivered',
@@ -47,13 +48,11 @@ export default function MyWishes({ alias }: { alias: string }) {
 
   if (rows.length === 0) {
     return (
-      <div className="mywishes__empty">
-        <p className="mywishes__empty-title">Nothing posted yet</p>
-        <p>
-          Start a chat below and tell us what would help. You'll see each wish here
-          once it's up.
-        </p>
-      </div>
+      <MontySays mood="calm">
+        <strong>Nothing posted yet.</strong><br />
+        Start a chat below and tell us what would help. You'll see each wish here
+        once it's up.
+      </MontySays>
     )
   }
 

@@ -608,3 +608,45 @@ And the spelling sweep changed `PledgeStatus.CANCELLED`'s *value* from
 "cancelled" to "canceled". Nothing referenced the literal, so tests stayed
 green, but I renamed the member to `CANCELED` too rather than leave a member
 and its value spelled differently.
+
+---
+
+## Problem 11 — The Wish Tree and Monty
+
+### Prompt 1 (a question, a rename, then the problem)
+
+> What is the passcode for the coordinator? and can we name that Admin instead and add in a show password button?
+>
+> Problem 11: "The Wish Tree and Monty"
+>
+> The last visual improvements. If anything here gets risky or buggy, keep the current list view working above all else.
+>
+> a.) Turn the wish wall into the Wish Tree, the first thing donors see: an illustrated SVG tree where each open wish is a leaf, colored by category and showing its category icon. Tapping a leaf opens its wish card. Filters show only matching leaves. Wishes granted in the last 30 days appear as gold leaves so the tree visibly fills up over time. Leaves must be large enough to tap on a phone; if there are too many to fit, show the rest in the list view.
+> b.) Keep the current card list as a "See as a list" toggle, with all filters and urgency badges working in both views.
+> c.) Add Monty, our mascot: an original, simple SVG drawing of a friendly corgi (he's my real dog; draw him as a red-and-white Pembroke corgi). Use him on the landing page, in empty states, and on the donor side, including playful "thinking" messages like "Monty is sniffing out wishes that fit you." On the family side, keep him gentle: a small friendly presence with calm text, no jokes. Keep the tree logo as it is.
+> d.) Do not change any other features. Rebuild and commit the frontend, take fresh screenshots of every screen, and update harness.md.
+
+**The passcode is `wishingtree-demo`**, in `backend/config.py`.
+
+**On the rename:** the role is now **Admin** everywhere a staff member sees it
+— landing card, page title, passcode screen, unlocked banner — with a show/hide
+control on the passcode, because it is shared and often typed off a note.
+"Coordinator" stays the job title in anything a family reads: "a coordinator
+will email you" is warmer, and truer, than "an admin will email you". Admin is
+what you sign in as; coordinator is who turns up with the delivery.
+
+**Outcome:** the tree is the donor's home screen, and the list is one tap away.
+
+- **Leaves are real HTML buttons over the SVG**, not shapes inside it — focusable, properly sized, readable to a screen reader, and able to hold a Lucide icon. 44px on desktop, measured at 58px in the live mobile layout.
+- **Positions are deterministic** (four rings from a fixed formula), so the tree doesn't reshuffle under someone's finger.
+- **Gold leaves** for wishes granted in the last 30 days, carrying only an id and a category — a granted wish is no longer anyone's to read.
+- **The canopy holds 30.** Past that, the rest go to the list with a line saying how many.
+- **Both views read the same filtered data**, so filters and badges behave identically; the toggle changes how wishes are drawn, not which ones exist.
+- **Monty** drawn from scratch: red-fox coat, white blaze, upright ears, no tail. Two moods differing only in the eyes and tongue — happy on the donor side ("Monty is sniffing out wishes that fit you"), calm on the family side beside "Tell us what you need". The tree logo is untouched.
+- **228 tests pass.** Six screenshots including the tree on a phone.
+
+**One bug the tree surfaced, worth knowing about:** the food category was amber
+and the gold "already granted" leaves were a near-identical amber. On a phone
+they were hard to tell apart — meaning a donor could read an open food wish as
+already taken and skip it. Gold is now the only amber on the tree: food is
+olive, and gold leaves carry a gold ring as well.

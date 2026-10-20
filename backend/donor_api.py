@@ -69,10 +69,20 @@ def wish_wall(
             request_type=request_type.value if request_type else None,
             occasion=occasion.value if occasion else None,
         )
+        granted = db.recently_granted(
+            conn, today - timedelta(days=config.GRANTED_LEAF_DAYS)
+        )
+
     region = config.get_region()
     return {
         "count": len(wishes),
         "wishes": badges.decorate([w.public_card(today) for w in wishes], today),
+        # The gold leaves. Just enough to draw one: no description, because a
+        # granted wish is no longer anyone's to read.
+        "recently_granted": [
+            {"id": w.id, "category": w.category.value} for w in granted
+        ],
+        "granted_window_days": config.GRANTED_LEAF_DAYS,
         "region": {
             "name": region.name,
             "hub_name": region.hub_name,

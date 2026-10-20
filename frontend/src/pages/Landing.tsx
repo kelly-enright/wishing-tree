@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { listAccounts, type Account } from '../api'
 import Logo from '../components/Logo'
+import Monty from '../components/Monty'
 import { ServiceNotice } from '../components/ServiceArea'
 import { clearSession, getSession, homePath, setSession } from '../session'
 
@@ -25,8 +26,8 @@ const ROLES = [
   {
     to: '/coordinator',
     eyebrow: 'For staff',
-    title: 'Coordinator',
-    blurb: 'See this week’s run sheet: who is dropping off, what is arriving, and what goes out on Saturday.',
+    title: 'Admin',
+    blurb: 'This week’s run sheet — who is dropping off, what is arriving, and what goes out on Saturday — plus what the agents have been doing.',
   },
 ]
 
@@ -70,7 +71,12 @@ export default function Landing() {
           actually need, neighbors grant a wish, and everything moves through one
           weekly drop-off.
         </p>
-        <p className="hero__pick">Pick the one that sounds like you.</p>
+        <div className="hero__monty">
+          <Monty size={64} />
+          <p className="hero__pick">
+            Monty here. Pick the one that sounds like you.
+          </p>
+        </div>
       </header>
 
       {session && (

@@ -40,9 +40,9 @@ export function clearSession(): void {
 }
 
 /**
- * The coordinator's token, issued by the server on a correct passcode.
- * sessionStorage, so it is gone when the tab closes. Coordinator data is
- * served against this token, so hiding the screen is not what protects it.
+ * The admin token, issued by the server on a correct passcode.
+ * sessionStorage, so it is gone when the tab closes. Admin data is served
+ * against this token, so hiding the screen is not what protects it.
  */
 export function coordinatorToken(): string | null {
   return sessionStorage.getItem(COORDINATOR_KEY)

@@ -1,10 +1,10 @@
-"""The coordinator passcode gate.
+"""The admin passcode gate.
 
 A correct passcode issues a short-lived token, held in memory so it dies with
-the process. Coordinator-only data is served against that token, which is what
-makes those endpoints closed on the server rather than merely hidden in the
-interface — the run sheet is the one screen in this app that shows a family's
-street address, so a hidden route would not be enough.
+the process. Admin-only data is served against that token, which is what makes those
+endpoints closed on the server rather than merely hidden in the interface —
+the run sheet is the one screen in this app that shows a family's street
+address, so a hidden route would not be enough.
 """
 
 from __future__ import annotations
@@ -40,7 +40,7 @@ def require_coordinator(x_coordinator_token: str | None = Header(default=None)) 
     if issued is None or datetime.now(timezone.utc) - issued > TOKEN_TTL:
         raise HTTPException(
             status_code=401,
-            detail="Coordinator access has expired. Enter the passcode again.",
+            detail="Admin access has expired. Enter the passcode again.",
         )
 
 

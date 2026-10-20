@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { calendarUrl, getGranted, releasePledge, userMessage, type GrantedRow } from '../api'
 import CategoryIcon from '../components/CategoryIcon'
+import { MontySays } from '../components/Monty'
 
 /**
  * What a donor has taken on.
@@ -61,6 +62,13 @@ export default function MyGranted({ alias }: { alias: string }) {
       )}
 
       {note && <p className="sheet__note">{note}</p>}
+
+      {rows.length === 0 && (
+        <MontySays>
+          You haven't granted anything yet. Have a look at the tree — Monty says
+          the gold leaves are the ones already spoken for.
+        </MontySays>
+      )}
 
       {rows.length > 0 && (
         <section className="granted" aria-label="My granted wishes">

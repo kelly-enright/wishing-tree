@@ -685,3 +685,28 @@ def pledges_for_family(conn: sqlite3.Connection, family_alias: str) -> list[Pled
         (family_alias,),
     )
     return [_pledge(r) for r in rows]
+
+
+def recently_granted(
+    conn: sqlite3.Connection, since: date, limit: int = 60
+) -> list[Request]:
+    """Wishes claimed or delivered since `since`.
+
+    These are the gold leaves: proof on the tree that wishes do get granted,
+    which an empty-looking wall of open needs never shows.
+    """
+    rows = conn.execute(
+        """SELECT r.* FROM requests r
+             JOIN pledges p ON p.request_id = r.id
+            WHERE r.status IN (?, ?, ?)
+              AND p.status IN (?, ?, ?)
+              AND p.created_at >= ?
+            ORDER BY p.created_at DESC
+            LIMIT ?""",
+        (RequestStatus.GRANTED.value, RequestStatus.DROPPED_OFF.value,
+         RequestStatus.DELIVERED.value,
+         PledgeStatus.PLEDGED.value, PledgeStatus.DROPPED_OFF.value,
+         PledgeStatus.DELIVERED.value,
+         since.isoformat(), limit),
+    )
+    return [_request(r) for r in rows]

@@ -272,7 +272,13 @@ export type RegionInfo = {
   delivery_window: string
 }
 
-export type WishWall = { count: number; wishes: WishCard[]; region: RegionInfo }
+export type WishWall = {
+  count: number
+  wishes: WishCard[]
+  region: RegionInfo
+  recently_granted: { id: number; category: Category }[]
+  granted_window_days: number
+}
 
 export type Match = {
   request_id: number

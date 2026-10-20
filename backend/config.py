@@ -198,12 +198,17 @@ def is_allowed_retailer(url: str | None) -> bool:
 
 
 # --------------------------------------------------------------------------
-# Coordinator passcode
+# Admin passcode
 # --------------------------------------------------------------------------
-# The coordinator's screens are the only ones that show a family's street
-# address and phone number, so they sit behind a shared passcode. This is a
-# demo gate, not authentication: there are no user passwords in the MVP, and
-# the passcode is checked on the server, never in the browser.
+# The admin screens — the run sheet and the agent activity log — are the only
+# ones that show a family's street address, email and phone, so they sit
+# behind a shared passcode. This is a demo gate, not authentication: there are
+# no user passwords in the MVP, and the passcode is checked on the server,
+# never in the browser.
+#
+# "Admin" is the role someone signs in as. "Coordinator" stays the job title
+# in anything a family reads — "a coordinator will email you" is warmer, and
+# truer, than "an admin will email you".
 
 COORDINATOR_PASSCODE = "wishingtree-demo"
 
@@ -239,6 +244,10 @@ HTTP_MAX_RETRIES = 1               # a wedged call is not worth retrying three t
 # "Needed by <date>" when the deadline falls on or before this many drop-offs
 # from now. Two gives a donor one window to miss and still make it.
 URGENCY_DROPOFFS_AHEAD = 2
+
+# How far back the tree remembers. Wishes granted inside this window stay on
+# the tree as gold leaves, so it visibly fills up as the month goes on.
+GRANTED_LEAF_DAYS = 30
 
 # "Waiting N weeks" once a wish has been open this long. This is the badge
 # that stops a quiet, undramatic need being scrolled past week after week.

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import Logo from '../components/Logo'
 import { unlockCoordinator,
   userMessage,
@@ -8,14 +9,19 @@ import RunSheet from './RunSheet'
 import { coordinatorToken, setCoordinatorToken } from '../session'
 
 /**
- * The coordinator screens are the only ones that show a family's home address
- * and phone number, so they sit behind a shared passcode. The passcode is
- * checked on the server; the browser only remembers that it succeeded, and
- * only until the tab is closed.
+ * The admin screens are the only ones that show a family's home address,
+ * email and phone number, so they sit behind a shared passcode. The passcode
+ * is checked on the server; the browser only remembers the token it got back,
+ * and only until the tab is closed.
+ *
+ * The show/hide control is there because this passcode is shared and typed by
+ * someone who may be reading it off a note — hiding it by default is right,
+ * refusing to ever show it is not.
  */
 export default function Coordinator() {
   const [token, setToken] = useState<string | null>(coordinatorToken())
   const [passcode, setPasscode] = useState('')
+  const [showPasscode, setShowPasscode] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -38,18 +44,29 @@ export default function Coordinator() {
     return (
       <main className="page">
         <header className="page__nav"><Logo size={26} /></header>
-        <h1 className="page__title">Coordinator</h1>
+        <h1 className="page__title">Admin</h1>
         <p className="page__blurb">
-          These screens show families’ home addresses and phone numbers, so they need
-          the coordinator passcode.
+          These screens show families’ home addresses, emails and phone numbers,
+          so they need the admin passcode.
         </p>
         <form className="form" onSubmit={submit}>
           <label className="field">
             <span className="field__label">Passcode</span>
-            <input
-              className="field__input" type="password" required autoFocus
-              value={passcode} onChange={(e) => setPasscode(e.target.value)}
-            />
+            <span className="field__reveal">
+              <input
+                className="field__input" required autoFocus value={passcode}
+                type={showPasscode ? 'text' : 'password'}
+                onChange={(e) => setPasscode(e.target.value)}
+              />
+              <button
+                type="button" className="field__eye"
+                aria-label={showPasscode ? 'Hide passcode' : 'Show passcode'}
+                aria-pressed={showPasscode}
+                onClick={() => setShowPasscode((on) => !on)}
+              >
+                {showPasscode ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>
+            </span>
           </label>
           {error && <p className="form__error" role="alert">{error}</p>}
           <button className="btn btn--primary" type="submit" disabled={busy}>
@@ -64,7 +81,7 @@ export default function Coordinator() {
     <main className="page page--wide">
       <header className="page__nav"><Logo size={26} /></header>
       <p className="signed-in">
-        Coordinator view unlocked
+        Admin view unlocked
         <button
           type="button"
           className="signed-in__switch"
@@ -78,8 +95,8 @@ export default function Coordinator() {
       </p>
       <h1 className="page__title">Run sheet</h1>
       <p className="page__blurb">
-        Expected drop-offs and deliveries, with contact details and statuses. This is
-        the only screen that shows a family’s address and phone number.
+        Expected drop-offs and deliveries, with contact details and statuses. These
+        are the only screens that show a family’s address, email or phone number.
       </p>
 
       <RunSheet token={token} />
