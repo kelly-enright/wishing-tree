@@ -1,0 +1,483 @@
+{
+  "prices_per_million_usd": {
+    "input": 0.1,
+    "cached_input": 0.01,
+    "cache_write": 0.125,
+    "output": 0.5
+  },
+  "billing_convention": "uncached input = input - cached - cache_write; each bucket priced once",
+  "model": "gpt-6-luna",
+  "totals": {
+    "calls": 19,
+    "input_tokens": 29236,
+    "cached_input_tokens": 68245,
+    "cache_write_tokens": 12723,
+    "output_tokens": 8548,
+    "total_tokens": 118752,
+    "cache_hit_rate": 0.6193,
+    "cost_usd": 0.00947042
+  },
+  "by_agent": {
+    "intake": {
+      "calls": 15,
+      "input": 27413,
+      "cached": 53435,
+      "cache_write": 11862,
+      "output": 6629,
+      "cost_usd": 0.0080729
+    },
+    "safety": {
+      "calls": 4,
+      "input": 1823,
+      "cached": 14810,
+      "cache_write": 861,
+      "output": 1919,
+      "cost_usd": 0.00139752
+    }
+  },
+  "by_session": {
+    "smoke-1": {
+      "calls": 1,
+      "input": 2596,
+      "cached": 2134,
+      "cache_write": 0,
+      "output": 308,
+      "cost_usd": 0.00043494,
+      "agents": [
+        "intake"
+      ]
+    },
+    "intake-20261020-a90715": {
+      "calls": 1,
+      "input": 710,
+      "cached": 6583,
+      "cache_write": 0,
+      "output": 427,
+      "cost_usd": 0.00035033,
+      "agents": [
+        "intake"
+      ]
+    },
+    "intake-20261020-4639d3": {
+      "calls": 2,
+      "input": 3548,
+      "cached": 7560,
+      "cache_write": 0,
+      "output": 993,
+      "cost_usd": 0.0009269,
+      "agents": [
+        "intake"
+      ]
+    },
+    "intake-20261020-00336a": {
+      "calls": 2,
+      "input": 3859,
+      "cached": 8283,
+      "cache_write": 0,
+      "output": 873,
+      "cost_usd": 0.00090523,
+      "agents": [
+        "intake"
+      ]
+    },
+    "intake-20261020-169687": {
+      "calls": 1,
+      "input": 3228,
+      "cached": 5308,
+      "cache_write": 0,
+      "output": 597,
+      "cost_usd": 0.00067438,
+      "agents": [
+        "intake"
+      ]
+    },
+    "intake-20261020-a050bc": {
+      "calls": 2,
+      "input": 3687,
+      "cached": 6188,
+      "cache_write": 0,
+      "output": 640,
+      "cost_usd": 0.00075058,
+      "agents": [
+        "intake",
+        "safety"
+      ]
+    },
+    "intake-20261020-9cda1e": {
+      "calls": 2,
+      "input": 3850,
+      "cached": 6234,
+      "cache_write": 0,
+      "output": 981,
+      "cost_usd": 0.00093784,
+      "agents": [
+        "intake",
+        "safety"
+      ]
+    },
+    "intake-20261020-39c7b6": {
+      "calls": 1,
+      "input": 3093,
+      "cached": 2488,
+      "cache_write": 0,
+      "output": 501,
+      "cost_usd": 0.00058468,
+      "agents": [
+        "intake"
+      ]
+    },
+    "intake-20261020-cff804": {
+      "calls": 1,
+      "input": 3027,
+      "cached": 2488,
+      "cache_write": 0,
+      "output": 278,
+      "cost_usd": 0.00046658,
+      "agents": [
+        "intake"
+      ]
+    },
+    "cache-check-intake": {
+      "calls": 1,
+      "input": 378,
+      "cached": 2727,
+      "cache_write": 5339,
+      "output": 371,
+      "cost_usd": 0.00091795,
+      "agents": [
+        "intake"
+      ]
+    },
+    "cache-check-intake-2": {
+      "calls": 1,
+      "input": 252,
+      "cached": 2482,
+      "cache_write": 2673,
+      "output": 228,
+      "cost_usd": 0.00049814,
+      "agents": [
+        "intake"
+      ]
+    },
+    "cache-check-safety": {
+      "calls": 1,
+      "input": 252,
+      "cached": 3690,
+      "cache_write": 342,
+      "output": 242,
+      "cost_usd": 0.00022585,
+      "agents": [
+        "safety"
+      ]
+    },
+    "cache-check-safety-2": {
+      "calls": 1,
+      "input": 252,
+      "cached": 3686,
+      "cache_write": 519,
+      "output": 821,
+      "cost_usd": 0.00053743,
+      "agents": [
+        "safety"
+      ]
+    },
+    "like-for-like-runA": {
+      "calls": 2,
+      "input": 504,
+      "cached": 8394,
+      "cache_write": 3850,
+      "output": 1288,
+      "cost_usd": 0.00125959,
+      "agents": [
+        "intake"
+      ]
+    }
+  },
+  "calls": [
+    {
+      "timestamp": "2026-10-20T17:28:53.298092Z",
+      "session_id": "smoke-1",
+      "agent": "intake",
+      "operation": "draft_wishes",
+      "request_id": null,
+      "input_tokens": 2596,
+      "cached_input_tokens": 2134,
+      "cache_write_tokens": 0,
+      "output_tokens": 308,
+      "total_tokens": 5038,
+      "latency_ms": 8266,
+      "cost_usd": 0.00043494,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T17:31:03.873247Z",
+      "session_id": "intake-20261020-a90715",
+      "agent": "intake",
+      "operation": "draft_wishes",
+      "request_id": null,
+      "input_tokens": 710,
+      "cached_input_tokens": 6583,
+      "cache_write_tokens": 0,
+      "output_tokens": 427,
+      "total_tokens": 7720,
+      "latency_ms": 11833,
+      "cost_usd": 0.00035033,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T17:35:35.188812Z",
+      "session_id": "intake-20261020-4639d3",
+      "agent": "intake",
+      "operation": "draft_wishes",
+      "request_id": null,
+      "input_tokens": 2783,
+      "cached_input_tokens": 2269,
+      "cache_write_tokens": 0,
+      "output_tokens": 340,
+      "total_tokens": 5392,
+      "latency_ms": 7241,
+      "cost_usd": 0.00047099,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T17:35:53.192998Z",
+      "session_id": "intake-20261020-4639d3",
+      "agent": "intake",
+      "operation": "draft_wishes",
+      "request_id": null,
+      "input_tokens": 765,
+      "cached_input_tokens": 5291,
+      "cache_write_tokens": 0,
+      "output_tokens": 653,
+      "total_tokens": 6709,
+      "latency_ms": 12142,
+      "cost_usd": 0.00045591,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T17:37:05.633388Z",
+      "session_id": "intake-20261020-00336a",
+      "agent": "intake",
+      "operation": "draft_wishes",
+      "request_id": null,
+      "input_tokens": 3025,
+      "cached_input_tokens": 2531,
+      "cache_write_tokens": 0,
+      "output_tokens": 308,
+      "total_tokens": 5864,
+      "latency_ms": 8206,
+      "cost_usd": 0.00048181,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T17:37:23.621023Z",
+      "session_id": "intake-20261020-00336a",
+      "agent": "intake",
+      "operation": "draft_wishes",
+      "request_id": null,
+      "input_tokens": 834,
+      "cached_input_tokens": 5752,
+      "cache_write_tokens": 0,
+      "output_tokens": 565,
+      "total_tokens": 7151,
+      "latency_ms": 7757,
+      "cost_usd": 0.00042342,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T17:38:02.831210Z",
+      "session_id": "intake-20261020-169687",
+      "agent": "intake",
+      "operation": "draft_wishes",
+      "request_id": null,
+      "input_tokens": 3228,
+      "cached_input_tokens": 5308,
+      "cache_write_tokens": 0,
+      "output_tokens": 597,
+      "total_tokens": 9133,
+      "latency_ms": 10863,
+      "cost_usd": 0.00067438,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T17:55:40.708362Z",
+      "session_id": "intake-20261020-a050bc",
+      "agent": "intake",
+      "operation": "draft_wishes",
+      "request_id": null,
+      "input_tokens": 3117,
+      "cached_input_tokens": 2494,
+      "cache_write_tokens": 0,
+      "output_tokens": 413,
+      "total_tokens": 6024,
+      "latency_ms": 16871,
+      "cost_usd": 0.00054314,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T17:56:07.067311Z",
+      "session_id": "intake-20261020-a050bc",
+      "agent": "safety",
+      "operation": "review_wish",
+      "request_id": 41,
+      "input_tokens": 570,
+      "cached_input_tokens": 3694,
+      "cache_write_tokens": 0,
+      "output_tokens": 227,
+      "total_tokens": 4491,
+      "latency_ms": 5861,
+      "cost_usd": 0.00020744,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T17:57:04.375745Z",
+      "session_id": "intake-20261020-9cda1e",
+      "agent": "intake",
+      "operation": "draft_wishes",
+      "request_id": null,
+      "input_tokens": 3101,
+      "cached_input_tokens": 2494,
+      "cache_write_tokens": 0,
+      "output_tokens": 352,
+      "total_tokens": 5947,
+      "latency_ms": 9631,
+      "cost_usd": 0.00051104,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T17:57:26.899801Z",
+      "session_id": "intake-20261020-9cda1e",
+      "agent": "safety",
+      "operation": "review_wish",
+      "request_id": 42,
+      "input_tokens": 749,
+      "cached_input_tokens": 3740,
+      "cache_write_tokens": 0,
+      "output_tokens": 629,
+      "total_tokens": 5118,
+      "latency_ms": 40279,
+      "cost_usd": 0.0004268,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T17:59:26.202164Z",
+      "session_id": "intake-20261020-39c7b6",
+      "agent": "intake",
+      "operation": "draft_wishes",
+      "request_id": null,
+      "input_tokens": 3093,
+      "cached_input_tokens": 2488,
+      "cache_write_tokens": 0,
+      "output_tokens": 501,
+      "total_tokens": 6082,
+      "latency_ms": 12593,
+      "cost_usd": 0.00058468,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T18:00:23.880058Z",
+      "session_id": "intake-20261020-cff804",
+      "agent": "intake",
+      "operation": "draft_wishes",
+      "request_id": null,
+      "input_tokens": 3027,
+      "cached_input_tokens": 2488,
+      "cache_write_tokens": 0,
+      "output_tokens": 278,
+      "total_tokens": 5793,
+      "latency_ms": 8465,
+      "cost_usd": 0.00046658,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T18:08:32.270277Z",
+      "session_id": "cache-check-intake",
+      "agent": "intake",
+      "operation": "draft_wishes",
+      "request_id": null,
+      "input_tokens": 378,
+      "cached_input_tokens": 2727,
+      "cache_write_tokens": 5339,
+      "output_tokens": 371,
+      "total_tokens": 8815,
+      "latency_ms": 16404,
+      "cost_usd": 0.00091795,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T18:08:48.679257Z",
+      "session_id": "cache-check-intake-2",
+      "agent": "intake",
+      "operation": "draft_wishes",
+      "request_id": null,
+      "input_tokens": 252,
+      "cached_input_tokens": 2482,
+      "cache_write_tokens": 2673,
+      "output_tokens": 228,
+      "total_tokens": 5635,
+      "latency_ms": 26359,
+      "cost_usd": 0.00049814,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T18:09:15.054330Z",
+      "session_id": "cache-check-safety",
+      "agent": "safety",
+      "operation": "review_wish",
+      "request_id": 1,
+      "input_tokens": 252,
+      "cached_input_tokens": 3690,
+      "cache_write_tokens": 342,
+      "output_tokens": 242,
+      "total_tokens": 4526,
+      "latency_ms": 7258,
+      "cost_usd": 0.00022585,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T18:09:22.317224Z",
+      "session_id": "cache-check-safety-2",
+      "agent": "safety",
+      "operation": "review_wish",
+      "request_id": 2,
+      "input_tokens": 252,
+      "cached_input_tokens": 3686,
+      "cache_write_tokens": 519,
+      "output_tokens": 821,
+      "total_tokens": 5278,
+      "latency_ms": 12792,
+      "cost_usd": 0.00053743,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T18:11:18.360558Z",
+      "session_id": "like-for-like-runA",
+      "agent": "intake",
+      "operation": "draft_wishes",
+      "request_id": null,
+      "input_tokens": 378,
+      "cached_input_tokens": 5289,
+      "cache_write_tokens": 3105,
+      "output_tokens": 984,
+      "total_tokens": 9756,
+      "latency_ms": 18552,
+      "cost_usd": 0.00097082,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T18:11:36.918576Z",
+      "session_id": "like-for-like-runA",
+      "agent": "intake",
+      "operation": "draft_wishes",
+      "request_id": null,
+      "input_tokens": 126,
+      "cached_input_tokens": 3105,
+      "cache_write_tokens": 745,
+      "output_tokens": 304,
+      "total_tokens": 4280,
+      "latency_ms": 4043,
+      "cost_usd": 0.00028877,
+      "ok": true
+    }
+  ]
+}

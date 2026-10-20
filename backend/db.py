@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS agent_calls (
     output_summary      TEXT    NOT NULL DEFAULT '',
     input_tokens        INTEGER NOT NULL DEFAULT 0,
     cached_input_tokens INTEGER NOT NULL DEFAULT 0,
+    cache_write_tokens  INTEGER NOT NULL DEFAULT 0,
     output_tokens       INTEGER NOT NULL DEFAULT 0,
     latency_ms          INTEGER NOT NULL DEFAULT 0,
     estimated_cost_usd  REAL,
@@ -394,12 +395,13 @@ def insert_agent_call(call: AgentCallLog, conn: sqlite3.Connection) -> int:
         """INSERT INTO agent_calls (timestamp, session_id, agent, model, operation,
                                     tools_called, input_summary, output_summary,
                                     input_tokens, cached_input_tokens,
-                                    output_tokens, latency_ms, estimated_cost_usd,
+                                    cache_write_tokens, output_tokens, latency_ms,
+                                    estimated_cost_usd,
                                     ok, error, request_id, prompt_version)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (_iso(call.timestamp), call.session_id, call.agent, call.model, call.operation,
          ",".join(call.tools_called), call.input_summary, call.output_summary,
-         call.input_tokens, call.cached_input_tokens,
+         call.input_tokens, call.cached_input_tokens, call.cache_write_tokens,
          call.output_tokens, call.latency_ms, call.estimated_cost_usd,
          int(call.ok), call.error, call.request_id, call.prompt_version),
     )
@@ -412,6 +414,7 @@ def session_usage(conn: sqlite3.Connection, session_id: str) -> dict:
         """SELECT COUNT(*)                      AS calls,
                   COALESCE(SUM(input_tokens), 0)        AS input_tokens,
                   COALESCE(SUM(cached_input_tokens), 0) AS cached_input_tokens,
+                  COALESCE(SUM(cache_write_tokens), 0)  AS cache_write_tokens,
                   COALESCE(SUM(output_tokens), 0)       AS output_tokens,
                   COALESCE(SUM(estimated_cost_usd), 0)  AS cost_usd,
                   COALESCE(SUM(latency_ms), 0)          AS latency_ms

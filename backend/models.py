@@ -334,8 +334,12 @@ class AgentCallLog(BaseModel):
     agent: str                      # intake | safety | matchmaker
     model: str
     operation: str                  # e.g. 'draft_wishes', 'review_request'
+    # The four buckets the course's billing convention prices separately.
+    # `input_tokens` is UNCACHED input: the API's figure minus the cached and
+    # cache-write parts, so no token is charged twice.
     input_tokens: int = 0
     cached_input_tokens: int = 0
+    cache_write_tokens: int = 0
     output_tokens: int = 0
     latency_ms: int = 0
     ok: bool = True
@@ -355,8 +359,13 @@ class AgentCallLog(BaseModel):
     estimated_cost_usd: float | None = None
 
     @property
+    def total_input_tokens(self) -> int:
+        """What the API reported as input, reassembled from the three buckets."""
+        return self.input_tokens + self.cached_input_tokens + self.cache_write_tokens
+
+    @property
     def total_tokens(self) -> int:
-        return self.input_tokens + self.cached_input_tokens + self.output_tokens
+        return self.total_input_tokens + self.output_tokens
 
 
 # --------------------------------------------------------------------------

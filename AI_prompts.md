@@ -262,3 +262,38 @@ identifying gone, the injection flagged.
 
 The deadline change asked for at the start of this message is recorded in the
 Problem 3 section above, with its reason.
+
+---
+
+## Between Problems 4 and 5 — Token Prices and Explicit Caching
+
+### Prompt 1
+
+> Yes, here are the token prices, plus one caching change, before we start Problem 5.
+>
+> a.) Set the gpt-6-luna prices from our Lecture 11 tokenomics slides (OpenAI Standard short-context, USD per 1M tokens): input $0.10, cached input $0.01, cache write $0.125, output $0.50. Source: https://developers.openai.com/api/docs/pricing. Add cache write as a fourth price in config.py. Follow the course's billing convention: the API's input token count includes cached and cache-write tokens, so uncached input = input − cached − cache write, billed at the input rate. Make sure the audit trail splits tokens this way, then re-cost every run already recorded.
+> b.) Following Lecture 11, use explicit prompt caching for both the Intake and Privacy & Safety agents: put each agent's long, stable system prompt first, mark a prompt_cache_breakpoint right after it, and keep the conversation or wish text after the breakpoint. Record cached_tokens and cache_write_tokens from the API's usage details.
+>
+> When you're done, tell me: what intake runs A and B cost, what run D's safety review cost, and whether the cache hit rate changed from 64%. Update harness.md with the prices, the billing convention, and the caching approach.
+
+**Outcome:** Prices are real, the four buckets are split and priced correctly,
+and both agents now cache explicitly.
+
+- **Four prices** in `config.py`, with `cache_write` added. `PRICES_ARE_PLACEHOLDERS` is now `False`, so the app shows real dollars everywhere instead of "price not set".
+- **The billing convention** lives in `config.split_input_tokens()` — `uncached = input − cached − cache_write`, never negative — and both agents call it before recording. A test asserts the split sums back to the API's figure and that pricing the split is always cheaper than pricing it all as fresh input, so no token can be charged twice.
+- **Cost is derived, not stored.** The audit trail is append-only and keeps token counts; `backend/tokenomics.py` re-costs the whole trail at current prices into `output/tokenomics.json` and corrects the `agent_calls` rows. All 19 recorded calls re-costed.
+- **Explicit caching** in both agents: `agent.run([CachePoint(), text], …)`, which PydanticAI maps to OpenAI's `prompt_cache_breakpoint: {mode: "explicit"}`. A leading breakpoint means "cache everything up to here", and what is up to there is the system prompt.
+- **`cache_write_tokens` is now reported** — it was always absent under implicit caching. Uncached input per call fell from ~3,000 to ~250–500, because those tokens are now identified as cache writes rather than plain input.
+- The token panel and the Agent activity page both show the cache-write bucket and real costs.
+- **135 tests pass.**
+
+**The numbers asked for:** run A $0.000905, run B $0.000674, run D's safety
+review $0.000427. Cache hit rate reads 61.9% against the earlier 64%, but the
+two are not like-for-like — cache-write tokens are now counted in the
+denominator and were not before, and the newer sample includes cold starts.
+
+Break-even on a cache write is 0.28 reads, so the first cache hit already pays
+for it. The more useful finding: re-running run A's exact messages cost
+$0.000355 more, of which the caching change is $0.000147 and **415 extra output
+tokens are $0.000208**. Output at $0.50/M moves this app's bill more than input
+caching does.

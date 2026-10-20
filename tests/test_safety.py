@@ -386,3 +386,58 @@ def test_the_summaries_the_app_writes_are_shape_not_content():
     for word in ("Sofia", "Delgado", "Wilbur", "coat", "size"):
         assert word not in input_summary
         assert word not in output_summary
+
+
+# --------------------------------------------------------------------------
+# Re-costing the trail
+# --------------------------------------------------------------------------
+
+def test_recost_applies_current_prices_to_the_recorded_buckets(tmp_path):
+    """Cost is derived, not stored: the trail keeps tokens, prices may change."""
+    from backend.agents import audit
+    from backend import tokenomics
+
+    trail = tmp_path / "trail.json"
+    audit.append_jsonl({
+        "agent": "intake", "session_id": "s1", "input_tokens": 1000,
+        "cached_input_tokens": 2000, "cache_write_tokens": 500, "output_tokens": 300,
+    }, trail)
+
+    report = tokenomics.recost(trail)
+    expected = (
+        1000 * config.PRICE_PER_MILLION_INPUT_USD
+        + 2000 * config.PRICE_PER_MILLION_CACHED_INPUT_USD
+        + 500 * config.PRICE_PER_MILLION_CACHE_WRITE_USD
+        + 300 * config.PRICE_PER_MILLION_OUTPUT_USD
+    ) / 1_000_000
+    assert report["totals"]["cost_usd"] == pytest.approx(expected)
+    assert report["by_session"]["s1"]["calls"] == 1
+
+
+def test_records_written_before_explicit_caching_recost_cleanly(tmp_path):
+    """Older records have no cache_write field; zero is the true figure there."""
+    from backend.agents import audit
+    from backend import tokenomics
+
+    trail = tmp_path / "trail.json"
+    audit.append_jsonl({
+        "agent": "intake", "session_id": "old", "input_tokens": 3228,
+        "cached_input_tokens": 5308, "output_tokens": 597,
+    }, trail)
+
+    report = tokenomics.recost(trail)
+    assert report["totals"]["cache_write_tokens"] == 0
+    assert report["totals"]["cost_usd"] > 0
+
+
+def test_the_cache_hit_rate_is_over_all_input_tokens(tmp_path):
+    from backend.agents import audit
+    from backend import tokenomics
+
+    trail = tmp_path / "trail.json"
+    audit.append_jsonl({
+        "agent": "intake", "session_id": "s", "input_tokens": 250,
+        "cached_input_tokens": 750, "cache_write_tokens": 0, "output_tokens": 100,
+    }, trail)
+    report = tokenomics.recost(trail)
+    assert report["totals"]["cache_hit_rate"] == pytest.approx(0.75)

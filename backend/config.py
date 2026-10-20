@@ -242,16 +242,16 @@ MAX_TOKENS_PER_MATCH_RUN = 8_000
 DAILY_TOKEN_BUDGET = 500_000       # across the whole app
 
 # --------------------------------------------------------------------------
-# Prices — PLACEHOLDERS
+# Prices
 # --------------------------------------------------------------------------
-# >>> KELLY: fill these three in before writing the tokenomics section. <<<
-# They are USD per MILLION tokens for gpt-6-luna. Until they are real, every
-# cost this app reports is 0.00 and PRICES_ARE_PLACEHOLDERS stays True, so no
-# placeholder number can quietly end up in the report.
+# gpt-6-luna, USD per MILLION tokens. OpenAI Standard, short context, from the
+# MGT 409 Lecture 11 tokenomics slides:
+# https://developers.openai.com/api/docs/pricing
 
-PRICE_PER_MILLION_INPUT_USD: float = 0.00         # PLACEHOLDER
-PRICE_PER_MILLION_CACHED_INPUT_USD: float = 0.00  # PLACEHOLDER
-PRICE_PER_MILLION_OUTPUT_USD: float = 0.00        # PLACEHOLDER
+PRICE_PER_MILLION_INPUT_USD: float = 0.10
+PRICE_PER_MILLION_CACHED_INPUT_USD: float = 0.01
+PRICE_PER_MILLION_CACHE_WRITE_USD: float = 0.125
+PRICE_PER_MILLION_OUTPUT_USD: float = 0.50
 
 PRICES_ARE_PLACEHOLDERS: bool = (
     PRICE_PER_MILLION_INPUT_USD == 0.0
@@ -260,14 +260,39 @@ PRICES_ARE_PLACEHOLDERS: bool = (
 )
 
 
+def split_input_tokens(
+    total_input_tokens: int, cached_tokens: int = 0, cache_write_tokens: int = 0
+) -> int:
+    """Uncached input, per the course's billing convention.
+
+    The API's input token count is the whole prompt: it already includes the
+    part served from cache and the part written to cache. Billing each at its
+    own rate therefore means subtracting both before applying the input rate,
+    or the same tokens get charged twice.
+
+        uncached = input - cached - cache_write
+
+    Never negative, so a provider that reports these inconsistently cannot
+    produce a negative charge.
+    """
+    return max(0, total_input_tokens - cached_tokens - cache_write_tokens)
+
+
 def estimate_cost_usd(
     input_tokens: int = 0,
     cached_input_tokens: int = 0,
     output_tokens: int = 0,
+    cache_write_tokens: int = 0,
 ) -> float:
-    """Cost of one call. Returns 0.0 while the prices above are placeholders."""
+    """Cost of one call in USD.
+
+    `input_tokens` is the UNCACHED input count — what `split_input_tokens()`
+    returns, not the raw figure from the API. Each of the four buckets is
+    priced once.
+    """
     return (
         input_tokens * PRICE_PER_MILLION_INPUT_USD
         + cached_input_tokens * PRICE_PER_MILLION_CACHED_INPUT_USD
+        + cache_write_tokens * PRICE_PER_MILLION_CACHE_WRITE_USD
         + output_tokens * PRICE_PER_MILLION_OUTPUT_USD
     ) / 1_000_000

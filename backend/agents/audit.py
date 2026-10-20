@@ -87,6 +87,7 @@ def totals(path: Path | None = None) -> dict:
         "calls": len(rows),
         "input_tokens": sum(r.get("input_tokens", 0) for r in rows),
         "cached_input_tokens": sum(r.get("cached_input_tokens", 0) for r in rows),
+        "cache_write_tokens": sum(r.get("cache_write_tokens", 0) for r in rows),
         "output_tokens": sum(r.get("output_tokens", 0) for r in rows),
         "cost_usd": sum(r.get("estimated_cost_usd") or 0 for r in rows),
         "prices_are_placeholders": config.PRICES_ARE_PLACEHOLDERS,

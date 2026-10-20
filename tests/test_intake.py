@@ -356,7 +356,7 @@ def test_the_trail_separates_cached_from_uncached_input(client, monkeypatch):
     usage = client.get(f"/api/intake/usage/{session_id}").json()
     assert usage["input_tokens"] == 100
     assert usage["cached_input_tokens"] == 900
-    assert usage["prices_are_placeholders"] is True
+    assert usage["prices_are_placeholders"] is False
 
 
 def test_the_trail_is_append_only(tmp_path):

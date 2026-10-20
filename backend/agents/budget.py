@@ -36,7 +36,8 @@ class BudgetExceeded(RuntimeError):
 
 def session_tokens(conn: sqlite3.Connection, session_id: str) -> int:
     row = conn.execute(
-        """SELECT COALESCE(SUM(input_tokens + cached_input_tokens + output_tokens), 0) AS n
+        """SELECT COALESCE(SUM(input_tokens + cached_input_tokens
+                                + cache_write_tokens + output_tokens), 0) AS n
              FROM agent_calls WHERE session_id = ?""",
         (session_id,),
     ).fetchone()
@@ -46,7 +47,8 @@ def session_tokens(conn: sqlite3.Connection, session_id: str) -> int:
 def tokens_today(conn: sqlite3.Connection, day: str | None = None) -> int:
     today = day or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     row = conn.execute(
-        """SELECT COALESCE(SUM(input_tokens + cached_input_tokens + output_tokens), 0) AS n
+        """SELECT COALESCE(SUM(input_tokens + cached_input_tokens
+                                + cache_write_tokens + output_tokens), 0) AS n
              FROM agent_calls WHERE substr(timestamp, 1, 10) = ?""",
         (today,),
     ).fetchone()

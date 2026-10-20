@@ -21,7 +21,7 @@ export default function AgentActivity({ token }: { token: string }) {
   if (!data) return <p className="activity__loading">Loading agent activity…</p>
 
   const { totals, budget } = data
-  const allInput = totals.input_tokens + totals.cached_input_tokens
+  const allInput = totals.input_tokens + totals.cached_input_tokens + (totals.cache_write_tokens ?? 0)
   const cachedShare = allInput > 0 ? Math.round((totals.cached_input_tokens / allInput) * 100) : 0
 
   return (
@@ -30,11 +30,12 @@ export default function AgentActivity({ token }: { token: string }) {
         <div><span>Calls</span><strong>{totals.calls}</strong></div>
         <div><span>Input</span><strong>{totals.input_tokens.toLocaleString()}</strong></div>
         <div><span>Cached</span><strong>{totals.cached_input_tokens.toLocaleString()}</strong></div>
+        <div><span>Cache write</span><strong>{(totals.cache_write_tokens ?? 0).toLocaleString()}</strong></div>
         <div><span>Output</span><strong>{totals.output_tokens.toLocaleString()}</strong></div>
         <div>
           <span>Cost</span>
           <strong>
-            {totals.prices_are_placeholders ? 'price not set' : `$${totals.cost_usd.toFixed(4)}`}
+            {totals.prices_are_placeholders ? 'price not set' : `$${totals.cost_usd.toFixed(5)}`}
           </strong>
         </div>
         <div>

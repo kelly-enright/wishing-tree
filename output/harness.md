@@ -27,10 +27,44 @@ One model, everywhere: **`gpt-6-luna`**, through the Portkey gateway at
 `https://api.portkey.ai/v1`. It is named once, in `backend/config.py`, so no
 second model can appear anywhere in the code or in a run.
 
-Prices for the tokenomics section are **placeholders** in `config.py` until
-measured runs exist. While they are placeholders, `PRICES_ARE_PLACEHOLDERS` is
-`True` and every cost the app reports is `0.00`, so a placeholder number cannot
-quietly reach the report. A test asserts this.
+### Prices
+
+From the Lecture 11 tokenomics slides — OpenAI Standard, short context, USD per
+**million** tokens (https://developers.openai.com/api/docs/pricing):
+
+| Bucket | Price /1M |
+|---|---|
+| input | $0.10 |
+| cached input | $0.01 |
+| cache write | $0.125 |
+| output | $0.50 |
+
+### The billing convention
+
+The API's input figure is the **whole** prompt: it already includes the part
+served from cache and the part written to cache. Pricing each bucket at its own
+rate therefore means subtracting both before applying the input rate, or the
+same tokens get charged twice:
+
+```
+uncached input = input − cached − cache_write
+```
+
+That rule lives in one place, `config.split_input_tokens()`, and both agents
+use it before recording anything. `config.estimate_cost_usd()` then prices the
+four buckets separately. A test asserts the split sums back to the API's figure
+and that pricing the split is always cheaper than pricing it all as fresh
+input, so no token can be charged twice.
+
+Cost is treated as **derived, not stored**. The audit trail keeps token counts,
+which are facts; prices change, and they did — they were placeholders until the
+Lecture 11 figures arrived. `backend/tokenomics.py` re-costs the whole trail at
+the current prices into `output/tokenomics.json`, and corrects
+`estimated_cost_usd` on the `agent_calls` rows:
+
+```bash
+./.venv/bin/python -m backend.tokenomics
+```
 
 ## 3. The .env lookup
 
@@ -220,12 +254,23 @@ separately, how many were served from cache. Cached input is priced differently
 from fresh input, so the trail stores *uncached* input in `input_tokens` and the
 cached part in `cached_input_tokens`. Each number is priced once.
 
-**Prompt caching.** Nothing asks for caching explicitly — the provider caches a
-long-enough prefix on its own. What this project does is make the prefix worth
-caching: the system prompt is ~1,750 tokens and comes first, the dynamic part
-(today's date, the family alias) is appended after it, and the changing
-conversation comes last. Measured across the seven calls so far: **64% of all
-input tokens were served from cache.**
+**Prompt caching is explicit.** Both agents send a `CachePoint` as the first
+item of the user prompt, which PydanticAI maps to OpenAI's
+`prompt_cache_breakpoint: {mode: "explicit"}`. A leading breakpoint means
+"cache everything up to here", and what is up to there is the system prompt:
+long, stable, and first. The dynamic part (today's date, the family alias) is
+appended after it, and the family's message or the wish comes after the
+breakpoint, so neither invalidates the cached prefix.
+
+```python
+result = await agent.run([CachePoint(), message], deps=deps, message_history=history)
+```
+
+This changed what the API reports. Under implicit caching `cache_write_tokens`
+was always absent, so the tokens being written to cache were billed as ordinary
+input. With explicit caching they are reported separately, and **uncached input
+per call fell from ~3,000 to ~250–500** — the same tokens, moved into the
+bucket that describes them.
 
 **Cost.** Computed from `config.estimate_cost_usd()` on every call and stored
 per record. The three prices are still placeholders, so every cost reads
@@ -236,39 +281,46 @@ token counts are already recorded, so past runs can be re-costed.
 **Intake duration** is recorded per session, from the family's first message to
 approval. The two runs below took 48 and 35 seconds.
 
-### Measured: two end-to-end intakes
+### Measured, at the real prices
 
-| | Run A — flexible | Run B — specific |
-|---|---|---|
-| Family | A12 | A04 |
-| What was said | shutoff notice on an electric bill, due the 3rd of next month, plus groceries for four — with a name and street address volunteered | a backpack, with a Target product link, blue, 4th grader |
-| Family messages | 2 | 1 |
-| Model calls | 2 | 1 |
-| Input / cached / output tokens | 3,859 / 8,283 / 873 | 3,228 / 5,308 / 597 |
-| Total tokens | 13,015 | 9,133 |
-| Cached share of input | 64% | 58% |
-| Wall clock, first message to approval | 48 s | 35 s |
-| Wishes drafted | 2 (both flexible) | 1 (specific, link kept) |
+All 19 recorded calls re-costed with `backend/tokenomics.py`.
 
-Whole-project totals so far: **7 calls, 47,007 tokens, 64% of input cached.**
+| Run | What it was | Calls | Cost |
+|---|---|---|---|
+| **A** | intake, flexible — electric bill + groceries, 2 family messages | 2 | **$0.000905** |
+| **B** | intake, specific — a backpack with a product link, 1 message | 1 | **$0.000674** |
+| **D** | the safety review that cleaned a name, school, address and phone, and flagged an injection | 1 | **$0.000427** |
+| C | the clean-wish safety review, for comparison | 1 | $0.000207 |
 
-### One thing that does not work reliably yet
+A whole intake plus its safety review costs roughly **a tenth of a cent**.
+Project total so far: 19 calls, 118,752 tokens, **$0.0095**.
 
-The agent calls `estimate_cost` as instructed, but does not always write the
-returned range into the draft — in run A it filled the electric bill's range
-(90–250) and left the groceries wish empty; in run B it left the backpack's
-cost empty and the family typed $30 on the approval screen. The gap is covered
-deterministically rather than papered over: on approval, any wish still missing
-a cost gets the price guide's range for its category, marked `cost_is_estimate`
-so every screen can label it "Estimated", and the family can type over it first.
-Worth a line in the report's limits section.
+### Did explicit caching help?
 
-**A missing deadline stays missing.** An earlier version filled an empty
-deadline with 30 days out. That was wrong twice over: it breaks the rule the
-whole intake runs on — never make up a detail — and it would hand the
-Matchmaker urgency the family never claimed, in a ranking that is supposed to
-be fair. A wish with no date now stores no date and reads "No deadline"
-everywhere it appears, and the family can add one on the approval screen.
+Cache hit rate across everything recorded is **61.9%**, against the 64% measured
+under implicit caching. That is not a like-for-like comparison and should not be
+read as a regression: the denominator changed. Cache-write tokens are now
+counted as input and they were not before, and the newer sample includes cold
+starts that had to write the cache in the first place.
+
+The mechanism is worth stating plainly, because it decides whether this is worth
+doing at all:
+
+- writing a token to cache costs **$0.125/M**, which is **$0.025/M more** than
+  billing it as plain input
+- reading it back later costs **$0.01/M**, which is **$0.09/M less**
+
+Break-even is **0.28 reads**. The first cache hit more than pays for the write,
+so explicit caching is the right default for any prompt read more than once.
+
+Re-running run A's exact two messages under explicit caching cost $0.001260
+against $0.000905. Pulling that apart, the caching change accounts for
+**+$0.000147** of the difference and **415 extra output tokens account for
++$0.000208** — the agent happened to draft both wishes in one turn instead of
+asking a follow-up. Output at $0.50/M is five times the input rate and
+twenty-five times the cached rate, so on this app output volume moves the bill
+more than input caching does. Worth saying in the report: the obvious lever
+(cache the prompt) is not the biggest one.
 
 ## 10. The Privacy & Safety agent
 
@@ -395,7 +447,7 @@ Agents arrive in later problems; these are the ones already standing.
 | Links are never fetched | by design | No agent and no server code opens a product URL, so a hostile link has nothing to run against. |
 | Contact details are separable | `public_view()` on `Family` and `Donor` | Addresses and phone numbers reaching the wish wall, a donor, or a model. |
 | Nothing is public by default | `RequestStatus.DRAFT` default | A drafted wish going public before the family approves it. |
-| Placeholder prices cannot pass as real | `PRICES_ARE_PLACEHOLDERS` + test | A made-up cost reaching the report. |
+| No token is charged twice | `split_input_tokens()` + test | A cost overstated by billing cached or cache-write tokens again at the input rate. |
 | Token budgets declared | `config.py` | Groundwork for the overspending guard: per-session, per-review, per-match-run and daily caps. |
 | Coordinator passcode | `config.COORDINATOR_PASSCODE`, checked in `POST /api/coordinator/unlock` | A casual visitor opening the only screens that show home addresses. Checked server-side; a test proves the passcode is absent from the built frontend. |
 | Sign-up responses echo nothing | `create_family` / `create_donor` return `public_view()` | The address and phone a family just typed coming back out of the API. Tested. |
@@ -416,7 +468,7 @@ Agents arrive in later problems; these are the ones already standing.
 
 ## 14. Tests
 
-`./.venv/bin/python -m pytest tests -q` — **128 passing**, in under a second. Every agent is stubbed, so the suite is free to run.
+`./.venv/bin/python -m pytest tests -q` — **135 passing**, in under a second. Every agent is stubbed, so the suite is free to run.
 
 - `test_config.py` — the .env lookup in all four cases, region config, allowlist accept/reject, placeholder prices
 - `test_models.py` — every validator, and that `public_view()` drops contact details

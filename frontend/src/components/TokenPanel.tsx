@@ -4,8 +4,9 @@ import type { Usage } from '../api'
 export default function TokenPanel({ usage }: { usage: Usage | null }) {
   if (!usage) return null
 
-  const total = usage.input_tokens + usage.cached_input_tokens + usage.output_tokens
-  const cachedShare = total > 0 ? Math.round((usage.cached_input_tokens / total) * 100) : 0
+  const allInput = usage.input_tokens + usage.cached_input_tokens + usage.cache_write_tokens
+  const total = allInput + usage.output_tokens
+  const cachedShare = allInput > 0 ? Math.round((usage.cached_input_tokens / allInput) * 100) : 0
 
   return (
     <aside className="tokens" aria-label="Token usage for this session">
@@ -14,6 +15,7 @@ export default function TokenPanel({ usage }: { usage: Usage | null }) {
         <div><dt>Calls</dt><dd>{usage.calls}</dd></div>
         <div><dt>Input</dt><dd>{usage.input_tokens.toLocaleString()}</dd></div>
         <div><dt>Cached input</dt><dd>{usage.cached_input_tokens.toLocaleString()}</dd></div>
+        <div><dt>Cache write</dt><dd>{usage.cache_write_tokens.toLocaleString()}</dd></div>
         <div><dt>Output</dt><dd>{usage.output_tokens.toLocaleString()}</dd></div>
         <div><dt>Total</dt><dd>{total.toLocaleString()}</dd></div>
         <div>
@@ -21,7 +23,7 @@ export default function TokenPanel({ usage }: { usage: Usage | null }) {
           <dd>
             {usage.prices_are_placeholders
               ? <span className="tokens__pending">price not set</span>
-              : `$${usage.cost_usd.toFixed(4)}`}
+              : `$${usage.cost_usd.toFixed(5)}`}
           </dd>
         </div>
       </dl>

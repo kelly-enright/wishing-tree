@@ -136,7 +136,40 @@ def test_everything_else_is_rejected(url):
 # Prices
 # --------------------------------------------------------------------------
 
-def test_prices_are_still_marked_as_placeholders():
-    """Guards the report: a placeholder price must never read as a real cost."""
-    assert config.PRICES_ARE_PLACEHOLDERS is True
-    assert config.estimate_cost_usd(1000, 1000, 1000) == 0.0
+def test_the_prices_are_the_lecture_11_figures():
+    """USD per million tokens, OpenAI Standard short context."""
+    assert config.PRICES_ARE_PLACEHOLDERS is False
+    assert config.PRICE_PER_MILLION_INPUT_USD == 0.10
+    assert config.PRICE_PER_MILLION_CACHED_INPUT_USD == 0.01
+    assert config.PRICE_PER_MILLION_CACHE_WRITE_USD == 0.125
+    assert config.PRICE_PER_MILLION_OUTPUT_USD == 0.50
+
+
+def test_each_bucket_is_priced_at_its_own_rate():
+    assert config.estimate_cost_usd(input_tokens=1_000_000) == 0.10
+    assert config.estimate_cost_usd(cached_input_tokens=1_000_000) == 0.01
+    assert config.estimate_cost_usd(cache_write_tokens=1_000_000) == 0.125
+    assert config.estimate_cost_usd(output_tokens=1_000_000) == 0.50
+
+
+def test_the_billing_convention_subtracts_cached_and_cache_write():
+    """The API's input figure includes both, so both come off before pricing."""
+    assert config.split_input_tokens(5_000, 3_000, 1_200) == 800
+    assert config.split_input_tokens(5_000, 5_000, 0) == 0
+    assert config.split_input_tokens(1_000, 0, 0) == 1_000
+
+
+def test_the_split_never_goes_negative():
+    """A provider reporting these inconsistently must not produce a credit."""
+    assert config.split_input_tokens(100, 90, 90) == 0
+
+
+def test_no_token_is_charged_twice():
+    """Pricing the split buckets must never exceed pricing it all as fresh input."""
+    total_input, cached, write = 8_000, 5_000, 2_000
+    uncached = config.split_input_tokens(total_input, cached, write)
+    assert uncached + cached + write == total_input
+
+    split_cost = config.estimate_cost_usd(uncached, cached, 0, write)
+    all_fresh = config.estimate_cost_usd(total_input, 0, 0, 0)
+    assert split_cost < all_fresh

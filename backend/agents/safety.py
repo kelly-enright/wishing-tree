@@ -26,7 +26,7 @@ import time
 from dataclasses import dataclass, field
 from functools import lru_cache
 
-from pydantic_ai import Agent, RunContext
+from pydantic_ai import Agent, CachePoint, RunContext
 from pydantic_ai.messages import ModelMessage, ToolCallPart
 
 from backend import config, safety_checks
@@ -297,7 +297,9 @@ async def review_wish(
     )
 
     try:
-        result = await agent.run(build_input(request), deps=deps)
+        # Same shape as intake: stable system prompt, breakpoint, then the
+        # wish. The wish changes every call; the prompt before it does not.
+        result = await agent.run([CachePoint(), build_input(request)], deps=deps)
     except Exception as exc:                        # noqa: BLE001
         call.ok = False
         call.error = f"{type(exc).__name__}: {exc}"
@@ -307,13 +309,17 @@ async def review_wish(
 
     usage = result.usage
     cached = usage.cache_read_tokens or 0
-    call.input_tokens = max(0, (usage.input_tokens or 0) - cached)
+    cache_write = usage.cache_write_tokens or 0
+    call.input_tokens = config.split_input_tokens(
+        usage.input_tokens or 0, cached, cache_write
+    )
     call.cached_input_tokens = cached
+    call.cache_write_tokens = cache_write
     call.output_tokens = usage.output_tokens or 0
     call.latency_ms = int((time.perf_counter() - started) * 1000)
     call.tools_called = _tool_names(result.new_messages())
     call.estimated_cost_usd = config.estimate_cost_usd(
-        call.input_tokens, cached, call.output_tokens
+        call.input_tokens, cached, call.output_tokens, cache_write
     )
 
     final, enforced = enforce(result.output, request)

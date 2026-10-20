@@ -67,6 +67,7 @@ export type AgentCall = {
   enforced: string[]
   input_tokens: number
   cached_input_tokens: number
+  cache_write_tokens: number
   output_tokens: number
   latency_ms: number
   cost_usd: number | null
@@ -81,6 +82,7 @@ export type Activity = {
     calls: number
     input_tokens: number
     cached_input_tokens: number
+    cache_write_tokens: number
     output_tokens: number
     cost_usd: number
     prices_are_placeholders: boolean
@@ -142,6 +144,7 @@ export type Usage = {
   calls: number
   input_tokens: number
   cached_input_tokens: number
+  cache_write_tokens: number
   output_tokens: number
   cost_usd: number
   latency_ms: number

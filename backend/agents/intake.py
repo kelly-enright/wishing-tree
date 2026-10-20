@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic_ai import Agent, RunContext
+from pydantic_ai import Agent, CachePoint, RunContext
 from pydantic_ai.messages import ModelMessage, ToolCallPart
 
 from backend import config, db
@@ -263,7 +263,12 @@ async def run_turn(
     )
 
     try:
-        result = await agent.run(message, deps=deps, message_history=history or [])
+        # A leading CachePoint marks "cache everything up to here", which is
+        # the system prompt: long, stable, and first. The family's message comes
+        # after the breakpoint, so it never invalidates the cached prefix.
+        result = await agent.run(
+            [CachePoint(), message], deps=deps, message_history=history or []
+        )
     except Exception as exc:                      # noqa: BLE001 - recorded, then re-raised
         call.ok = False
         call.error = f"{type(exc).__name__}: {exc}"
@@ -273,19 +278,20 @@ async def run_turn(
 
     usage = result.usage
     cached = usage.cache_read_tokens or 0
-    # `input_tokens` from the API counts the cached part too. Split them, so
-    # each number is priced once: uncached input at the full rate, cached input
-    # at the cached rate.
-    uncached = max(0, (usage.input_tokens or 0) - cached)
+    cache_write = usage.cache_write_tokens or 0
+    # The API's input figure is the whole prompt, cached and cache-write parts
+    # included. Split it so each bucket is priced once.
+    uncached = config.split_input_tokens(usage.input_tokens or 0, cached, cache_write)
 
     call.input_tokens = uncached
     call.cached_input_tokens = cached
+    call.cache_write_tokens = cache_write
     call.output_tokens = usage.output_tokens or 0
     call.latency_ms = int((time.perf_counter() - started) * 1000)
     call.tools_called = _tool_names(result.new_messages())
     call.input_summary, call.output_summary = summarize(message, result.output)
     call.estimated_cost_usd = config.estimate_cost_usd(
-        uncached, cached, call.output_tokens
+        uncached, cached, call.output_tokens, cache_write
     )
     audit.record(call)
 
