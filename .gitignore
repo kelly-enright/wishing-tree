@@ -1,0 +1,18 @@
+# Secrets — never commit a real .env.
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node — source deps only; the BUILT frontend is committed on purpose so the
+# teaching staff need nothing but Python to run the app (see README).
+frontend/node_modules/
+
+# macOS
+.DS_Store
+
+# The database is rebuilt from backend/seed.py; it is not source.
+data/*.db

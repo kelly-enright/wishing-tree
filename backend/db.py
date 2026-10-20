@@ -1,0 +1,246 @@
+"""SQLite storage for Wishing Tree.
+
+One file at data/wishing_tree.db, created automatically on first run. Plain
+sqlite3 on purpose: no migrations to run, nothing to install, and the teaching
+staff need only Python. The Pydantic models in backend/models.py are the typed
+layer on top; every function here takes or returns one of them.
+"""
+
+from __future__ import annotations
+
+import sqlite3
+from datetime import date, datetime
+from pathlib import Path
+
+from backend import config
+from backend.models import (
+    Donor,
+    Family,
+    Pledge,
+    PledgeStatus,
+    Request,
+    RequestStatus,
+)
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS families (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    alias           TEXT    NOT NULL UNIQUE,
+    zip             TEXT    NOT NULL,
+    region_slug     TEXT    NOT NULL,
+    contact_address TEXT    NOT NULL,   -- coordinator only
+    contact_phone   TEXT    NOT NULL,   -- coordinator only
+    created_at      TEXT    NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS donors (
+    id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+    alias                TEXT    NOT NULL UNIQUE,
+    zip                  TEXT    NOT NULL,
+    region_slug          TEXT    NOT NULL,
+    contact_address      TEXT    NOT NULL,   -- coordinator only
+    contact_phone        TEXT    NOT NULL,   -- coordinator only
+    budget_usd           REAL    NOT NULL,
+    preferred_categories TEXT    NOT NULL,   -- comma separated
+    preference           TEXT    NOT NULL,
+    created_at           TEXT    NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS requests (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    family_alias       TEXT    NOT NULL REFERENCES families(alias),
+    category           TEXT    NOT NULL,
+    request_type       TEXT    NOT NULL,
+    item_description   TEXT    NOT NULL,
+    deadline           TEXT    NOT NULL,
+    occasion           TEXT    NOT NULL,
+    zip                TEXT    NOT NULL,
+    status             TEXT    NOT NULL,
+    estimated_cost_usd REAL,
+    budget_min_usd     REAL,
+    budget_max_usd     REAL,
+    product_link       TEXT,
+    brand              TEXT,
+    size               TEXT,
+    color              TEXT,
+    open_to_substitute INTEGER NOT NULL DEFAULT 0,
+    size_preferences   TEXT,
+    created_at         TEXT    NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS pledges (
+    id                        INTEGER PRIMARY KEY AUTOINCREMENT,
+    request_id                INTEGER NOT NULL REFERENCES requests(id),
+    donor_alias               TEXT    NOT NULL REFERENCES donors(alias),
+    dropoff_date              TEXT    NOT NULL,
+    delivery_date             TEXT    NOT NULL,
+    family_confirmed_delivery INTEGER NOT NULL DEFAULT 0,
+    status                    TEXT    NOT NULL,
+    created_at                TEXT    NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_requests_status   ON requests(status);
+CREATE INDEX IF NOT EXISTS idx_requests_zip      ON requests(zip);
+CREATE INDEX IF NOT EXISTS idx_requests_deadline ON requests(deadline);
+CREATE INDEX IF NOT EXISTS idx_pledges_request   ON pledges(request_id);
+"""
+
+
+# --------------------------------------------------------------------------
+# Connection
+# --------------------------------------------------------------------------
+
+def connect(db_path: Path | None = None) -> sqlite3.Connection:
+    """Open the database, creating the folder and file if needed."""
+    path = Path(db_path or config.DB_PATH)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(path)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
+
+
+def init_db(db_path: Path | None = None) -> Path:
+    """Create the schema if it is not there. Safe to call on every start."""
+    path = Path(db_path or config.DB_PATH)
+    with connect(path) as conn:
+        conn.executescript(SCHEMA)
+    return path
+
+
+def is_empty(db_path: Path | None = None) -> bool:
+    with connect(db_path) as conn:
+        row = conn.execute("SELECT COUNT(*) AS n FROM requests").fetchone()
+    return row["n"] == 0
+
+
+# --------------------------------------------------------------------------
+# Row <-> model
+# --------------------------------------------------------------------------
+
+def _family(row: sqlite3.Row) -> Family:
+    return Family(**dict(row))
+
+
+def _donor(row: sqlite3.Row) -> Donor:
+    data = dict(row)
+    cats = data.pop("preferred_categories", "") or ""
+    return Donor(preferred_categories=[c for c in cats.split(",") if c], **data)
+
+
+def _request(row: sqlite3.Row) -> Request:
+    data = dict(row)
+    data["open_to_substitute"] = bool(data["open_to_substitute"])
+    return Request(**data)
+
+
+def _pledge(row: sqlite3.Row) -> Pledge:
+    data = dict(row)
+    data["family_confirmed_delivery"] = bool(data["family_confirmed_delivery"])
+    return Pledge(**data)
+
+
+def _iso(value: datetime | date) -> str:
+    return value.isoformat()
+
+
+# --------------------------------------------------------------------------
+# Writes
+# --------------------------------------------------------------------------
+
+def insert_family(family: Family, conn: sqlite3.Connection) -> int:
+    cur = conn.execute(
+        """INSERT INTO families (alias, zip, region_slug, contact_address,
+                                 contact_phone, created_at)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (family.alias, family.zip, family.region_slug, family.contact_address,
+         family.contact_phone, _iso(family.created_at)),
+    )
+    return int(cur.lastrowid)
+
+
+def insert_donor(donor: Donor, conn: sqlite3.Connection) -> int:
+    cur = conn.execute(
+        """INSERT INTO donors (alias, zip, region_slug, contact_address, contact_phone,
+                               budget_usd, preferred_categories, preference, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (donor.alias, donor.zip, donor.region_slug, donor.contact_address,
+         donor.contact_phone, donor.budget_usd,
+         ",".join(c.value for c in donor.preferred_categories),
+         donor.preference.value, _iso(donor.created_at)),
+    )
+    return int(cur.lastrowid)
+
+
+def insert_request(request: Request, conn: sqlite3.Connection) -> int:
+    cur = conn.execute(
+        """INSERT INTO requests (family_alias, category, request_type, item_description,
+                                 deadline, occasion, zip, status, estimated_cost_usd,
+                                 budget_min_usd, budget_max_usd, product_link, brand,
+                                 size, color, open_to_substitute, size_preferences,
+                                 created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (request.family_alias, request.category.value, request.request_type.value,
+         request.item_description, _iso(request.deadline), request.occasion.value,
+         request.zip, request.status.value, request.estimated_cost_usd,
+         request.budget_min_usd, request.budget_max_usd, request.product_link,
+         request.brand, request.size, request.color, int(request.open_to_substitute),
+         request.size_preferences, _iso(request.created_at)),
+    )
+    return int(cur.lastrowid)
+
+
+def insert_pledge(pledge: Pledge, conn: sqlite3.Connection) -> int:
+    cur = conn.execute(
+        """INSERT INTO pledges (request_id, donor_alias, dropoff_date, delivery_date,
+                                family_confirmed_delivery, status, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (pledge.request_id, pledge.donor_alias, _iso(pledge.dropoff_date),
+         _iso(pledge.delivery_date), int(pledge.family_confirmed_delivery),
+         pledge.status.value, _iso(pledge.created_at)),
+    )
+    return int(cur.lastrowid)
+
+
+# --------------------------------------------------------------------------
+# Reads
+# --------------------------------------------------------------------------
+
+def list_families(conn: sqlite3.Connection) -> list[Family]:
+    return [_family(r) for r in conn.execute("SELECT * FROM families ORDER BY alias")]
+
+
+def list_donors(conn: sqlite3.Connection) -> list[Donor]:
+    return [_donor(r) for r in conn.execute("SELECT * FROM donors ORDER BY alias")]
+
+
+def list_requests(
+    conn: sqlite3.Connection, status: RequestStatus | None = None
+) -> list[Request]:
+    if status is None:
+        rows = conn.execute("SELECT * FROM requests ORDER BY deadline")
+    else:
+        rows = conn.execute(
+            "SELECT * FROM requests WHERE status = ? ORDER BY deadline", (status.value,)
+        )
+    return [_request(r) for r in rows]
+
+
+def list_pledges(
+    conn: sqlite3.Connection, status: PledgeStatus | None = None
+) -> list[Pledge]:
+    if status is None:
+        rows = conn.execute("SELECT * FROM pledges ORDER BY dropoff_date")
+    else:
+        rows = conn.execute(
+            "SELECT * FROM pledges WHERE status = ? ORDER BY dropoff_date",
+            (status.value,),
+        )
+    return [_pledge(r) for r in rows]
+
+
+def counts(conn: sqlite3.Connection) -> dict[str, int]:
+    out = {}
+    for table in ("families", "donors", "requests", "pledges"):
+        out[table] = conn.execute(f"SELECT COUNT(*) AS n FROM {table}").fetchone()["n"]
+    return out

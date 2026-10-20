@@ -1,0 +1,17 @@
+# Wishing Tree — Python dependencies.
+# Install into the project venv:  ./.venv/bin/pip install -r requirements.txt
+
+# FastAPI backend (backend/main.py), which also serves the built frontend.
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+
+# Structured types (backend/models.py) and config loading (backend/config.py).
+pydantic>=2.9.0
+python-dotenv>=1.0.1
+
+# Agents (added in a later problem) — gpt-6-luna through the Portkey gateway.
+pydantic-ai-slim[openai]>=1.0.0
+openai>=1.40.0
+
+# Tests (tests/).
+pytest>=8.0.0

@@ -1,0 +1,233 @@
+/* Wishing Tree — blue and green theme.
+   Blue carries structure (headers, surfaces), green carries action and growth. */
+
+:root {
+  --blue-900: #0b2239;
+  --blue-800: #12324f;
+  --blue-700: #17456c;
+  --blue-500: #2a79b4;
+  --blue-100: #dceaf6;
+
+  --green-700: #146347;
+  --green-600: #1c7a52;
+  --green-500: #2a9d6b;
+  --green-300: #8ed9b4;
+  --green-100: #e2f4ea;
+
+  --ink: #0f1b26;
+  --ink-soft: #46606f;
+  --surface: #f5faf8;
+  --white: #ffffff;
+
+  --radius: 14px;
+  --shadow: 0 10px 30px rgba(11, 34, 57, 0.10);
+  --shadow-lift: 0 16px 40px rgba(11, 34, 57, 0.18);
+
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(1100px 520px at 12% -10%, var(--blue-100) 0%, transparent 60%),
+    radial-gradient(900px 480px at 100% 0%, var(--green-100) 0%, transparent 55%),
+    var(--surface);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--blue-700); }
+
+/* ----------------------------------------------------------------- landing */
+
+.landing {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 72px 24px 56px;
+}
+
+.hero { text-align: center; margin-bottom: 44px; }
+
+.hero__eyebrow {
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--green-700);
+}
+
+.hero__title {
+  margin: 0 0 16px;
+  font-size: clamp(2.6rem, 6vw, 4rem);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  color: var(--blue-900);
+}
+
+.hero__accent {
+  background: linear-gradient(100deg, var(--green-600), var(--blue-500));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero__lede {
+  margin: 0 auto;
+  max-width: 62ch;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* ------------------------------------------------------------------- roles */
+
+.roles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(258px, 1fr));
+  gap: 20px;
+}
+
+.role {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 26px 24px 22px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(23, 69, 108, 0.12);
+  border-top: 4px solid var(--green-500);
+  background: var(--white);
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-top-color 0.16s ease;
+}
+
+.role:hover,
+.role:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lift);
+  border-top-color: var(--blue-500);
+}
+
+.role__eyebrow {
+  font-size: 0.74rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--green-700);
+}
+
+.role__title {
+  font-size: 1.42rem;
+  font-weight: 700;
+  color: var(--blue-900);
+  letter-spacing: -0.015em;
+}
+
+.role__blurb {
+  font-size: 0.97rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  flex: 1;
+}
+
+.role__go {
+  margin-top: 10px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--blue-700);
+}
+
+/* -------------------------------------------------------------------- demo */
+
+.demo {
+  margin-top: 28px;
+  padding: 20px 24px;
+  border-radius: var(--radius);
+  background: linear-gradient(100deg, var(--blue-800), var(--green-700));
+  color: var(--white);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.demo__text { margin: 0; font-size: 1rem; }
+
+.demo__link {
+  padding: 11px 20px;
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--blue-900);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.demo__link:hover, .demo__link:focus-visible { background: var(--green-100); }
+
+/* ------------------------------------------------------------------ footer */
+
+.footer {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(23, 69, 108, 0.14);
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+
+.footer p { margin: 0 0 6px; }
+.footer__note { color: var(--green-700); font-weight: 600; }
+
+/* ------------------------------------------------------------- placeholder */
+
+.placeholder {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 80px 24px;
+}
+
+.placeholder__back {
+  display: inline-block;
+  margin-bottom: 26px;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--green-700);
+}
+
+.placeholder__back:hover { text-decoration: underline; }
+
+.placeholder__title {
+  margin: 0 0 14px;
+  font-size: clamp(2rem, 4.5vw, 2.6rem);
+  color: var(--blue-900);
+  letter-spacing: -0.02em;
+}
+
+.placeholder__blurb {
+  margin: 0 0 24px;
+  font-size: 1.08rem;
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+
+.placeholder__tag {
+  display: inline-block;
+  margin: 0;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: var(--green-100);
+  color: var(--green-700);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+:focus-visible { outline: 3px solid var(--blue-500); outline-offset: 3px; }
