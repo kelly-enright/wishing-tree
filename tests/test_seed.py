@@ -89,7 +89,7 @@ def test_a_wish_with_no_deadline_survives_a_round_trip(tmp_path):
 
     path = _seeded(tmp_path)
     wish = Request(
-        family_alias="Family A04",
+        family_alias="Neighbor A04",
         category=Category.CLOTHING,
         request_type=RequestType.FLEXIBLE,
         item_description="Warm layers for a child.",
@@ -116,7 +116,7 @@ def test_wishes_without_a_deadline_sort_after_those_with_one(tmp_path):
     with db.connect(path) as conn:
         db.insert_request(
             Request(
-                family_alias="Family A04", category=Category.OTHER,
+                family_alias="Neighbor A04", category=Category.OTHER,
                 request_type=RequestType.FLEXIBLE, item_description="No date given.",
                 occasion=Occasion.EVERYDAY, zip="06511", budget_min_usd=10.0,
             ),

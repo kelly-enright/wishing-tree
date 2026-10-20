@@ -55,7 +55,7 @@ export function ZipField({
           onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 5))}
         />
         <span className="field__hint">
-          We check this first, so you know straight away whether we can reach you.
+          We check this first, so you'll know right away if we deliver to your area.
         </span>
       </label>
 

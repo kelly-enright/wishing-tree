@@ -76,9 +76,8 @@ def guard(session_id: str | None = None) -> None:
         daily = tokens_today(conn)
         if daily >= config.DAILY_TOKEN_BUDGET:
             raise BudgetExceeded(
-                "Wishing Tree has reached its daily limit for AI usage. "
-                "Nothing you did caused this — please come back tomorrow, or "
-                "ask the coordinator to look at it.",
+                "Wishing Tree is busy right now. Nothing you did caused this — "
+                "try again tomorrow, or tell a coordinator.",
                 scope="daily", used=daily, cap=config.DAILY_TOKEN_BUDGET,
             )
 
@@ -88,8 +87,8 @@ def guard(session_id: str | None = None) -> None:
         used = session_tokens(conn, session_id)
         if used >= config.MAX_TOKENS_PER_INTAKE_SESSION:
             raise BudgetExceeded(
-                "This conversation has got long enough that we need to stop here. "
-                "Your wishes so far are safe — go to the review screen to check "
-                "and approve them, and start a new chat later if you need to add more.",
+                "We need to stop here for now. Everything you've told me is safe — "
+                "check your wishes on the next screen and post them, and start "
+                "a new chat any time.",
                 scope="session", used=used, cap=config.MAX_TOKENS_PER_INTAKE_SESSION,
             )

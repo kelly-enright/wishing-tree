@@ -75,9 +75,9 @@ def run_sheet(week_of: str | None = None) -> dict:
                     "amount_usd": wish.cost_ceiling_usd(),
                     "pay_by": pledge.delivery_date.isoformat(),
                     "status": pledge.status.value,
-                    "note": "Email the family to confirm the amount and who to pay. "
+                    "note": "Email the neighbor to confirm the amount and who to pay. "
                             "Paid to the landlord or provider, never to the "
-                            "family. Simulated in this MVP.",
+                            "neighbor. Simulated in this demo.",
                 })
                 continue
 
@@ -188,7 +188,7 @@ def update_status(body: StatusClick) -> dict:
         "reopened_wishes": reopened,
         "note": (
             f"{text.counted(len(reopened), 'wish', 'wishes')} went back on the "
-            f"wall for another donor."
+            f"tree for another neighbor."
             if reopened else ""
         ),
     }

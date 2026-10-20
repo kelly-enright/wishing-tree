@@ -1,5 +1,5 @@
 import Logo from '../components/Logo'
-import Monty from '../components/Monty'
+import KellyAndMonty from '../components/KellyAndMonty'
 
 /**
  * About.
@@ -48,27 +48,27 @@ export default function About() {
       <section className="about__section">
         <h2 className="about__heading">How we protect privacy</h2>
         <p className="about__para">
-          Families are never shown by name or address. Donors never see who they're
-          helping, and families never see who helped them. Every wish is checked for
-          personal details before anyone sees it. Gifts are dropped off at Yale School
-          of Management, and we deliver them to families ourselves.
+          Families are never shown by name or address. Wish granters never see who
+          they're helping, and neighbors never see who helped them. Every wish is
+          checked for personal details before anyone sees it. Gifts are dropped off at
+          Yale School of Management, and we deliver them to families ourselves.
         </p>
       </section>
 
       <section className="about__section about__section--who">
-        <div className="about__whohead">
-          <Monty size={58} />
-          <h2 className="about__heading">Who I am</h2>
+        <h2 className="about__heading">Who I am</h2>
+        <div className="about__who">
+          <KellyAndMonty />
+          <p className="about__para">
+            I'm Kelly, an MBA student at Yale School of Management. Before business
+            school, I spent nearly a decade building and running operations at a global
+            research company and an early-stage startup. Wishing Tree brings those skills
+            to something I've cared about for years: making it easier for neighbors to
+            help each other. Wishing Tree is starting in New Haven, and I'm the first
+            coordinator, so if your wish is granted, I may be the one who brings it to
+            your door.
+          </p>
         </div>
-        <p className="about__para">
-          I'm Kelly, an MBA student at Yale School of Management. Before business
-          school, I spent nearly a decade building and running operations at a global
-          research company and an early-stage startup. Wishing Tree brings those skills
-          to something I've cared about for years: making it easier for neighbors to
-          help each other. Wishing Tree is starting in New Haven, and I'm the first
-          coordinator, so if your wish is granted, I may be the one who brings it to
-          your door.
-        </p>
       </section>
     </main>
   )

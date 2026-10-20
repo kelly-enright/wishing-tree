@@ -675,3 +675,65 @@ The one piece of judgment was structural: her first line, "Why Wishing Tree
 exists", became the page's `<h1>`, and the other two became `<h2>`s. That adds
 no words — a nav link saying "About" was the alternative, which would have
 meant inventing a title.
+
+## Problem 12 — Wording and Tone
+
+### Prompt 1 (the wording pass, plus a request for UI ideas)
+
+> Part 1 — wording and tone.
+>
+> The app works; now I want it to sound like us. The feeling I want is neighbors helping neighbors: warm, welcoming, and free of shame for asking for help, while making giving feel joyful and easy. Words only — don't change layout or features.
+>
+> a.) "I need help" becomes "Make a wish", with card text "Something you or your family could use? Ask your neighbors." "I want to give" becomes "Grant a wish", with "Help a neighbor with something they need." Never show the word "donor" to users — they're "wish granters", or just "a neighbor" in running text. Internal code names can stay. Use "neighbor" instead of "family" in user-facing text. Aliases become "Neighbor A59" instead of "Family A59." Admin and "coordinator" stay as they are.
+> b.) Voice by role. People making wishes: dignity never pity; plain short sentences; never use "needy," "less fortunate," "beneficiary," "recipient," or "charity"; never ask for their story or pressure them to be grateful; reassure about privacy; be honest a wish isn't guaranteed and never make claims like "most wishes are granted" that we can't back up. Wish granters: warm, practical, celebrate giving without guilt-tripping or "save a family" language; after granting show something like "You just made a neighbor's week. Thank you."; explain privacy as deliberate ("You won't see names or addresses. That's on purpose, to protect each neighbor."). Admin: short, scannable, operational.
+> c.) Add the voice guide to the Intake agent's system prompt.
+> d.) [exact replacement copy for the Make a wish sign-up screen — alias sentence, How it works step 3, zip helper, email helper]
+> e.) On the landing page, add a line like "Every wish on this tree is from someone in New Haven" and a small counter of wishes granted so far — from real data, not made up.
+> f.) American spelling and phrasing throughout.
+> g.) On the About page, change only this one sentence: "Donors never see who they're helping, and families never see who helped them." becomes "Wish granters never see who they're helping, and neighbors never see who helped them." Leave every other sentence on the About page exactly as it is.
+> h.) Show me a before/after list of every line you changed, grouped by role, so I can review it. Then update tests, take fresh screenshots, and update harness.md.
+>
+> Part 2 — after Part 1, review every screen and give me a ranked list of 8–10 UI improvements: what it changes, why it helps, how long it takes, how risky it is. Don't make any of these changes yet. I'll choose which ones to do.
+
+**Outcome:** 76 lines rewritten across 22 files, listed before and after in
+`output/wording_changes.md`. No layout, no features, no behavior.
+
+- **The hardest line was the honest one.** The old status copy said a wish
+  would go up and "most wishes find someone." That reads as reassurance, but it
+  is a statistic nobody has measured, and (b) rules it out. It now reads "We
+  can't promise someone will grant it, but we'll do our best to find a neighbor
+  who can help" — a promise about effort, which is one we can keep.
+- **The counter is read from the database**, not written into the page. A new
+  `GET /api/stats` counts distinct wishes ever pledged, dropped off or
+  delivered, so a wish released and granted again counts once. A test grants a
+  wish and watches the number move.
+- **`donor` survives in the code and nowhere else.** The table, the route and
+  the `role` discriminator still say donor; the 33 tests in `test_voice.py`
+  strip JSON field names and that discriminator out of every public response,
+  then assert nothing a person reads says *donor* or any of the ten banned
+  words, and that no agent prompt names one except to forbid it.
+- **Four words I had already changed came back from the wall.** "Back to the
+  wish wall", "Show the whole wall", "On the wish wall" and the tree's load
+  error were all still saying *wall* after the first pass. The post-grant
+  screenshot is what caught them, which is the argument for taking screenshots
+  rather than trusting a grep.
+- **One sentence on About, and only one.** The paragraph around it still says
+  "Families are never shown by name or address" and "we deliver them to
+  families ourselves", because (g) said to leave every other sentence exactly
+  as it is.
+
+### Prompt 2 (a portrait for the About page)
+
+> can you add an image of a brown girl in yale merch next to the "who I am" and maybe there could be a corgi next to her since Monty is my dog / partner in crime
+
+> i meant brown hair
+
+> I feel like that image doesn't look like me as im white with hazel eyes and dark brown hair
+
+**Outcome:** `frontend/src/components/KellyAndMonty.tsx` — drawn in SVG in the
+same flat style as Monty, not generated or photographed. Self-contained (no
+binary asset to ship with the deliverables), sharp at any size, and it embeds
+the real `<Monty />` component rather than a copy of him, so the two drawings
+cannot drift apart. Appearance is six named constants at the top of the file,
+which is how the corrections to skin, hair and eye color were made without
+touching a single path.

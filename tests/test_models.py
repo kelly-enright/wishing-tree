@@ -19,7 +19,7 @@ from backend.models import (
 
 def _specific(**overrides) -> dict:
     base = dict(
-        family_alias="Family A04",
+        family_alias="Neighbor A04",
         category=Category.CLOTHING,
         request_type=RequestType.SPECIFIC,
         item_description="Winter coat",
@@ -73,24 +73,24 @@ def test_a_window_must_end_after_it_starts():
 
 def test_a_family_public_view_drops_the_contact_details():
     family = Family(
-        alias="Family A04", zip="06511",
+        alias="Neighbor A04", zip="06511",
         contact_address="118 Larkspur St, New Haven, CT 06511",
         contact_email="familya04@example.com",
         contact_phone="(203) 555-0104",
     )
     public = family.public_view()
-    assert public == {"alias": "Family A04", "zip": "06511", "region_slug": "new_haven"}
+    assert public == {"alias": "Neighbor A04", "zip": "06511", "region_slug": "new_haven"}
     assert "Larkspur" not in str(public)
     assert "555" not in str(public)
     assert "@" not in str(public)
 
 
 def test_a_family_may_have_no_phone_but_must_have_an_email():
-    Family(alias="Family A04", zip="06511", contact_address="somewhere",
+    Family(alias="Neighbor A04", zip="06511", contact_address="somewhere",
            contact_email="someone@example.com")        # no phone: fine
 
     with pytest.raises(ValidationError):
-        Family(alias="Family A04", zip="06511", contact_address="somewhere",
+        Family(alias="Neighbor A04", zip="06511", contact_address="somewhere",
                contact_email="not-an-email")
 
 

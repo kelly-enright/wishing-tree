@@ -45,7 +45,7 @@ def badges_for(card: dict, today: date | None = None,
             out.append({
                 "kind": "needed_by",
                 "label": f"Needed by {deadline}",
-                "detail": "This one has to arrive before a date the family gave us.",
+                "detail": "This one has to arrive before a date your neighbor gave us.",
             })
 
     waiting = card.get("days_waiting", 0)
@@ -54,7 +54,7 @@ def badges_for(card: dict, today: date | None = None,
         out.append({
             "kind": "waiting",
             "label": f"Waiting {weeks} week{'' if weeks == 1 else 's'}",
-            "detail": "Nobody has picked this one up yet.",
+            "detail": "No neighbor has picked this one up yet.",
         })
 
     return out

@@ -37,8 +37,8 @@ export default function SignUpFamily() {
 
   return (
     <FormShell
-      title="I need help"
-      blurb="You get an alias like “Family A59”. That alias is the only name anyone else ever sees."
+      title="Make a wish"
+      blurb="Everyone needs a hand sometimes. Tell us what would help, and a neighbor nearby can make it happen. You'll only ever appear as “Neighbor A59,” never by name or address."
     >
       <ServiceNotice />
       <HowItWorks compact />
@@ -66,8 +66,8 @@ export default function SignUpFamily() {
                 onChange={(e) => setEmail(e.target.value)}
               />
               <span className="field__hint">
-                How the coordinator reaches you about a delivery. We never post it
-                and never email you anything else.
+                We'll only use this to coordinate your delivery. It's never shown
+                to anyone.
               </span>
             </label>
 
@@ -84,9 +84,9 @@ export default function SignUpFamily() {
             </label>
 
             <p className="form__privacy">
-              Your address, email and phone are shown only to the Wishing Tree
-              coordinator who delivers to you. They are never shown to donors, never
-              put on the wish wall, and never sent to the AI.
+              Your address, email and phone are only ever seen by the coordinator
+              who brings your delivery. They're never shown to the neighbor granting
+              your wish, never on the tree, and never sent to the AI.
             </p>
           </>
         )}

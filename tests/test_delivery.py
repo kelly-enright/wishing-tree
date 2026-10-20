@@ -37,7 +37,7 @@ def _token(client) -> dict:
     return {"X-Coordinator-Token": token}
 
 
-def _grant_first_open(client, donor="Donor D01", category: str | None = None) -> dict:
+def _grant_first_open(client, donor="Granter D01", category: str | None = None) -> dict:
     url = "/api/wishes" + (f"?category={category}" if category else "")
     wish = client.get(url).json()["wishes"][0]
     body = client.post("/api/grant", json={
@@ -64,14 +64,14 @@ def test_no_public_api_response_ever_contains_an_address_or_a_phone(client):
     public_endpoints = [
         "/api/health",
         "/api/accounts",
-        "/api/accounts/family/Family A04",
-        "/api/accounts/donor/Donor D01",
+        "/api/accounts/family/Neighbor A04",
+        "/api/accounts/donor/Granter D01",
         "/api/wishes",
         "/api/wishes?category=clothing",
         "/api/wishes?max_cost_usd=50",
         "/api/wishes?request_type=specific",
-        "/api/donors/Donor D01/pledges",
-        "/api/families/Family A04/deliveries",
+        "/api/donors/Granter D01/pledges",
+        "/api/families/Neighbor A04/deliveries",
         f"/api/families/{granted['wish']['family_alias']}/deliveries",
     ]
 
@@ -93,7 +93,7 @@ def test_the_grant_response_carries_no_contact_details(client):
         people = [*db.list_families(conn), *db.list_donors(conn)]
     wish = client.get("/api/wishes").json()["wishes"][0]
     body = client.post("/api/grant", json={
-        "donor_alias": "Donor D01", "request_id": wish["id"],
+        "donor_alias": "Granter D01", "request_id": wish["id"],
     }).text
     for person in people:
         assert person.contact_address not in body
@@ -176,7 +176,7 @@ def test_saying_it_does_not_work_hands_it_to_a_coordinator(client):
 
 def test_one_family_cannot_answer_for_another(client):
     granted = _grant_first_open(client)
-    other = "Family A19" if granted["wish"]["family_alias"] != "Family A19" else "Family A04"
+    other = "Neighbor A19" if granted["wish"]["family_alias"] != "Neighbor A19" else "Neighbor A04"
 
     response = client.post("/api/families/deliveries/respond", json={
         "family_alias": other, "pledge_id": granted["pledge"]["id"], "response": "confirmed",
@@ -228,7 +228,7 @@ def test_a_malformed_week_is_rejected(client):
 
 
 def test_rent_wishes_sit_in_their_own_section(client):
-    granted = _grant_first_open(client, donor="Donor D06", category="rent_utilities")
+    granted = _grant_first_open(client, donor="Granter D06", category="rent_utilities")
     sheet = client.get("/api/coordinator/run-sheet", headers=_token(client)).json()
 
     direct = [p for p in sheet["direct_payments"] if p["pledge_id"] == granted["pledge"]["id"]]
@@ -257,9 +257,9 @@ def test_several_wishes_for_one_family_are_one_delivery_row(client):
         conn.commit()
 
     first = client.post("/api/grant", json={
-        "donor_alias": "Donor D01", "request_id": wishes[0]["id"]}).json()
+        "donor_alias": "Granter D01", "request_id": wishes[0]["id"]}).json()
     second = client.post("/api/grant", json={
-        "donor_alias": "Donor D04", "request_id": extra.id}).json()
+        "donor_alias": "Granter D04", "request_id": extra.id}).json()
 
     sheet = client.get("/api/coordinator/run-sheet", headers=_token(client)).json()
     rows = [d for d in sheet["deliveries"] if d["family_alias"] == alias]
@@ -324,7 +324,7 @@ def test_a_missed_dropoff_puts_the_wish_back_on_the_wall(client):
     }).json()
 
     assert body["reopened_wishes"] == [wish_id]
-    assert "back on the wall" in body["note"]
+    assert "back on the tree" in body["note"]
     assert wish_id in {w["id"] for w in client.get("/api/wishes").json()["wishes"]}
 
     with db.connect(config.DB_PATH) as conn:
@@ -337,7 +337,7 @@ def test_a_reopened_wish_can_be_granted_by_someone_else(client):
         "pledge_ids": [granted["pledge"]["id"]], "status": "missed",
     })
     again = client.post("/api/grant", json={
-        "donor_alias": "Donor D02", "request_id": granted["wish"]["id"],
+        "donor_alias": "Granter D02", "request_id": granted["wish"]["id"],
     })
     assert again.status_code == 200
     assert again.json()["granted"] is True
@@ -346,7 +346,7 @@ def test_a_reopened_wish_can_be_granted_by_someone_else(client):
 def test_one_click_can_move_a_whole_delivery(client):
     wishes = client.get("/api/wishes").json()["wishes"][:2]
     ids = []
-    for wish, donor in zip(wishes, ["Donor D01", "Donor D04"]):
+    for wish, donor in zip(wishes, ["Granter D01", "Granter D04"]):
         body = client.post("/api/grant", json={
             "donor_alias": donor, "request_id": wish["id"],
         }).json()
@@ -381,7 +381,7 @@ def test_a_full_week_several_grants_one_missed_and_deliveries_done(client):
     """The scenario the problem asks for, start to finish."""
     headers = _token(client)
     wishes = client.get("/api/wishes").json()["wishes"][:4]
-    donors = ["Donor D01", "Donor D03", "Donor D04", "Donor D07"]
+    donors = ["Granter D01", "Granter D03", "Granter D04", "Granter D07"]
 
     granted = []
     for wish, donor in zip(wishes, donors):

@@ -46,7 +46,7 @@ export default function Coordinator() {
         <header className="page__nav"><Logo size={26} /></header>
         <h1 className="page__title">Admin</h1>
         <p className="page__blurb">
-          These screens show families’ home addresses, emails and phone numbers,
+          These screens show neighbors’ home addresses, emails and phone numbers,
           so they need the admin passcode.
         </p>
         <form className="form" onSubmit={submit}>
@@ -95,8 +95,8 @@ export default function Coordinator() {
       </p>
       <h1 className="page__title">Run sheet</h1>
       <p className="page__blurb">
-        Expected drop-offs and deliveries, with contact details and statuses. These
-        are the only screens that show a family’s address, email or phone number.
+        Drop-offs and deliveries for the week, with contact details and statuses.
+        The only screens that show a neighbor’s address, email or phone.
       </p>
 
       <RunSheet token={token} />

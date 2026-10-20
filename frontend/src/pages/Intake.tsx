@@ -57,7 +57,7 @@ export default function Intake() {
         <header className="page__nav"><Logo size={26} /></header>
         <h1 className="page__title">Sign in first</h1>
         <p className="page__blurb">
-          <Link to="/family/signup">Create a family account</Link> to start an intake.
+          <Link to="/family/signup">Make a wish</Link> to get started.
         </p>
       </main>
     )
@@ -207,7 +207,7 @@ export default function Intake() {
           {phase === 'done' && result && (
             <>
               <h1 className="page__title">
-                {result.held === 0 ? 'On the wish wall' : 'Here’s what happened'}
+                {result.held === 0 ? 'On the tree' : 'Here’s what happened'}
               </h1>
               <p className="page__blurb">
                 {result.published > 0 && (
@@ -228,7 +228,7 @@ export default function Intake() {
                     className={`outcome outcome--${outcome.published ? 'published' : 'held'}`}
                   >
                     <span className="outcome__status">
-                      {outcome.published ? 'On the wall' : 'Held'}
+                      {outcome.published ? 'On the tree' : 'Held'}
                     </span>
                     <p className="outcome__desc">{outcome.description}</p>
                     <p className="outcome__note">{outcome.note_to_family}</p>

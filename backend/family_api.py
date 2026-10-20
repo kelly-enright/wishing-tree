@@ -24,8 +24,8 @@ from backend.models import (
 router = APIRouter(prefix="/api/families")
 
 RESCHEDULE_MESSAGE = (
-    "Thanks for telling us. A Wishing Tree coordinator will get in touch to "
-    "sort out another time — you don't need to do anything else."
+    "Thanks for telling us. A coordinator will get in touch to find another "
+    "time. Nothing else for you to do."
 )
 
 CONFIRMED_MESSAGE = "Thanks — we'll see you then."
@@ -37,7 +37,7 @@ def family_deliveries(alias: str) -> dict:
     with db.connect() as conn:
         family = db.get_family(conn, alias)
         if family is None:
-            raise HTTPException(status_code=404, detail=f"No family with alias {alias!r}.")
+            raise HTTPException(status_code=404, detail=f"We couldn't find a neighbor with the alias {alias!r}.")
 
         region = config.get_region(family.region_slug)
         today = date.today()
@@ -77,7 +77,7 @@ def respond_to_window(body: WindowAnswer) -> dict:
         wish = db.get_request(conn, pledge.request_id)
         if wish is None or wish.family_alias != body.family_alias:
             # A pledge belongs to one family; nobody else may answer for them.
-            raise HTTPException(status_code=403, detail="That delivery is not yours.")
+            raise HTTPException(status_code=403, detail="That delivery isn't yours.")
 
         db.set_window_response(conn, body.pledge_id, body.response)
         conn.commit()
@@ -102,16 +102,16 @@ def respond_to_window(body: WindowAnswer) -> dict:
 STAGES = {
     "being_checked": "Being checked",
     "on_the_tree": "On the tree",
-    "granted": "Granted!",
+    "granted": "A neighbor granted it!",
     "on_its_way": "On its way",
     "delivered": "Delivered",
-    "not_posted": "Couldn't be posted",
+    "not_posted": "Not on the tree yet",
 }
 
 RENT_NOTE = (
-    "A Wishing Tree coordinator will email you to confirm the amount and who "
-    "to pay. The payment goes straight to your landlord or the utility "
-    "company — never to you, and never through this app."
+    "A coordinator will email you to confirm the amount and who to pay. The "
+    "payment goes straight to your landlord or the utility company — never "
+    "to you, and never through this app."
 )
 
 
@@ -126,13 +126,13 @@ def _stage_for(wish, pledge, review) -> tuple[str, str, bool]:
     )
 
     if status == "delivered":
-        return "delivered", "This one arrived. Thank you for letting us help.", False
+        return "delivered", "This one arrived.", False
     if status == "dropped_off":
         return ("on_its_way",
-                "A neighbor has dropped this at the hub. It comes to you on the "
-                "next delivery day.", False)
+                "It's at the hub. We bring it to you on the next delivery day.",
+                False)
     if status == "granted":
-        return "granted", "A neighbor has claimed this one.", False
+        return "granted", "A neighbor nearby is picking this up for you.", False
     if status == "open":
         if dropped_once:
             # Deliberately says nothing about why. A family does not need to
@@ -142,13 +142,14 @@ def _stage_for(wish, pledge, review) -> tuple[str, str, bool]:
             return "on_the_tree", "Still looking for the right neighbor.", True
         return ("on_the_tree",
                 "Up on the tree where neighbors can see it. We can't promise "
-                "someone will grant it, but most wishes find someone.", False)
+                "someone will grant it, but we'll do our best to find a "
+                "neighbor who can help.", False)
     if status == "pending_review":
         if review is not None and not review["approved"]:
             return "not_posted", review["note_to_family"], False
         return ("being_checked",
                 "We're checking this for anything that shouldn't be public. "
-                "It usually takes a moment.", False)
+                "It only takes a moment.", False)
     return "being_checked", "Just submitted.", False
 
 
@@ -159,7 +160,7 @@ def family_wishes(alias: str) -> dict:
     with db.connect() as conn:
         family = db.get_family(conn, alias)
         if family is None:
-            raise HTTPException(status_code=404, detail=f"No family with alias {alias!r}.")
+            raise HTTPException(status_code=404, detail=f"We couldn't find a neighbor with the alias {alias!r}.")
 
         region = config.get_region(family.region_slug)
         rows = []

@@ -116,6 +116,26 @@ def _check_email(email: str) -> str:
     return cleaned
 
 
+@app.get("/api/stats")
+def stats() -> dict:
+    """The small, true numbers on the landing page.
+
+    Counted from the database every time. Nothing here is rounded up, seeded
+    or aspirational — a counter on a charity's front page that is not real is
+    worse than no counter.
+    """
+    with db.connect() as conn:
+        granted = db.granted_ever(conn)
+        open_now = len(db.list_open_wishes(conn))
+    region = config.get_region()
+    return {
+        "wishes_granted": granted,
+        "wishes_open": open_now,
+        "region": region.name,
+        "line": f"Every wish on this tree is from someone in {region.name.split(',')[0]}.",
+    }
+
+
 @app.get("/api/retailers")
 def retailers() -> dict:
     """The stores a product link may point at.

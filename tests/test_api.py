@@ -34,7 +34,7 @@ def test_family_signup_creates_a_record_and_returns_an_alias(client):
     assert response.status_code == 201
     body = response.json()
     assert body["role"] == "family"
-    assert body["alias"] == "Family A59"   # next free alias after the seeded set
+    assert body["alias"] == "Neighbor A59"   # next free alias after the seeded set
     assert body["zip"] == "06511"
 
 
@@ -60,7 +60,7 @@ def test_the_contact_details_are_stored_for_the_coordinator(client):
         "contact_phone": "(203) 555-0191",
     })
     with db.connect(config.DB_PATH) as conn:
-        family = db.get_family(conn, "Family A59")
+        family = db.get_family(conn, "Neighbor A59")
     assert family is not None
     assert family.contact_address.startswith("4 Nightingale Ct")
     assert family.contact_email == "new.family@example.com"
@@ -148,10 +148,10 @@ def test_donor_signup_stores_preferences(client):
         "preference": "flexible",
     })
     assert response.status_code == 201
-    assert response.json()["alias"] == "Donor D09"
+    assert response.json()["alias"] == "Granter D09"
 
     with db.connect(config.DB_PATH) as conn:
-        donor = db.get_donor(conn, "Donor D09")
+        donor = db.get_donor(conn, "Granter D09")
     assert donor.budget_usd == 150
     assert [c.value for c in donor.preferred_categories] == ["clothing", "food"]
     assert donor.preference.value == "flexible"
@@ -165,7 +165,10 @@ def test_accounts_lists_every_seeded_family_and_donor(client):
     body = client.get("/api/accounts").json()
     assert len(body["families"]) == 15
     assert len(body["donors"]) == 8
-    assert body["families"][0]["alias"].startswith("Family ")
+    assert body["families"][0]["alias"].startswith("Neighbor ")
+    assert body["donors"][0]["alias"].startswith("Granter ")
+    # The word "donor" is never shown to anyone using the app.
+    assert "Donor" not in client.get("/api/accounts").text
 
 
 def test_the_accounts_list_leaks_no_contact_details(client):
@@ -186,7 +189,7 @@ def test_the_accounts_list_leaks_no_contact_details(client):
 
 
 def test_a_remembered_alias_can_be_confirmed(client):
-    assert client.get("/api/accounts/family/Family A27").status_code == 200
+    assert client.get("/api/accounts/family/Neighbor A27").status_code == 200
     assert client.get("/api/accounts/family/Family Z99").status_code == 404
 
 

@@ -36,21 +36,20 @@ from backend.models import (
 router = APIRouter(prefix="/api/intake")
 
 GREETING = (
-    "Hi — I'm here to help you put together your wishes. "
-    "Tell me what's going on and what would help most right now. "
+    "Hi — I'm here to help you put your wishes together. "
+    "Tell me what would help, in whatever words are easiest. "
     "You don't need to share your address, phone number or anyone's name here."
 )
 
 LIMIT_MESSAGE = (
-    "We've covered a lot here, so I'll stop and put together what we have. "
-    "You can look through the wishes on the next screen, change anything that "
-    "isn't right, and start a new chat later if you need to add more."
+    "We've covered a lot, so I'll stop here and gather what we have. "
+    "Check the wishes on the next screen, change anything that isn't right, "
+    "and start a new chat any time you want to add more."
 )
 
 WISH_CAP_MESSAGE = (
-    "You already have {used} wishes on the wall, which is the most we can show "
-    "at once ({cap}). Once one of them is granted, come back and we'll add the "
-    "next one."
+    "You have {used} wishes on the tree, which is as many as we show at once "
+    "({cap}). When one of them is granted, come back and we'll add the next."
 )
 
 # session_id -> conversation so far
@@ -88,7 +87,7 @@ def _family_or_404(alias: str):
     with db.connect() as conn:
         family = db.get_family(conn, alias)
     if family is None:
-        raise HTTPException(status_code=404, detail=f"No family with alias {alias!r}.")
+        raise HTTPException(status_code=404, detail=f"We couldn't find a neighbor with the alias {alias!r}.")
     return family
 
 
@@ -264,7 +263,7 @@ async def intake_message(body: IntakeMessage) -> dict:
     except Exception as exc:                       # noqa: BLE001
         raise HTTPException(
             status_code=502,
-            detail="The assistant could not answer just then. Please try again.",
+            detail="That didn't get through. Try sending it again.",
         ) from exc
 
     _HISTORY[session.session_id] = history
@@ -302,8 +301,8 @@ async def approve_intake(body: ApproveIntake) -> dict:
                 f"{text.plural(len(body.wishes) - remaining, 'one', 'some')} "
                 f"before approving."
                 if remaining
-                else "You have as many wishes on the wall as we can show at once. "
-                     "Once one of them is granted, come back and add the next."
+                else "You have as many wishes on the tree as we show at once. "
+                     "When one is granted, come back and add the next."
             ),
         )
 
@@ -373,9 +372,9 @@ async def _review_and_publish(request: Request, session_id: str) -> dict:
             "flags": [],
             "enforced": [],
             "note_to_family": (
-                "Wishing Tree has reached its daily limit for AI usage, so the "
-                "safety check on this one has to wait. Your wish is saved and "
-                "nothing is lost — it will go up once the limit resets."
+                "Our privacy check is busy right now, so this one has to wait. "
+                "Your wish is saved and nothing is lost — it goes up as soon as "
+                "the check is free."
             ),
             "budget_scope": limit.scope,
         }
@@ -388,8 +387,8 @@ async def _review_and_publish(request: Request, session_id: str) -> dict:
             "flags": [],
             "enforced": [],
             "note_to_family": (
-                "We could not finish the safety check on this one just now. "
-                "It is saved and a coordinator will look at it."
+                "We couldn't finish the privacy check on this one just now. "
+                "It's saved, and a coordinator will take a look."
             ),
         }
 

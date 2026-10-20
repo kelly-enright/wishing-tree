@@ -45,7 +45,7 @@ export default function Donor() {
         setGold(wall.recently_granted ?? [])
         setGoldDays(wall.granted_window_days ?? 30)
       })
-      .catch((e) => setError(userMessage(e, 'We could not load the wish wall.')))
+      .catch((e) => setError(userMessage(e, 'We could not load the tree.')))
       .finally(() => setBusy(null))
   }
 
@@ -57,7 +57,7 @@ export default function Donor() {
         <header className="page__nav"><Logo size={26} /></header>
         <h1 className="page__title">Sign in first</h1>
         <p className="page__blurb">
-          <Link to="/donor/signup">Create a donor account</Link> to browse and grant wishes.
+          <Link to="/donor/signup">Create an account</Link> to browse and grant wishes.
         </p>
       </main>
     )
@@ -117,7 +117,7 @@ export default function Donor() {
     return (
       <main className="page">
         <header className="page__nav"><Logo size={26} /></header>
-        <h1 className="page__title">Thank you — that wish is yours</h1>
+        <h1 className="page__title">You just made a neighbor's week. Thank you.</h1>
         <p className="page__blurb">{granted.wish.item_description}</p>
 
         <section className={`logistics logistics--${logistics.kind}`}>
@@ -143,7 +143,7 @@ export default function Donor() {
           type="button" className="btn btn--light"
           onClick={() => { setGranted(null); loadWall(filters); setMatches(null) }}
         >
-          Back to the wish wall
+          Back to the tree
         </button>
       </main>
     )
@@ -185,7 +185,7 @@ export default function Donor() {
         </div>
       </div>
 
-      <section className="filters" aria-label="Filter the wish wall">
+      <section className="filters" aria-label="Filter the wishes">
         <div className="filters__row">
           {(Object.keys(CATEGORY_LABELS) as Category[]).map((category) => (
             <button
@@ -242,7 +242,7 @@ export default function Donor() {
 
           {matches && (
             <button type="button" className="btn btn--light" onClick={() => setMatches(null)}>
-              Show the whole wall
+              Show the whole tree
             </button>
           )}
         </div>
@@ -316,7 +316,7 @@ export default function Donor() {
               <p>Delivery: {region.delivery_window}</p>
               <p className="hubcard__note">
                 Rent and utility wishes are paid straight to the landlord or provider —
-                never cash to a family.
+                never cash to a neighbor.
               </p>
             </aside>
           )}

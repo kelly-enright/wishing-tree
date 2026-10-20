@@ -1823,10 +1823,27 @@ textarea.field__input { resize: vertical; font: inherit; }
   letter-spacing: -0.015em;
 }
 
-.about__whohead { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-.about__whohead .about__heading { margin: 0; }
+/* Kelly and Monty sit beside the paragraph, and above it on a phone. */
+.about__who { display: flex; align-items: flex-start; gap: 24px; }
+.about__who .about__para { margin: 0; }
+.portrait { flex: 0 0 auto; }
+
+@media (max-width: 680px) {
+  .about__who { flex-direction: column; align-items: center; }
+  .about__who .portrait { margin-bottom: 4px; }
+}
 
 .hero__about { color: var(--evergreen); font-weight: 700; }
 
 .footer__links { margin: 10px 0 0; }
 .footer__links a { color: var(--evergreen); font-weight: 700; }
+
+.hero__from {
+  margin: 10px auto 0;
+  max-width: 48ch;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.hero__from strong { color: var(--evergreen); }

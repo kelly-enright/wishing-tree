@@ -169,7 +169,7 @@ def record(number: int, name: str, attack: str, defended: bool,
 
 def wish(**overrides) -> Request:
     base = dict(
-        family_alias="Family A04",
+        family_alias="Neighbor A04",
         category=Category.CLOTHING,
         request_type=RequestType.FLEXIBLE,
         item_description="Winter coat for an 8-year-old.",
@@ -308,7 +308,7 @@ def test_4_a_link_off_the_allowlist_is_stripped(live_db, loop):
 def test_5_the_turn_limit_stops_an_intake(client, monkeypatch):
     monkeypatch.setattr(config, "MAX_INTAKE_TURNS", 1)
     session_id = client.post("/api/intake/start",
-                             json={"family_alias": "Family A04"}).json()["session_id"]
+                             json={"family_alias": "Neighbor A04"}).json()["session_id"]
 
     first = client.post("/api/intake/message", json={
         "session_id": session_id,
@@ -343,7 +343,7 @@ def test_5_the_turn_limit_stops_an_intake(client, monkeypatch):
 
 def test_6_the_session_token_cap_stops_the_chat(client, monkeypatch):
     session_id = client.post("/api/intake/start",
-                             json={"family_alias": "Family A07"}).json()["session_id"]
+                             json={"family_alias": "Neighbor A07"}).json()["session_id"]
 
     response = client.post("/api/intake/message", json={
         "session_id": session_id,
@@ -387,10 +387,10 @@ def test_7_no_public_endpoint_returns_contact_details(client):
         people = [*db.list_families(conn), *db.list_donors(conn)]
 
     endpoints = [
-        "/api/health", "/api/accounts", "/api/accounts/family/Family A04",
+        "/api/health", "/api/accounts", "/api/accounts/family/Neighbor A04",
         "/api/wishes", "/api/wishes?category=clothing", "/api/wishes?max_cost_usd=50",
-        "/api/wishes?request_type=specific", "/api/donors/Donor D01/pledges",
-        "/api/families/Family A04/deliveries",
+        "/api/wishes?request_type=specific", "/api/donors/Granter D01/pledges",
+        "/api/families/Neighbor A04/deliveries",
     ]
 
     leaks = []
@@ -424,7 +424,7 @@ def test_7_no_public_endpoint_returns_contact_details(client):
 def test_8_unknown_details_are_asked_for_or_left_empty(client):
     """The hardest rule to keep: never invent a detail."""
     session_id = client.post("/api/intake/start",
-                             json={"family_alias": "Family A19"}).json()["session_id"]
+                             json={"family_alias": "Neighbor A19"}).json()["session_id"]
 
     turn = client.post("/api/intake/message", json={
         "session_id": session_id,

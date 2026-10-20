@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { listAccounts, type Account } from '../api'
+import { getStats, listAccounts, type Account, type Stats } from '../api'
 import Logo from '../components/Logo'
 import Monty from '../components/Monty'
 import { ServiceNotice } from '../components/ServiceArea'
@@ -13,15 +13,15 @@ type Health = {
 const ROLES = [
   {
     to: '/family/signup',
-    eyebrow: 'For families',
-    title: 'I need help',
-    blurb: 'Tell us what you need in your own words. We turn it into wishes you approve before anyone sees them.',
+    eyebrow: 'For neighbors',
+    title: 'Make a wish',
+    blurb: 'Something you or your family could use? Ask your neighbors.',
   },
   {
     to: '/donor/signup',
     eyebrow: 'For neighbors',
-    title: 'I want to give',
-    blurb: 'Browse wishes near you, or get matched to the ones your budget and interests fit best.',
+    title: 'Grant a wish',
+    blurb: 'Help a neighbor with something they need.',
   },
   {
     to: '/coordinator',
@@ -33,10 +33,13 @@ const ROLES = [
 
 export default function Landing() {
   const [health, setHealth] = useState<Health | null>(null)
+  const [stats, setStats] = useState<Stats | null>(null)
   const [accounts, setAccounts] = useState<{ families: Account[]; donors: Account[] } | null>(null)
   const [showAccounts, setShowAccounts] = useState(false)
   const [session, setLocalSession] = useState(getSession())
   const navigate = useNavigate()
+
+  useEffect(() => { getStats().then(setStats).catch(() => setStats(null)) }, [])
 
   useEffect(() => {
     fetch('/api/health')
@@ -66,10 +69,25 @@ export default function Landing() {
         <div className="hero__logo"><Logo plain size={52} /></div>
         <p className="hero__tagline">Grant a neighbor's wish, any time of year</p>
         <ServiceNotice />
+
+        {stats && (
+          <p className="hero__from">
+            {stats.line}
+            {stats.wishes_granted > 0 && (
+              <>
+                {' '}
+                <strong>
+                  {stats.wishes_granted} wish{stats.wishes_granted === 1 ? '' : 'es'} granted
+                </strong>{' '}
+                so far.
+              </>
+            )}
+          </p>
+        )}
         <p className="hero__lede">
-          A giving tree that stays up all year in New Haven. Families ask for what they
-          actually need, neighbors grant a wish, and everything moves through one
-          weekly drop-off.
+          A giving tree that stays up all year in New Haven. Ask for what would
+          actually help, or grant a wish for someone nearby. Everything moves
+          through one weekly drop-off.
         </p>
         <div className="hero__monty">
           <Monty size={64} />
@@ -112,7 +130,7 @@ export default function Landing() {
           <div>
             <p className="demo__tag">Demo shortcut — not part of the real product</p>
             <p className="demo__text">
-              Continue as an existing family or donor, without signing up or typing anything.
+              Continue as a neighbor who already has an account, without signing up.
             </p>
           </div>
           <button
@@ -136,7 +154,7 @@ export default function Landing() {
             {accounts && (
               <>
                 <div className="accounts__group">
-                  <h2 className="accounts__title">Families</h2>
+                  <h2 className="accounts__title">Making a wish</h2>
                   <ul className="accounts__list">
                     {accounts.families.map((account) => (
                       <li key={account.alias}>
@@ -151,7 +169,7 @@ export default function Landing() {
                   </ul>
                 </div>
                 <div className="accounts__group">
-                  <h2 className="accounts__title">Donors</h2>
+                  <h2 className="accounts__title">Granting a wish</h2>
                   <ul className="accounts__list">
                     {accounts.donors.map((account) => (
                       <li key={account.alias}>
@@ -179,7 +197,7 @@ export default function Landing() {
           </p>
           <p className="footer__note">
             No cash ever changes hands between neighbors. Rent and utilities are paid
-            directly to the landlord or provider.
+            straight to the landlord or provider.
           </p>
           <p className="footer__links">
             <Link to="/about">About Wishing Tree</Link>

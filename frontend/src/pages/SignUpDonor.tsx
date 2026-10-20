@@ -58,8 +58,8 @@ export default function SignUpDonor() {
 
   return (
     <FormShell
-      title="I want to give"
-      blurb="Tell us where you are and what you like to help with. You get an alias like “Donor D09”."
+      title="Grant a wish"
+      blurb="Tell us where you are and what you like to help with. You'll appear as “Granter D09” — a neighbor never sees your name."
     >
       <ServiceNotice />
 
@@ -82,7 +82,8 @@ export default function SignUpDonor() {
             placeholder="you@example.com" onChange={(e) => setEmail(e.target.value)}
           />
           <span className="field__hint">
-            How the coordinator reaches you about a drop-off. Never shown to families.
+            We'll only use this to coordinate your drop-off. It's never shown to
+            the neighbor whose wish you grant.
           </span>
         </label>
 
@@ -137,8 +138,9 @@ export default function SignUpDonor() {
         </fieldset>
 
         <p className="form__privacy">
-          Your address, email and phone are shown only to the coordinator. Families
-          never see them.
+          Your address, email and phone are only ever seen by the coordinator.
+          You won't see a neighbor's name or address, and they won't see yours.
+          That's on purpose, to protect each neighbor.
         </p>
 
         {error && <p className="form__error" role="alert">{error}</p>}

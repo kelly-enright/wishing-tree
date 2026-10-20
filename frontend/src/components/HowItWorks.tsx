@@ -27,8 +27,8 @@ export default function HowItWorks({ compact = false }: { compact?: boolean }) {
           <span className="how__num">3</span>
           <span className="how__text">
             <strong>A neighbor nearby grants it, and we deliver it to your door on a
-            Saturday.</strong> We can't promise every wish finds someone — but most do,
-            and nothing is lost if one doesn't.
+            Saturday.</strong> We can't promise every wish will be granted, but we'll
+            do our best to find a neighbor who can help.
           </span>
         </li>
       </ol>

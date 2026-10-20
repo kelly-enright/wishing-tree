@@ -328,7 +328,7 @@ export function getWishes(filters: WallFilters): Promise<WishWall> {
   if (filters.occasion) params.set('occasion', filters.occasion)
   if (filters.requestType) params.set('request_type', filters.requestType)
   if (filters.maxCost) params.set('max_cost_usd', filters.maxCost)
-  return request(`/api/wishes?${params}`, undefined, 'We could not load the wish wall.')
+  return request(`/api/wishes?${params}`, undefined, 'We could not load the tree.')
 }
 
 export function requestMatches(donorAlias: string, filters: WallFilters) {
@@ -580,4 +580,17 @@ export function releasePledge(pledgeId: number, donorAlias: string) {
 
 export function calendarUrl(pledgeId: number, donorAlias: string): string {
   return `/api/pledges/${pledgeId}/calendar.ics?donor_alias=${encodeURIComponent(donorAlias)}`
+}
+
+
+export type Stats = {
+  wishes_granted: number
+  wishes_open: number
+  region: string
+  line: string
+}
+
+/** Counted from the database every time. Nothing here is rounded up. */
+export function getStats(): Promise<Stats> {
+  return request('/api/stats', undefined, 'We could not load the numbers just now.')
 }

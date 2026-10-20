@@ -308,15 +308,22 @@ def counts(conn: sqlite3.Connection) -> dict[str, int]:
 # Aliases and lookups (sign-up)
 # --------------------------------------------------------------------------
 
+# The word a user sees. "Neighbor" for both sides of a wish, because that is
+# what they are to each other; the letter keeps the two sets apart. The tables
+# are still `families` and `donors` in code — renaming columns buys nothing and
+# risks a migration, and nobody outside this file reads them.
+ALIAS_LABELS = {"families": "Neighbor", "donors": "Granter"}
+
+
 def _next_alias(conn: sqlite3.Connection, table: str, prefix: str) -> str:
-    """Next free alias, e.g. 'Family A59'. Aliases are the only public names."""
+    """Next free alias, e.g. 'Neighbor A59'. Aliases are the only public names."""
     rows = conn.execute(f"SELECT alias FROM {table}").fetchall()
     highest = 0
     for row in rows:
         tail = row["alias"].rsplit(" ", 1)[-1]
         if tail.startswith(prefix) and tail[len(prefix):].isdigit():
             highest = max(highest, int(tail[len(prefix):]))
-    label = "Family" if table == "families" else "Donor"
+    label = ALIAS_LABELS[table]
     return f"{label} {prefix}{highest + 1:02d}"
 
 
@@ -710,3 +717,19 @@ def recently_granted(
          since.isoformat(), limit),
     )
     return [_request(r) for r in rows]
+
+
+def granted_ever(conn: sqlite3.Connection) -> int:
+    """How many wishes have been granted, all time.
+
+    Counted from pledges that stuck — a wish released or missed and granted
+    again by someone else counts once, because one wish was granted. This is
+    the number on the landing page, and it has to be real.
+    """
+    row = conn.execute(
+        """SELECT COUNT(DISTINCT request_id) AS n FROM pledges
+            WHERE status IN (?, ?, ?)""",
+        (PledgeStatus.PLEDGED.value, PledgeStatus.DROPPED_OFF.value,
+         PledgeStatus.DELIVERED.value),
+    ).fetchone()
+    return int(row["n"])

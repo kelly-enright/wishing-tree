@@ -24,9 +24,8 @@ export default function DonorHowItWorks({ compact = false }: { compact?: boolean
         <li>
           <span className="how__num">3</span>
           <span className="how__text">
-            <strong>We deliver it to the family, and you never see each other's
-            personal details</strong> — on purpose. You don't get their address;
-            they don't get your name.
+            <strong>We deliver it to your neighbor, and you never see each other's
+            personal details.</strong> That's on purpose, to protect each neighbor.
           </span>
         </li>
       </ol>

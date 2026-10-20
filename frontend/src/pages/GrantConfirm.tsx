@@ -159,7 +159,7 @@ export default function GrantConfirm({
       {!agreed && (
         <p className="confirm__nudge">
           Tick the box above once you know you can make it — the wish stays on the
-          tree for someone else until you do.
+          tree for another neighbor until you do.
         </p>
       )}
     </div>

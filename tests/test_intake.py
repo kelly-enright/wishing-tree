@@ -102,26 +102,26 @@ def test_a_family_address_never_appears_in_the_agent_prompt():
 # --------------------------------------------------------------------------
 
 def test_start_creates_a_session_and_greets_without_a_model_call(client):
-    body = client.post("/api/intake/start", json={"family_alias": "Family A04"}).json()
+    body = client.post("/api/intake/start", json={"family_alias": "Neighbor A04"}).json()
     assert body["session_id"].startswith("intake-")
     assert body["at_wish_cap"] is False
     assert body["usage"]["calls"] == 0        # the greeting is free
 
 
 def test_a_family_at_the_wish_cap_cannot_start(client):
-    """Family A07 has four open wishes; add one more and the cap is reached."""
+    """Neighbor A07 has four open wishes; add one more and the cap is reached."""
     with db.connect(config.DB_PATH) as conn:
         extra = db.list_requests(conn)[0]
-        extra.family_alias = "Family A07"
+        extra.family_alias = "Neighbor A07"
         extra.status = RequestStatus.OPEN
         db.insert_request(extra, conn)
         conn.commit()
-        assert db.open_wish_count(conn, "Family A07") == config.MAX_OPEN_WISHES_PER_FAMILY
+        assert db.open_wish_count(conn, "Neighbor A07") == config.MAX_OPEN_WISHES_PER_FAMILY
 
-    body = client.post("/api/intake/start", json={"family_alias": "Family A07"}).json()
+    body = client.post("/api/intake/start", json={"family_alias": "Neighbor A07"}).json()
     assert body["at_wish_cap"] is True
     assert body["session_id"] is None
-    assert "most we can show" in body["message"]
+    assert "as many as we show at once" in body["message"]
 
 
 def test_an_unknown_family_is_404(client):
@@ -134,7 +134,7 @@ def test_an_unknown_family_is_404(client):
 
 def test_a_turn_returns_drafts_and_counts_tokens(client, monkeypatch):
     monkeypatch.setattr(intake_api, "run_turn", _stub_turn("Got it.", [COAT], done=True))
-    session_id = client.post("/api/intake/start", json={"family_alias": "Family A04"}).json()["session_id"]
+    session_id = client.post("/api/intake/start", json={"family_alias": "Neighbor A04"}).json()["session_id"]
 
     turn = client.post("/api/intake/message",
                        json={"session_id": session_id, "message": "He needs a coat."}).json()
@@ -148,7 +148,7 @@ def test_a_turn_returns_drafts_and_counts_tokens(client, monkeypatch):
 
 def test_the_turn_cap_stops_the_chat_without_spending_a_call(client, monkeypatch):
     monkeypatch.setattr(intake_api, "run_turn", _stub_turn("ok", []))
-    session_id = client.post("/api/intake/start", json={"family_alias": "Family A04"}).json()["session_id"]
+    session_id = client.post("/api/intake/start", json={"family_alias": "Neighbor A04"}).json()["session_id"]
 
     with db.connect(config.DB_PATH) as conn:
         session = db.get_intake_session(conn, session_id)
@@ -160,11 +160,11 @@ def test_the_turn_cap_stops_the_chat_without_spending_a_call(client, monkeypatch
                        json={"session_id": session_id, "message": "one more"}).json()
     assert turn["limit_reached"] is True
     assert turn["usage"]["calls"] == 0          # no model call was made
-    assert "put together what we have" in turn["message"]
+    assert "gather what we have" in turn["message"]
 
 
 def test_an_overlong_message_is_refused(client):
-    session_id = client.post("/api/intake/start", json={"family_alias": "Family A04"}).json()["session_id"]
+    session_id = client.post("/api/intake/start", json={"family_alias": "Neighbor A04"}).json()["session_id"]
     response = client.post("/api/intake/message",
                            json={"session_id": session_id, "message": "x" * 2001})
     assert response.status_code == 422
@@ -182,7 +182,7 @@ def test_an_expired_session_is_404(client):
 
 def test_approval_publishes_through_the_safety_review(client, monkeypatch):
     monkeypatch.setattr(intake_api, "run_turn", _stub_turn("Got it.", [COAT], done=True))
-    session_id = client.post("/api/intake/start", json={"family_alias": "Family A04"}).json()["session_id"]
+    session_id = client.post("/api/intake/start", json={"family_alias": "Neighbor A04"}).json()["session_id"]
     client.post("/api/intake/message", json={"session_id": session_id, "message": "coat"})
 
     body = client.post("/api/intake/approve", json={
@@ -208,7 +208,7 @@ def test_approval_publishes_through_the_safety_review(client, monkeypatch):
 def test_a_rejected_wish_stays_hidden_and_the_family_is_told_why(client, monkeypatch):
     monkeypatch.setattr(intake_api, "run_turn", _stub_turn("Got it.", [COAT], done=True))
     monkeypatch.setattr(safety, "review_wish", _stub_review(False))
-    session_id = client.post("/api/intake/start", json={"family_alias": "Family A04"}).json()["session_id"]
+    session_id = client.post("/api/intake/start", json={"family_alias": "Neighbor A04"}).json()["session_id"]
     client.post("/api/intake/message", json={"session_id": session_id, "message": "coat"})
 
     body = client.post("/api/intake/approve", json={
@@ -227,7 +227,7 @@ def test_a_rejected_wish_stays_hidden_and_the_family_is_told_why(client, monkeyp
 def test_a_wish_is_never_public_before_the_review_runs(client, monkeypatch):
     """Approving stores it; only the safety review can make it open."""
     monkeypatch.setattr(intake_api, "run_turn", _stub_turn("Got it.", [COAT], done=True))
-    session_id = client.post("/api/intake/start", json={"family_alias": "Family A04"}).json()["session_id"]
+    session_id = client.post("/api/intake/start", json={"family_alias": "Neighbor A04"}).json()["session_id"]
     client.post("/api/intake/message", json={"session_id": session_id, "message": "coat"})
 
     seen: list[str] = []
@@ -249,7 +249,7 @@ def test_a_wish_is_never_public_before_the_review_runs(client, monkeypatch):
 
 def test_approving_more_than_the_cap_is_refused(client, monkeypatch):
     monkeypatch.setattr(intake_api, "run_turn", _stub_turn("ok", [COAT]))
-    session_id = client.post("/api/intake/start", json={"family_alias": "Family A04"}).json()["session_id"]
+    session_id = client.post("/api/intake/start", json={"family_alias": "Neighbor A04"}).json()["session_id"]
     too_many = [COAT.model_dump(mode="json")] * 6
     response = client.post("/api/intake/approve",
                            json={"session_id": session_id, "wishes": too_many})
@@ -262,7 +262,7 @@ def test_approving_more_than_the_cap_is_refused(client, monkeypatch):
 
 def test_a_missing_deadline_stays_missing():
     """Never make up a detail. No date given means no date stored."""
-    request = intake_api._to_request(COAT, "Family A04", "06511")
+    request = intake_api._to_request(COAT, "Neighbor A04", "06511")
     assert request.deadline is None
     assert request.deadline_label() == "No deadline"
     assert request.days_until_deadline() is None
@@ -270,27 +270,27 @@ def test_a_missing_deadline_stays_missing():
 
 def test_a_deadline_the_family_gave_is_kept():
     draft = COAT.model_copy(update={"deadline": date(2026, 12, 1)})
-    request = intake_api._to_request(draft, "Family A04", "06511")
+    request = intake_api._to_request(draft, "Neighbor A04", "06511")
     assert request.deadline == date(2026, 12, 1)
     assert request.deadline_label() == "2026-12-01"
 
 
 def test_a_missing_cost_is_filled_from_the_price_guide_and_marked_as_an_estimate():
-    request = intake_api._to_request(COAT, "Family A04", "06511")
+    request = intake_api._to_request(COAT, "Neighbor A04", "06511")
     assert request.budget_min_usd is not None and request.budget_max_usd is not None
     assert request.cost_is_estimate is True
 
 
 def test_a_cost_the_family_gave_is_not_marked_as_an_estimate():
     draft = COAT.model_copy(update={"estimated_cost_usd": 30.0})
-    request = intake_api._to_request(draft, "Family A04", "06511")
+    request = intake_api._to_request(draft, "Neighbor A04", "06511")
     assert request.estimated_cost_usd == 30.0
     assert request.cost_is_estimate is False
 
 
 def test_a_specific_wish_with_no_link_becomes_flexible():
     draft = COAT.model_copy(update={"request_type": RequestType.SPECIFIC, "product_link": None})
-    assert intake_api._to_request(draft, "Family A04", "06511").request_type is RequestType.FLEXIBLE
+    assert intake_api._to_request(draft, "Neighbor A04", "06511").request_type is RequestType.FLEXIBLE
 
 
 def test_a_specific_wish_keeps_its_link():
@@ -299,7 +299,7 @@ def test_a_specific_wish_keeps_its_link():
         "product_link": "https://www.target.com/p/coat/-/A-1",
         "estimated_cost_usd": 45.0,
     })
-    request = intake_api._to_request(draft, "Family A04", "06511")
+    request = intake_api._to_request(draft, "Neighbor A04", "06511")
     assert request.request_type is RequestType.SPECIFIC
     assert request.product_link.startswith("https://www.target.com")
 
@@ -332,7 +332,7 @@ def test_nonsense_does_not_match_anything():
 
 def test_every_call_is_written_to_the_trail_and_the_table(client, monkeypatch):
     monkeypatch.setattr(intake_api, "run_turn", _stub_turn("ok", [COAT]))
-    session_id = client.post("/api/intake/start", json={"family_alias": "Family A04"}).json()["session_id"]
+    session_id = client.post("/api/intake/start", json={"family_alias": "Neighbor A04"}).json()["session_id"]
     client.post("/api/intake/message", json={"session_id": session_id, "message": "hello"})
 
     rows = audit.read_all(config.AUDIT_PATH)
@@ -350,7 +350,7 @@ def test_every_call_is_written_to_the_trail_and_the_table(client, monkeypatch):
 def test_the_trail_separates_cached_from_uncached_input(client, monkeypatch):
     """They are priced differently, so they are never summed into one number."""
     monkeypatch.setattr(intake_api, "run_turn", _stub_turn("ok", []))
-    session_id = client.post("/api/intake/start", json={"family_alias": "Family A04"}).json()["session_id"]
+    session_id = client.post("/api/intake/start", json={"family_alias": "Neighbor A04"}).json()["session_id"]
     client.post("/api/intake/message", json={"session_id": session_id, "message": "hi"})
 
     usage = client.get(f"/api/intake/usage/{session_id}").json()

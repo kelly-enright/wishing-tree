@@ -27,7 +27,7 @@ from backend.models import (
 
 def _wish(**overrides) -> Request:
     base = dict(
-        family_alias="Family A04",
+        family_alias="Neighbor A04",
         category=Category.CLOTHING,
         request_type=RequestType.FLEXIBLE,
         item_description="Winter coat for an 8-year-old.",
@@ -276,7 +276,7 @@ def test_the_session_cap_stops_further_calls(spent):
     with pytest.raises(budget.BudgetExceeded) as err:
         budget.guard("intake-test")
     assert err.value.scope == "session"
-    assert "approve them" in err.value.friendly
+    assert "post them" in err.value.friendly
 
 
 def test_one_session_does_not_spend_another_session_s_budget(spent):
@@ -289,7 +289,7 @@ def test_the_daily_cap_stops_every_session(spent):
     with pytest.raises(budget.BudgetExceeded) as err:
         budget.guard("intake-fresh-session")
     assert err.value.scope == "daily"
-    assert "daily limit" in err.value.friendly
+    assert "busy right now" in err.value.friendly
 
 
 def test_being_under_both_caps_passes(spent):

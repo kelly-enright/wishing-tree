@@ -65,7 +65,7 @@ export default function MyGranted({ alias }: { alias: string }) {
 
       {rows.length === 0 && (
         <MontySays>
-          You haven't granted anything yet. Have a look at the tree — Monty says
+          You haven't granted a wish yet. Have a look at the tree — Monty says
           the gold leaves are the ones already spoken for.
         </MontySays>
       )}

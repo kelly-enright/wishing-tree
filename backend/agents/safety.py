@@ -248,8 +248,8 @@ def enforce(review: SafetyReview, request: Request) -> tuple[SafetyReview, list[
     note = review.note_to_family
     if not approved and review.approved:
         note = (
-            "We could not put this one on the wall yet. A coordinator will look "
-            "at it and get back to you."
+            "This one isn't on the tree yet. A coordinator will take a look and "
+            "get back to you."
         )
 
     return (

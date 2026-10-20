@@ -123,7 +123,7 @@ def test_filters_narrow_the_wall(client):
 def test_wishes_without_a_deadline_sort_last_on_the_wall(client):
     with db.connect(config.DB_PATH) as conn:
         db.insert_request(
-            Request(family_alias="Family A04", category=Category.OTHER,
+            Request(family_alias="Neighbor A04", category=Category.OTHER,
                     request_type=RequestType.FLEXIBLE, item_description="No date given.",
                     occasion=Occasion.EVERYDAY, zip="06511", budget_min_usd=20.0,
                     status=RequestStatus.OPEN),
@@ -172,7 +172,7 @@ def _match(request_id: int) -> WishMatch:
 
 
 def test_a_wish_the_search_never_returned_is_dropped(client):
-    deps = MatchDeps(donor_alias="Donor D01", session_id="s", candidate_ids=[1, 2])
+    deps = MatchDeps(donor_alias="Granter D01", session_id="s", candidate_ids=[1, 2])
     result = MatchmakerResult(matches=[_match(1), _match(999)])
     final, enforced = matchmaker.enforce(result, deps)
 
@@ -186,7 +186,7 @@ def test_a_wish_claimed_while_the_model_was_thinking_is_dropped(client):
         db.update_request_status(conn, open_wish.id, RequestStatus.GRANTED)
         conn.commit()
 
-    deps = MatchDeps(donor_alias="Donor D01", session_id="s",
+    deps = MatchDeps(donor_alias="Granter D01", session_id="s",
                      candidate_ids=[open_wish.id])
     final, enforced = matchmaker.enforce(MatchmakerResult(matches=[_match(open_wish.id)]), deps)
 
@@ -199,7 +199,7 @@ def test_more_than_five_matches_are_trimmed(client, monkeypatch):
     with db.connect(config.DB_PATH) as conn:
         ids = [w.id for w in db.list_open_wishes(conn, limit=7)]
 
-    deps = MatchDeps(donor_alias="Donor D01", session_id="s", candidate_ids=ids)
+    deps = MatchDeps(donor_alias="Granter D01", session_id="s", candidate_ids=ids)
     final, enforced = matchmaker.enforce(
         MatchmakerResult(matches=[_match(i) for i in ids]), deps
     )
@@ -229,7 +229,7 @@ def _first_open(client, category: str | None = None) -> dict:
 def test_granting_locks_the_wish_and_creates_a_pledge(client):
     wish = _first_open(client)
     body = client.post("/api/grant", json={
-        "donor_alias": "Donor D01", "request_id": wish["id"],
+        "donor_alias": "Granter D01", "request_id": wish["id"],
     }).json()
 
     assert body["granted"] is True
@@ -240,18 +240,18 @@ def test_granting_locks_the_wish_and_creates_a_pledge(client):
         pledge = db.get_pledge_for_request(conn, wish["id"])
     assert stored.status is RequestStatus.GRANTED
     assert pledge is not None
-    assert pledge.donor_alias == "Donor D01"
+    assert pledge.donor_alias == "Granter D01"
     assert pledge.delivery_date >= pledge.dropoff_date
 
 
 def test_a_second_donor_cannot_claim_the_same_wish(client):
     wish = _first_open(client)
-    first = client.post("/api/grant", json={"donor_alias": "Donor D01", "request_id": wish["id"]})
-    second = client.post("/api/grant", json={"donor_alias": "Donor D02", "request_id": wish["id"]})
+    first = client.post("/api/grant", json={"donor_alias": "Granter D01", "request_id": wish["id"]})
+    second = client.post("/api/grant", json={"donor_alias": "Granter D02", "request_id": wish["id"]})
 
     assert first.status_code == 200
     assert second.status_code == 409
-    assert "already granted" in second.json()["detail"]
+    assert "just granted this one" in second.json()["detail"]
 
     with db.connect(config.DB_PATH) as conn:
         pledges = [p for p in db.list_pledges(conn) if p.request_id == wish["id"]]
@@ -260,7 +260,7 @@ def test_a_second_donor_cannot_claim_the_same_wish(client):
 
 def test_a_granted_wish_leaves_the_wall(client):
     wish = _first_open(client)
-    client.post("/api/grant", json={"donor_alias": "Donor D01", "request_id": wish["id"]})
+    client.post("/api/grant", json={"donor_alias": "Granter D01", "request_id": wish["id"]})
     remaining = {w["id"] for w in client.get("/api/wishes").json()["wishes"]}
     assert wish["id"] not in remaining
 
@@ -268,7 +268,7 @@ def test_a_granted_wish_leaves_the_wall(client):
 def test_an_item_wish_goes_through_the_hub(client):
     wish = _first_open(client, "clothing")
     body = client.post("/api/grant", json={
-        "donor_alias": "Donor D01", "request_id": wish["id"],
+        "donor_alias": "Granter D01", "request_id": wish["id"],
     }).json()
 
     assert body["paid_directly_to_provider"] is False
@@ -282,13 +282,13 @@ def test_an_item_wish_goes_through_the_hub(client):
 def test_a_rent_wish_skips_the_hub_and_is_paid_to_the_provider(client):
     wish = _first_open(client, "rent_utilities")
     body = client.post("/api/grant", json={
-        "donor_alias": "Donor D06", "request_id": wish["id"],
+        "donor_alias": "Granter D06", "request_id": wish["id"],
     }).json()
 
     assert body["paid_directly_to_provider"] is True
     logistics = body["logistics"]
     assert logistics["kind"] == "direct_payment"
-    assert logistics["headline"] == "Paid directly to provider (simulated)"
+    assert logistics["headline"] == "Paid straight to the provider (simulated)"
     assert "hub_address" not in logistics
 
 
@@ -298,13 +298,13 @@ def test_the_drop_off_offered_is_the_one_the_schedule_chose(client):
         date.fromisoformat(wish["deadline"]) if wish["deadline"] else None
     )
     body = client.post("/api/grant", json={
-        "donor_alias": "Donor D01", "request_id": wish["id"],
+        "donor_alias": "Granter D01", "request_id": wish["id"],
     }).json()
     assert body["logistics"]["dropoff_date"] == expected["dropoff_date"]
 
 
 def test_granting_a_missing_wish_is_404(client):
-    response = client.post("/api/grant", json={"donor_alias": "Donor D01", "request_id": 99999})
+    response = client.post("/api/grant", json={"donor_alias": "Granter D01", "request_id": 99999})
     assert response.status_code == 404
 
 
@@ -316,8 +316,8 @@ def test_an_unknown_donor_cannot_grant(client):
 
 def test_a_donor_can_see_what_they_claimed(client):
     wish = _first_open(client)
-    client.post("/api/grant", json={"donor_alias": "Donor D01", "request_id": wish["id"]})
-    body = client.get("/api/donors/Donor D01/pledges").json()
+    client.post("/api/grant", json={"donor_alias": "Granter D01", "request_id": wish["id"]})
+    body = client.get("/api/donors/Granter D01/pledges").json()
     assert any(row["wish"]["id"] == wish["id"] for row in body["pledges"])
 
 

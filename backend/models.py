@@ -165,7 +165,7 @@ class Family(BaseModel):
     """
 
     id: int | None = None
-    alias: str = Field(description="public label, e.g. 'Family A27'")
+    alias: str = Field(description="public label, e.g. 'Neighbor A27'")
     zip: str
     region_slug: str = "new_haven"
 

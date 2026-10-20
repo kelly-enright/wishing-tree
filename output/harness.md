@@ -1178,7 +1178,7 @@ Agents arrive in later problems; these are the ones already standing.
 
 ## 25. Tests
 
-`./.venv/bin/python -m pytest` — **228 passing**, in under two seconds, every agent stubbed.
+`./.venv/bin/python -m pytest` — **261 passing**, in under two seconds, every agent stubbed.
 
 `./.venv/bin/python -m pytest -m live` — **10 more** against the real model, excluded by default because they spend tokens. Every agent is stubbed, so the suite is free to run.
 
@@ -1190,6 +1190,7 @@ Agents arrive in later problems; these are the ones already standing.
 - `test_donor_experience.py` — badge thresholds and the no-shouting rule, what the confirmation screen promises for each wish type, picking a later drop-off, releasing a pledge and how it differs from a miss, and the `.ics` being a real calendar file with no family details in it
 - `test_donor.py` — the schedule in every case including a deadline nothing can reach, the wall's filters and what it refuses to carry, the candidate limit both ways, what `enforce()` throws away, the two-donor race, and rent skipping the hub
 - `test_safety.py` — the patterns (and what they must *not* match), the second pass narrowing in every direction it can, both token caps, and the activity feed refusing an unauthenticated request and carrying no contact details
+- `test_voice.py` — the vocabulary, held in place: every seeded person has a `Neighbor`/`Granter` alias and a new sign-up gets one too; no public endpoint says *donor* or any of the ten words on the banned list, once JSON field names and the `role` discriminator are stripped out; nothing claims a rate of wishes granted; each agent prompt only names a banned word inside a sentence forbidding it; and the landing counter is real — it rises when a wish is granted and does not double-count one released and granted again.
 - `test_intake.py` — the agent's deps carry no contact details, turn and wish caps (the turn cap spending zero calls), approval storing `pending_review` and nothing public, draft-to-request conversion, price-guide matching, and the audit trail recording to both the file and the table with cached input kept separate. The model is stubbed, so the suite is fast and free; the two real runs are the table above.
 
 ## 26. Specs
@@ -1207,3 +1208,81 @@ _Filled in as the agents are built._
 ### Tools
 
 Each agent's tools are described in its own section: Intake in 8, Privacy & Safety in 10, Matchmaker in 14.
+
+## 27. A wording and tone pass
+
+The app worked before this pass; it did not yet sound like itself. The brief was
+neighbors helping neighbors — warm, welcoming, no shame in asking — so this is
+words only. No layout moved, no feature appeared, no behavior changed.
+
+**The two words that drove everything else.** *I need help* became **Make a
+wish**, *I want to give* became **Grant a wish**. Once the two doors are named
+that way, the rest of the vocabulary follows: nobody is a *donor* on screen —
+they are a **wish granter**, or just **a neighbor** — and nobody is a *family*
+either. Aliases went from `Family A59` to **Neighbor A59**. The code keeps its
+own names: the table is still `donors`, the route is still `/donor`, and
+`"role": "donor"` is still what the frontend routes on. Renaming those would be
+churn with no reader on the other end.
+
+**Three voices, because three people read this app.**
+
+Someone making a wish gets dignity, never pity. Short plain sentences. We never
+ask for their story and never ask them to be grateful — *"This one arrived.
+Thank you for letting us help."* lost its second sentence for that reason. The
+hardest line to get right was the honest one: a wish is not guaranteed, and we
+cannot claim otherwise. The old copy said *"most wishes find someone"*, which
+reads as reassurance but is a statistic we have no data for. It now says *"We
+can't promise someone will grant it, but we'll do our best to find a neighbor
+who can help."* That is a promise about our effort, which we can keep.
+
+A wish granter gets warm and practical. Giving is celebrated and never
+guilt-tripped: no family is there to be saved, no wish is anyone's last hope.
+Granting now ends on **"You just made a neighbor's week. Thank you."** Privacy
+is explained as a deliberate choice rather than a limitation — *"You won't see
+a neighbor's name or address, and they won't see yours. That's on purpose, to
+protect each neighbor."*
+
+Admin stays short, scannable and operational. It barely moved.
+
+**The counter on the landing page.** *"Every wish on this tree is from someone
+in New Haven"* sits under the tagline with a count of wishes granted so far.
+The count is real: a new `GET /api/stats` endpoint reads it from the pledges
+table, counting distinct wishes ever pledged, dropped off or delivered. A wish
+released and granted again counts once. There is no hardcoded number anywhere
+near it, and a test grants a wish and watches the counter move.
+
+**The intake agent was told how to speak.** The prompt already covered what to
+collect; it now carries a voice guide — dignity never pity, the banned words,
+never ask for their story, never ask for gratitude, never quote a rate of
+wishes granted. New prompt version `edb9400f3e4a`, about 2,571 tokens, which
+sits inside the cached prefix and so costs the same per call as the old one.
+
+**One sentence on the About page**, and only that one: *"Donors never see who
+they're helping, and families never see who helped them"* became *"Wish
+granters never see who they're helping, and neighbors never see who helped
+them."* The rest of that page is Kelly's own writing and was left untouched,
+including the sentences around it that still say *families*.
+
+**What this cost to verify.** Nothing. The pass changed strings, and every test
+is stubbed. The 76 rewritten lines are listed before and after in
+`output/wording_changes.md`, grouped by who reads them.
+
+| | |
+|---|---|
+| Lines rewritten | 76 |
+| Lines read and kept | 12 |
+| Files touched | 22 |
+| Tests after | 261 passing, 10 deselected |
+| Model calls spent | 0 |
+
+**A portrait on the About page.** Kelly asked for a picture of herself and
+Monty beside "Who I am". It is drawn in SVG in the same flat style as Monty —
+`frontend/src/components/KellyAndMonty.tsx` — rather than generated or
+photographed. Three reasons: the deliverables have to be self-contained, so no
+binary asset is the simpler promise; it stays sharp at any size and on any
+screen; and the real `<Monty />` component is embedded inside it rather than
+copied, so the two drawings cannot drift apart. The crewneck carries the only
+Yale blue in the app. Appearance is six named constants at the top of the file,
+which is how the first draft was corrected to dark brown hair and hazel eyes
+without touching a path. On a phone the illustration stacks above the
+paragraph.

@@ -48,7 +48,7 @@ export default function AgentActivity({ token }: { token: string }) {
         </div>
       </div>
       <p className="activity__note">
-        {cachedShare}% of input tokens served from cache. No family contact details are
+        {cachedShare}% of input tokens served from cache. No contact details are
         recorded on this page.
       </p>
 

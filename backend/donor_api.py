@@ -37,7 +37,7 @@ def _donor_or_404(alias: str):
     with db.connect() as conn:
         donor = db.get_donor(conn, alias)
     if donor is None:
-        raise HTTPException(status_code=404, detail=f"No donor with alias {alias!r}.")
+        raise HTTPException(status_code=404, detail=f"We couldn't find a neighbor with the alias {alias!r}.")
     return donor
 
 
@@ -187,8 +187,8 @@ def grant_wish(body: GrantRequest) -> dict:
         if wish.status is not RequestStatus.OPEN:
             raise HTTPException(
                 status_code=409,
-                detail="Someone else has already granted this wish. "
-                       "Have a look at what else is on the wall.",
+                detail="A neighbor just granted this one. Have a look at "
+                       "what else is on the tree.",
             )
 
         schedule = scheduling.dropoff_before(wish.deadline, today, region)
@@ -225,8 +225,8 @@ def grant_wish(body: GrantRequest) -> dict:
         if pledge is None:
             raise HTTPException(
                 status_code=409,
-                detail="Someone else got there first. "
-                       "Have a look at what else is on the wall.",
+                detail="A neighbor got there first. Have a look at what else "
+                       "is on the tree.",
             )
         conn.commit()
         granted = db.get_request(conn, wish.id)
@@ -240,11 +240,11 @@ def grant_wish(body: GrantRequest) -> dict:
         "logistics": (
             {
                 "kind": "direct_payment",
-                "headline": "Paid directly to provider (simulated)",
+                "headline": "Paid straight to the provider (simulated)",
                 "detail": (
                     "Rent and utility help never passes through a person. "
                     "Wishing Tree pays the landlord or the utility company "
-                    "directly. No payment is actually made in this MVP."
+                    "directly. No payment is actually made in this demo."
                 ),
                 "delivery_date": schedule["delivery_date"],
             }
@@ -291,7 +291,7 @@ def _what_to_bring(wish) -> dict:
     if wish.request_type is RequestType.SPECIFIC:
         return {
             "kind": "specific",
-            "headline": "Bring this exact item",
+            "headline": "What to bring",
             "item": wish.item_description,
             "brand": wish.brand,
             "size": wish.size,
@@ -299,10 +299,10 @@ def _what_to_bring(wish) -> dict:
             "link": wish.product_link,
             "substitute_ok": wish.open_to_substitute,
             "substitute_note": (
-                "A similar substitute is fine if the exact one isn't available."
+                "Something similar is fine if you can't find this exact one."
                 if wish.open_to_substitute
-                else "This family asked for this item specifically — please don't "
-                     "substitute."
+                else "Your neighbor asked for this one specifically, so please don't "
+                     "swap it."
             ),
         }
     return {
@@ -350,8 +350,8 @@ def grant_options(request_id: int, donor_alias: str) -> dict:
     if wish.status is not RequestStatus.OPEN:
         raise HTTPException(
             status_code=409,
-            detail="Someone else has already granted this wish. "
-                   "Have a look at what else is on the tree.",
+            detail="A neighbor just granted this one. Have a look at what else "
+                   "is on the tree.",
         )
 
     card = wish.public_card(today)
@@ -367,8 +367,8 @@ def grant_options(request_id: int, donor_alias: str) -> dict:
         "paid_directly_to_provider": paid_direct,
         "direct_payment_note": (
             "Wishing Tree pays the landlord or the utility company directly — "
-            "never the family, and never you to them. A coordinator will email "
-            "you how to pay. No payment is actually taken in this MVP."
+            "never your neighbor, and never you to them. A coordinator will "
+            "email you how to pay. No payment is taken in this demo."
             if paid_direct else None
         ),
         "dropoff_choices": [] if paid_direct else _dropoff_choices(wish, today, region),
@@ -386,11 +386,11 @@ def grant_options(request_id: int, donor_alias: str) -> dict:
 # --------------------------------------------------------------------------
 
 DONOR_STATUS = {
-    "pledged": "Granted",
+    "pledged": "You granted this",
     "dropped_off": "Dropped off — thank you, it's on its way",
     "delivered": "Delivered",
     "missed": "Missed",
-    "released": "Released back to the tree",
+    "released": "Back on the tree",
     "canceled": "Canceled",
 }
 
@@ -486,8 +486,8 @@ def release_pledge(pledge_id: int, donor_alias: str) -> dict:
         "released": True,
         "wish_id": pledge.request_id,
         "wish_status": wish.status.value if wish else None,
-        "message": "Released. It's back on the tree for another neighbor — "
-                   "thank you for telling us rather than leaving it.",
+        "message": "Back on the tree for another neighbor. Thank you for "
+                   "telling us — that's genuinely helpful.",
     }
 
 
