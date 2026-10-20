@@ -201,3 +201,22 @@ one line explaining why, and the drop-off date that still arrives in time.
 and when to drop off: the hub, the Thursday window, and the Saturday the family
 receives it. Rent and utility wishes skip the hub and read "paid directly to
 provider (simulated)" — money never moves between people.
+
+---
+
+## Delivery and the run sheet
+
+A family with a granted wish sees it under **Coming to you**, with the delivery
+date and window, and either confirms it or says it doesn't work. Saying it
+doesn't work flags the delivery for a coordinator — there is no self-service
+rescheduling, because a new date is a promise to a person.
+
+The **coordinator run sheet** (behind the passcode) shows one week at a time:
+drop-offs with the donor's contact details, deliveries grouped by household
+with the family's address and phone, and rent/utility payments in their own
+section. Each row has a one-click status. A missed drop-off puts the wish back
+on the wall for another donor.
+
+Contact details appear on the run sheet and nowhere else. A test walks every
+seeded family and donor and checks their real address and phone against the
+raw body of every endpoint a visitor, family or donor can reach.

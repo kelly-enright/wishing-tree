@@ -33,6 +33,7 @@ from backend.models import (
     RequestStatus,
     RequestType,
     Weekday,
+    WindowResponse,
 )
 
 _WEEKDAY_INDEX = {
@@ -406,7 +407,11 @@ def seed(db_path: Path | None = None, today: date | None = None) -> dict[str, in
                     donor_alias=donor_aliases[i % len(donor_aliases)],
                     dropoff_date=drop,
                     delivery_date=deliv,
-                    family_confirmed_delivery=(request.status is RequestStatus.DELIVERED),
+                    window_response=(
+                        WindowResponse.CONFIRMED
+                        if request.status is RequestStatus.DELIVERED
+                        else WindowResponse.PENDING
+                    ),
                     status=pledge_status,
                 ),
                 conn,

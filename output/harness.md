@@ -566,7 +566,90 @@ obviously grant a wish in 06511. `zip` now resolves to the region that covers
 it: 29 candidates instead of 2. Both matchmaker calls are in the activity log,
 before and after, with different prompt versions.
 
-## 17. Safety measures so far
+## 17. Delivery confirmation and the run sheet
+
+No agents in any of this. It is database logic, and the whole point of the
+section is one rule: **contact details live on the coordinator's screen and
+nowhere else.**
+
+### The family's side
+
+A granted wish shows up under "Coming to you" with the delivery date and the
+weekly window. The family either confirms it or says it does not work.
+
+Saying it does not work **does not offer a new date**. It sets
+`window_response` to `needs_reschedule`, the run sheet flags it, and a
+coordinator gets in touch. There is no self-service rescheduling by design: a
+date is a promise to a person, and a person should be the one to make it. The
+response body deliberately carries no `delivery_date`, so the interface has
+nothing to quietly re-promise.
+
+`window_response` replaced the earlier `family_confirmed_delivery` boolean,
+because "not confirmed" and "cannot make it" are different things to a
+coordinator and a boolean cannot tell them apart. The old flag survives as a
+derived property.
+
+### The run sheet
+
+`GET /api/coordinator/run-sheet`, behind the coordinator token, one week at a
+time (Monday to Sunday, steppable with `week_of`). Three sections:
+
+| Section | Shows | One-click |
+|---|---|---|
+| Drop-offs | donor alias, **address, phone**, item, date, status | Dropped off · Missed |
+| Deliveries | family alias, **address, phone**, the items on that stop, whether they confirmed, status | Delivered |
+| Rent & utilities | family, funding donor, amount, pay-by date | Paid |
+
+Deliveries are **grouped by family and date**, because the coordinator makes
+one trip per household, not one per wish. A single button moves every pledge on
+that stop.
+
+A **missed drop-off puts the wish back on the wall** as `open`, so another
+donor can grant it rather than the family quietly going without. The response
+says how many wishes were reopened, and the sheet says so too.
+
+### The privacy line, proved
+
+`tests/test_delivery.py::test_no_public_api_response_ever_contains_an_address_or_a_phone`
+is the test the problem asked for, and it is not a spot check. It walks **every
+seeded family and donor** — 23 people — and looks for each one's actual address
+and phone in the raw response body of **every endpoint a signed-out visitor, a
+family or a donor can reach**: health, accounts, the wish wall under four
+filter combinations, a donor's pledges, and a family's own deliveries. It also
+asserts the field names never appear.
+
+The matching test in the other direction asserts the coordinator run sheet
+*does* carry them, because a coordinator who cannot find the house cannot
+deliver.
+
+Checked live against the running app at the end of the recorded week: 6 public
+endpoints, 23 people, **0 leaks** — while the run sheet returned
+`Family A15 → 260 Fernbrook Ln, New Haven, CT 06511 / (203) 555-0115`.
+
+### A full week, worked
+
+| | |
+|---|---|
+| Wishes granted | 6, across 5 donors |
+| Families confirming their window | 3 |
+| Families saying it does not work | 1 — flagged for a coordinator, no new date offered |
+| Drop-offs completed | 7 |
+| Drop-offs missed | 1 |
+| Delivery rounds completed | 4 |
+| Rent payments pending | 1, in its own section at $600 |
+
+The missed drop-off — Donor D03's interview blazer — reopened wish #11 to
+`open`, and it was back on the public wish wall immediately.
+
+### One bug this found
+
+A missed drop-off was still appearing as a scheduled delivery. Nothing had been
+dropped off, so there was nothing to deliver, and the coordinator would have
+driven to a house for an item that was never there. Missed and cancelled
+pledges now leave the delivery round while staying in the drop-off list, where
+the coordinator can see what actually happened. Two tests hold it.
+
+## 18. Safety measures so far
 
 Agents arrive in later problems; these are the ones already standing.
 
@@ -598,20 +681,24 @@ Agents arrive in later problems; these are the ones already standing.
 | Claiming is settled in SQL | `UPDATE … WHERE status = 'open'` | Two donors both being told they granted the same wish. |
 | Matches are checked against the search | `matchmaker.enforce()` | An invented or already-claimed wish id reaching a donor. |
 | Dates come from the schedule, not the model | `scheduling.py` | A delivery promise the app cannot keep. |
+| Contact details exist on one screen only | the run sheet, behind the token | Tested in both directions: 23 people checked against every public endpoint, and asserted present on the coordinator's. |
+| One family cannot answer for another | `respond_to_window` checks the pledge's family | Confirming or cancelling someone else's delivery. |
+| A missed drop-off reopens the wish | `set_pledge_status` | A family quietly going without because a donor did not turn up. |
 
-## 18. Tests
+## 19. Tests
 
-`./.venv/bin/python -m pytest tests -q` — **165 passing**, in under two seconds. Every agent is stubbed, so the suite is free to run.
+`./.venv/bin/python -m pytest tests -q` — **190 passing**, in under two seconds. Every agent is stubbed, so the suite is free to run.
 
 - `test_config.py` — the .env lookup in all four cases, region config, allowlist accept/reject, placeholder prices
 - `test_models.py` — every validator, and that `public_view()` drops contact details
 - `test_seed.py` — counts, category and occasion coverage, specific/flexible balance, all links allowlisted, fiction-range phone numbers, re-seeding does not duplicate
 - `test_api.py` — sign-up creates records and assigns aliases, responses never echo contact details, the accounts list leaks no address or phone, out-of-region and malformed zips are refused, the passcode accepts only the right value and never ships to the browser
+- `test_delivery.py` — the privacy proof across every public endpoint, window confirmation and the no-reschedule rule, week boundaries and stepping, grouped deliveries, each one-click status, a missed drop-off reopening its wish, and a whole week start to finish
 - `test_donor.py` — the schedule in every case including a deadline nothing can reach, the wall's filters and what it refuses to carry, the candidate limit both ways, what `enforce()` throws away, the two-donor race, and rent skipping the hub
 - `test_safety.py` — the patterns (and what they must *not* match), the second pass narrowing in every direction it can, both token caps, and the activity feed refusing an unauthenticated request and carrying no contact details
 - `test_intake.py` — the agent's deps carry no contact details, turn and wish caps (the turn cap spending zero calls), approval storing `pending_review` and nothing public, draft-to-request conversion, price-guide matching, and the audit trail recording to both the file and the table with cached input kept separate. The model is stubbed, so the suite is fast and free; the two real runs are the table above.
 
-## 19. Specs
+## 20. Specs
 
 _Filled in as the agents are built._
 

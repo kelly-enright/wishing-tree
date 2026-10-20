@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { unlockCoordinator } from '../api'
 import AgentActivity from './AgentActivity'
+import RunSheet from './RunSheet'
 import { coordinatorToken, setCoordinatorToken } from '../session'
 
 /**
@@ -73,19 +74,21 @@ export default function Coordinator() {
           Lock again
         </button>
       </p>
-      <h1 className="page__title">Agent activity</h1>
+      <h1 className="page__title">Run sheet</h1>
+      <p className="page__blurb">
+        Expected drop-offs and deliveries, with contact details and statuses. This is
+        the only screen that shows a family’s address and phone number.
+      </p>
+
+      <RunSheet token={token} />
+
+      <h2 className="activity__heading">Agent activity</h2>
       <p className="page__blurb">
         Every call the agents have made, in order: what went in, what came out, which
         tools ran, what the safety review removed, and what it cost.
       </p>
 
       <AgentActivity token={token} />
-
-      <h2 className="activity__heading">This week’s run sheet</h2>
-      <p className="page__blurb">
-        Expected drop-offs and deliveries, with contact details and statuses.
-      </p>
-      <p className="page__tag">Coming in a later step of this build.</p>
     </main>
   )
 }

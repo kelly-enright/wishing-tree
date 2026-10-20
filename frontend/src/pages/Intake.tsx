@@ -4,6 +4,7 @@ import {
   approveIntake, sendIntakeMessage, startIntake,
   type DraftWish, type Usage, type WishOutcome,
 } from '../api'
+import Deliveries from '../components/Deliveries'
 import TokenPanel from '../components/TokenPanel'
 import { clearSession, getSession } from '../session'
 import WishReview from './WishReview'
@@ -121,6 +122,8 @@ export default function Intake() {
           Switch account
         </button>
       </p>
+
+      <Deliveries familyAlias={session.alias} />
 
       <div className="intake">
         <div className="intake__main">

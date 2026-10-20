@@ -23,6 +23,7 @@ from backend.models import (
     PledgeStatus,
     Request,
     RequestStatus,
+    WindowResponse,
 )
 
 SCHEMA = """
@@ -78,7 +79,7 @@ CREATE TABLE IF NOT EXISTS pledges (
     donor_alias               TEXT    NOT NULL REFERENCES donors(alias),
     dropoff_date              TEXT    NOT NULL,
     delivery_date             TEXT    NOT NULL,
-    family_confirmed_delivery INTEGER NOT NULL DEFAULT 0,
+    window_response           TEXT    NOT NULL DEFAULT 'pending',
     status                    TEXT    NOT NULL,
     created_at                TEXT    NOT NULL
 );
@@ -187,7 +188,6 @@ def _request(row: sqlite3.Row) -> Request:
 
 def _pledge(row: sqlite3.Row) -> Pledge:
     data = dict(row)
-    data["family_confirmed_delivery"] = bool(data["family_confirmed_delivery"])
     return Pledge(**data)
 
 
@@ -247,10 +247,10 @@ def insert_request(request: Request, conn: sqlite3.Connection) -> int:
 def insert_pledge(pledge: Pledge, conn: sqlite3.Connection) -> int:
     cur = conn.execute(
         """INSERT INTO pledges (request_id, donor_alias, dropoff_date, delivery_date,
-                                family_confirmed_delivery, status, created_at)
+                                window_response, status, created_at)
            VALUES (?, ?, ?, ?, ?, ?, ?)""",
         (pledge.request_id, pledge.donor_alias, _iso(pledge.dropoff_date),
-         _iso(pledge.delivery_date), int(pledge.family_confirmed_delivery),
+         _iso(pledge.delivery_date), pledge.window_response.value,
          pledge.status.value, _iso(pledge.created_at)),
     )
     return int(cur.lastrowid)
@@ -604,3 +604,80 @@ def get_pledge_for_request(
         (request_id,),
     ).fetchone()
     return _pledge(row) if row else None
+
+
+# --------------------------------------------------------------------------
+# The coordinator's run sheet
+# --------------------------------------------------------------------------
+
+def pledges_in_week(
+    conn: sqlite3.Connection, week_start: date, week_end: date
+) -> list[Pledge]:
+    """Every pledge whose drop-off OR delivery falls in the week.
+
+    Both, because a drop-off on Thursday and its delivery on Saturday are the
+    same week here, but a pledge made late in one week can be delivered in the
+    next, and the coordinator needs to see it in both.
+    """
+    rows = conn.execute(
+        """SELECT * FROM pledges
+            WHERE (dropoff_date  BETWEEN ? AND ?)
+               OR (delivery_date BETWEEN ? AND ?)
+            ORDER BY dropoff_date, id""",
+        (week_start.isoformat(), week_end.isoformat(),
+         week_start.isoformat(), week_end.isoformat()),
+    )
+    return [_pledge(r) for r in rows]
+
+
+def get_pledge(conn: sqlite3.Connection, pledge_id: int) -> Pledge | None:
+    row = conn.execute("SELECT * FROM pledges WHERE id = ?", (pledge_id,)).fetchone()
+    return _pledge(row) if row else None
+
+
+def set_window_response(
+    conn: sqlite3.Connection, pledge_id: int, response: WindowResponse
+) -> None:
+    conn.execute(
+        "UPDATE pledges SET window_response = ? WHERE id = ?",
+        (response.value, pledge_id),
+    )
+
+
+# One click on the run sheet moves both the pledge and its wish. A missed
+# drop-off is the interesting one: the wish goes back on the wall rather than
+# being quietly lost, so another donor can pick it up.
+_WISH_STATUS_FOR_PLEDGE = {
+    PledgeStatus.PLEDGED: RequestStatus.GRANTED,
+    PledgeStatus.DROPPED_OFF: RequestStatus.DROPPED_OFF,
+    PledgeStatus.DELIVERED: RequestStatus.DELIVERED,
+    PledgeStatus.MISSED: RequestStatus.OPEN,
+    PledgeStatus.CANCELLED: RequestStatus.OPEN,
+}
+
+
+def set_pledge_status(
+    conn: sqlite3.Connection, pledge_id: int, status: PledgeStatus
+) -> Pledge | None:
+    """Move a pledge, and move its wish to match."""
+    pledge = get_pledge(conn, pledge_id)
+    if pledge is None:
+        return None
+
+    conn.execute(
+        "UPDATE pledges SET status = ? WHERE id = ?", (status.value, pledge_id)
+    )
+    update_request_status(conn, pledge.request_id, _WISH_STATUS_FOR_PLEDGE[status])
+    return get_pledge(conn, pledge_id)
+
+
+def pledges_for_family(conn: sqlite3.Connection, family_alias: str) -> list[Pledge]:
+    """What is on its way to one family."""
+    rows = conn.execute(
+        """SELECT p.* FROM pledges p
+             JOIN requests r ON r.id = p.request_id
+            WHERE r.family_alias = ?
+            ORDER BY p.delivery_date, p.id""",
+        (family_alias,),
+    )
+    return [_pledge(r) for r in rows]

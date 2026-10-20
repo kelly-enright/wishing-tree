@@ -348,3 +348,53 @@ drop-off, delivered 7 November.
    candidates. Donations all pass through one hub, so `zip` now means the
    donor's region: 29 candidates instead of 2. Both calls are in the activity
    log, before and after.
+
+---
+
+## Problem 6 — Delivery Confirmation and Coordinator Run Sheet
+
+### Prompt 1
+
+> Problem 6: "Delivery confirmation and coordinator run sheet"
+>
+> Last piece of the core flow: getting the item to the family.
+>
+> a.) When a wish is granted, the family sees their delivery window (the delivery day after the donor's drop-off) and taps "Confirm delivery window." If it doesn't work, they tap "This doesn't work," and see a message that the coordinator will reach out to reschedule. No self-service rescheduling.
+> b.) A coordinator run sheet (behind the coordinator passcode) showing one week at a time:
+>    Drop-offs: donor alias, contact details, item, and status (scheduled, dropped off, missed).
+>    Deliveries: family alias, address, phone, items, whether they confirmed, and status (scheduled, delivered).
+>    Rent/utility pledges in their own section.
+> c.) The coordinator can update statuses with one click. A missed drop-off reopens the wish (status open) so another donor can grant it.
+> d.) Contact details appear only on the coordinator screens and in no other view or API response. Add a test that proves the public wish API never returns address or phone fields.
+> e.) No agents in this problem; it is plain database logic.
+> f.) Test a full week (several grants, one missed drop-off, deliveries marked done), save screenshots, and update harness.md.
+>
+> Ask any questions you have before starting.
+
+**Outcome:** The core flow is complete — a family describes a need, a donor
+grants it, and the coordinator gets it to the door.
+
+- **"Coming to you"** on the family page, with the delivery date and window, and the two buttons. Saying it doesn't work sets `needs_reschedule` and returns a message about a coordinator getting in touch; the response deliberately carries no new date, so the interface has nothing to quietly re-promise.
+- **`window_response` replaced the `family_confirmed_delivery` boolean.** "Not confirmed" and "cannot make it" are different things to a coordinator, and a boolean cannot tell them apart. The old flag survives as a derived property.
+- **The run sheet**, Monday to Sunday with week stepping, three sections, contact details on every row, and one-click statuses. Deliveries are grouped by household and date, because the coordinator makes one trip per family, not one per wish — a single button moves every pledge on that stop.
+- **A missed drop-off reopens the wish** as `open`, and the sheet says how many went back on the wall.
+- **No agents.** Plain SQLite.
+- **190 tests pass.**
+
+**The privacy test you asked for** walks every seeded family and donor — 23
+people — and looks for each one's real address and phone in the raw response
+body of every endpoint a visitor, family or donor can reach, plus asserts the
+field names never appear. A second test asserts the coordinator run sheet *does*
+carry them, because a coordinator who cannot find the house cannot deliver.
+Checked live against the running app too: 6 public endpoints, 23 people, 0
+leaks, while the run sheet returned a real address.
+
+**The full week:** 6 wishes granted across 5 donors, 3 families confirming, 1
+saying it doesn't work, 7 drop-offs completed, 1 missed, 4 delivery rounds done,
+1 rent payment pending at $600. The missed drop-off reopened wish #11 and it was
+back on the public wall immediately. Six screenshots.
+
+**One bug this found:** a missed drop-off was still showing as a scheduled
+delivery — the coordinator would have driven to a house for an item that was
+never dropped off. Missed and cancelled pledges now leave the delivery round
+while staying in the drop-off list, where what happened is visible.

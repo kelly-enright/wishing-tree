@@ -311,3 +311,102 @@ export function grantWish(donorAlias: string, requestId: number) {
     request_id: requestId,
   })
 }
+
+// ------------------------------------------------------- deliveries & run sheet
+
+export type WindowResponse = 'pending' | 'confirmed' | 'needs_reschedule'
+
+export type Delivery = {
+  pledge_id: number
+  wish: WishCard
+  delivery_date: string
+  delivery_window: string
+  status: 'scheduled' | 'delivered'
+  window_response: WindowResponse
+  paid_directly_to_provider: boolean
+}
+
+export async function getDeliveries(familyAlias: string): Promise<{ deliveries: Delivery[] }> {
+  const response = await fetch(`/api/families/${encodeURIComponent(familyAlias)}/deliveries`)
+  if (!response.ok) throw new Error('Could not load your deliveries.')
+  return response.json()
+}
+
+export function respondToWindow(
+  familyAlias: string, pledgeId: number, response: 'confirmed' | 'needs_reschedule',
+) {
+  return post<{ message: string; coordinator_will_contact: boolean; window_response: WindowResponse }>(
+    '/api/families/deliveries/respond',
+    { family_alias: familyAlias, pledge_id: pledgeId, response },
+  )
+}
+
+export type DropoffRow = {
+  pledge_id: number
+  donor_alias: string
+  donor_address: string | null
+  donor_phone: string | null
+  item: string
+  dropoff_date: string
+  status: 'scheduled' | 'dropped off' | 'missed'
+}
+
+export type DeliveryRow = {
+  family_alias: string
+  family_address: string | null
+  family_phone: string | null
+  delivery_date: string
+  pledge_ids: number[]
+  items: string[]
+  confirmed: boolean
+  window_responses: WindowResponse[]
+  status: 'scheduled' | 'delivered'
+}
+
+export type DirectPaymentRow = {
+  pledge_id: number
+  family_alias: string
+  donor_alias: string
+  item: string
+  amount_usd: number
+  pay_by: string
+  status: string
+  note: string
+}
+
+export type RunSheet = {
+  week_start: string
+  week_end: string
+  is_this_week: boolean
+  previous_week: string
+  next_week: string
+  hub: { name: string; address: string; dropoff_window: string; delivery_window: string }
+  dropoffs: DropoffRow[]
+  deliveries: DeliveryRow[]
+  direct_payments: DirectPaymentRow[]
+  counts: {
+    dropoffs: number; deliveries: number; direct_payments: number
+    awaiting_confirmation: number; needs_reschedule: number
+  }
+}
+
+export async function getRunSheet(token: string, weekOf?: string): Promise<RunSheet> {
+  const query = weekOf ? `?week_of=${weekOf}` : ''
+  const response = await fetch(`/api/coordinator/run-sheet${query}`, {
+    headers: { 'X-Coordinator-Token': token },
+  })
+  if (!response.ok) throw new Error('Coordinator access has expired.')
+  return response.json()
+}
+
+export async function setPledgeStatus(
+  token: string, pledgeIds: number[], status: string,
+): Promise<{ reopened_wishes: number[]; note: string }> {
+  const response = await fetch('/api/coordinator/pledge-status', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Coordinator-Token': token },
+    body: JSON.stringify({ pledge_ids: pledgeIds, status }),
+  })
+  if (!response.ok) throw new Error('Could not update that.')
+  return response.json()
+}

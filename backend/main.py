@@ -24,7 +24,10 @@ from fastapi.staticfiles import StaticFiles
 
 from backend import config, db, safety_checks, seed
 from backend.agents import budget as budget_module
+from backend.coordinator_api import router as coordinator_router
+from backend.coordinator_auth import issue_token, require_coordinator
 from backend.donor_api import router as donor_router
+from backend.family_api import router as family_router
 from backend.intake_api import router as intake_router
 from backend.models import (
     AccountSummary,
@@ -49,6 +52,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Wishing Tree", version="0.1.0", lifespan=lifespan)
 app.include_router(intake_router)
 app.include_router(donor_router)
+app.include_router(family_router)
+app.include_router(coordinator_router)
 
 
 # --------------------------------------------------------------------------
@@ -176,39 +181,20 @@ def get_account(role: str, alias: str) -> dict:
     return {"role": role, **record.public_view()}
 
 
-# Tokens issued on a correct passcode. In memory, so they die with the process.
-_COORDINATOR_TOKENS: dict[str, datetime] = {}
-_TOKEN_TTL = timedelta(hours=8)
-
-
 @app.post("/api/coordinator/unlock")
 def coordinator_unlock(body: CoordinatorUnlock) -> dict:
     """The coordinator screens show addresses and phone numbers, so they are
-    behind a shared passcode. Checked here on the server, never in the browser.
+    behind a shared passcode, checked here on the server.
 
-    A correct passcode issues a token. Coordinator-only data is served against
-    that token, so those endpoints are closed on the server and not merely
-    hidden in the interface.
+    A correct passcode issues a token (see `coordinator_auth`). Coordinator
+    data is served against that token, so those endpoints are closed rather
+    than merely hidden.
     """
-    if not secrets.compare_digest(body.passcode.strip(), config.COORDINATOR_PASSCODE):
-        raise HTTPException(status_code=401, detail="That passcode is not right.")
-
-    token = secrets.token_urlsafe(24)
-    now = datetime.now(timezone.utc)
-    _COORDINATOR_TOKENS[token] = now
-    for issued, when in list(_COORDINATOR_TOKENS.items()):
-        if now - when > _TOKEN_TTL:
-            _COORDINATOR_TOKENS.pop(issued, None)
-    return {"role": "coordinator", "unlocked": True, "token": token}
-
-
-def require_coordinator(x_coordinator_token: str | None = Header(default=None)) -> None:
-    issued = _COORDINATOR_TOKENS.get(x_coordinator_token or "")
-    if issued is None or datetime.now(timezone.utc) - issued > _TOKEN_TTL:
-        raise HTTPException(
-            status_code=401,
-            detail="Coordinator access has expired. Enter the passcode again.",
-        )
+    return {
+        "role": "coordinator",
+        "unlocked": True,
+        "token": issue_token(body.passcode),
+    }
 
 
 @app.get("/api/coordinator/activity", dependencies=[Depends(require_coordinator)])

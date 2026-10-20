@@ -10,7 +10,7 @@ coordinator's activity feed.
 import pytest
 from fastapi.testclient import TestClient
 
-from backend import config, db, main, safety_checks, seed
+from backend import config, coordinator_auth, db, main, safety_checks, seed
 from backend.agents import budget, safety
 from backend.models import (
     AgentCallLog,
@@ -315,7 +315,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "test.db")
     monkeypatch.setattr(config, "AUDIT_PATH", tmp_path / "audit_trail.json")
     seed.seed(config.DB_PATH)
-    main._COORDINATOR_TOKENS.clear()
+    coordinator_auth.clear()
     return TestClient(main.app)
 
 

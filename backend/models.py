@@ -78,6 +78,19 @@ class PledgeStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
+class WindowResponse(str, Enum):
+    """What the family said about the delivery window they were offered.
+
+    There is no self-service rescheduling: a family that cannot make the window
+    says so, and a coordinator gets in touch. A date is a promise to a person,
+    and a person should make it.
+    """
+
+    PENDING = "pending"                    # not asked, or not answered yet
+    CONFIRMED = "confirmed"
+    NEEDS_RESCHEDULE = "needs_reschedule"  # waiting on the coordinator
+
+
 class Weekday(str, Enum):
     MONDAY = "monday"
     TUESDAY = "tuesday"
@@ -344,7 +357,7 @@ class Pledge(BaseModel):
     donor_alias: str
     dropoff_date: date
     delivery_date: date
-    family_confirmed_delivery: bool = False
+    window_response: WindowResponse = WindowResponse.PENDING
     status: PledgeStatus = PledgeStatus.PLEDGED
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -353,6 +366,22 @@ class Pledge(BaseModel):
         if self.delivery_date < self.dropoff_date:
             raise ValueError("delivery_date cannot be before dropoff_date")
         return self
+
+    @property
+    def family_confirmed_delivery(self) -> bool:
+        return self.window_response is WindowResponse.CONFIRMED
+
+    def dropoff_status(self) -> str:
+        """What the run sheet shows in the drop-off column."""
+        if self.status is PledgeStatus.MISSED:
+            return "missed"
+        if self.status in (PledgeStatus.DROPPED_OFF, PledgeStatus.DELIVERED):
+            return "dropped off"
+        return "scheduled"
+
+    def delivery_status(self) -> str:
+        """What the run sheet shows in the delivery column."""
+        return "delivered" if self.status is PledgeStatus.DELIVERED else "scheduled"
 
 
 # --------------------------------------------------------------------------
@@ -604,3 +633,22 @@ class DonorFilters(BaseModel):
     categories: list[Category] = Field(default_factory=list)
     request_type: RequestType | None = None
     occasion: Occasion | None = None
+
+
+# --------------------------------------------------------------------------
+# The coordinator's run sheet
+# --------------------------------------------------------------------------
+
+class WindowAnswer(BaseModel):
+    """A family answering the delivery window they were offered."""
+
+    family_alias: str
+    pledge_id: int
+    response: WindowResponse
+
+
+class StatusUpdate(BaseModel):
+    """One click on the run sheet."""
+
+    pledge_id: int
+    status: PledgeStatus
