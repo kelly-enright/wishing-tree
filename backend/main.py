@@ -15,11 +15,15 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+import secrets
+from datetime import datetime, timedelta, timezone
+
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from backend import config, db, seed
+from backend import config, db, safety_checks, seed
+from backend.agents import budget as budget_module
 from backend.intake_api import router as intake_router
 from backend.models import (
     AccountSummary,
@@ -170,13 +174,107 @@ def get_account(role: str, alias: str) -> dict:
     return {"role": role, **record.public_view()}
 
 
+# Tokens issued on a correct passcode. In memory, so they die with the process.
+_COORDINATOR_TOKENS: dict[str, datetime] = {}
+_TOKEN_TTL = timedelta(hours=8)
+
+
 @app.post("/api/coordinator/unlock")
 def coordinator_unlock(body: CoordinatorUnlock) -> dict:
     """The coordinator screens show addresses and phone numbers, so they are
-    behind a shared passcode. Checked here on the server, never in the browser."""
-    if body.passcode.strip() != config.COORDINATOR_PASSCODE:
+    behind a shared passcode. Checked here on the server, never in the browser.
+
+    A correct passcode issues a token. Coordinator-only data is served against
+    that token, so those endpoints are closed on the server and not merely
+    hidden in the interface.
+    """
+    if not secrets.compare_digest(body.passcode.strip(), config.COORDINATOR_PASSCODE):
         raise HTTPException(status_code=401, detail="That passcode is not right.")
-    return {"role": "coordinator", "unlocked": True}
+
+    token = secrets.token_urlsafe(24)
+    now = datetime.now(timezone.utc)
+    _COORDINATOR_TOKENS[token] = now
+    for issued, when in list(_COORDINATOR_TOKENS.items()):
+        if now - when > _TOKEN_TTL:
+            _COORDINATOR_TOKENS.pop(issued, None)
+    return {"role": "coordinator", "unlocked": True, "token": token}
+
+
+def require_coordinator(x_coordinator_token: str | None = Header(default=None)) -> None:
+    issued = _COORDINATOR_TOKENS.get(x_coordinator_token or "")
+    if issued is None or datetime.now(timezone.utc) - issued > _TOKEN_TTL:
+        raise HTTPException(
+            status_code=401,
+            detail="Coordinator access has expired. Enter the passcode again.",
+        )
+
+
+@app.get("/api/coordinator/activity", dependencies=[Depends(require_coordinator)])
+def coordinator_activity(limit: int = 200) -> dict:
+    """Every agent call, newest last, with what it did and what it cost.
+
+    Two things keep family details off this page, in this order:
+
+      1. Nothing written into a call summary is family text. The server
+         composes both summaries from structured values it already holds —
+         intake records *how long* a message was, never what it said, and
+         safety records verdicts and the kinds of things removed. There is no
+         code path that copies a family's words into these fields.
+      2. `scrub()` runs over both on the way out, which removes phone numbers,
+         emails and street addresses by pattern.
+
+    The first is the guarantee; the second is a net under it. A bare name with
+    no lead-in phrase would not be caught by pattern alone, which is exactly
+    why the summaries are built from structure rather than from text.
+    """
+    with db.connect() as conn:
+        calls = db.list_agent_calls(conn)
+        reviews = {r["request_id"]: r for r in db.list_safety_reviews(conn) if r}
+        daily = budget_module.tokens_today(conn)
+
+    rows = []
+    for call in calls[-limit:]:
+        review = reviews.get(call["request_id"]) if call["request_id"] else None
+        rows.append({
+            "timestamp": call["timestamp"],
+            "agent": call["agent"],
+            "operation": call["operation"],
+            "session_id": call["session_id"],
+            "request_id": call["request_id"],
+            "tools_called": [t for t in (call["tools_called"] or "").split(",") if t],
+            "input_summary": safety_checks.scrub(call["input_summary"]),
+            "output_summary": safety_checks.scrub(call["output_summary"]),
+            "removed": review["removed"] if review else [],
+            "flags": review["flags"] if review else [],
+            "enforced": review["enforced"] if review else [],
+            "input_tokens": call["input_tokens"],
+            "cached_input_tokens": call["cached_input_tokens"],
+            "output_tokens": call["output_tokens"],
+            "latency_ms": call["latency_ms"],
+            "cost_usd": call["estimated_cost_usd"],
+            "ok": bool(call["ok"]),
+            "error": call["error"],
+            "prompt_version": call["prompt_version"],
+        })
+
+    totals = {
+        "calls": len(calls),
+        "input_tokens": sum(c["input_tokens"] for c in calls),
+        "cached_input_tokens": sum(c["cached_input_tokens"] for c in calls),
+        "output_tokens": sum(c["output_tokens"] for c in calls),
+        "cost_usd": sum(c["estimated_cost_usd"] or 0 for c in calls),
+        "prices_are_placeholders": config.PRICES_ARE_PLACEHOLDERS,
+    }
+    return {
+        "calls": rows,
+        "totals": totals,
+        "budget": {
+            "daily_tokens": daily,
+            "daily_cap": config.DAILY_TOKEN_BUDGET,
+            "daily_remaining": max(0, config.DAILY_TOKEN_BUDGET - daily),
+            "session_cap": config.MAX_TOKENS_PER_INTAKE_SESSION,
+        },
+    }
 
 
 # --------------------------------------------------------------------------

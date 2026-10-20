@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { unlockCoordinator } from '../api'
-import { isCoordinatorUnlocked, setCoordinatorUnlocked } from '../session'
+import AgentActivity from './AgentActivity'
+import { coordinatorToken, setCoordinatorToken } from '../session'
 
 /**
  * The coordinator screens are the only ones that show a family's home address
@@ -10,7 +11,7 @@ import { isCoordinatorUnlocked, setCoordinatorUnlocked } from '../session'
  * only until the tab is closed.
  */
 export default function Coordinator() {
-  const [unlocked, setUnlocked] = useState(isCoordinatorUnlocked())
+  const [token, setToken] = useState<string | null>(coordinatorToken())
   const [passcode, setPasscode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -20,9 +21,9 @@ export default function Coordinator() {
     setBusy(true)
     setError(null)
     try {
-      await unlockCoordinator(passcode)
-      setCoordinatorUnlocked(true)
-      setUnlocked(true)
+      const unlocked = await unlockCoordinator(passcode)
+      setCoordinatorToken(unlocked.token)
+      setToken(unlocked.token)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.')
     } finally {
@@ -30,7 +31,7 @@ export default function Coordinator() {
     }
   }
 
-  if (!unlocked) {
+  if (!token) {
     return (
       <main className="page">
         <Link to="/" className="page__back">← Wishing Tree</Link>
@@ -57,7 +58,7 @@ export default function Coordinator() {
   }
 
   return (
-    <main className="page">
+    <main className="page page--wide">
       <Link to="/" className="page__back">← Wishing Tree</Link>
       <p className="signed-in">
         Coordinator view unlocked
@@ -65,17 +66,24 @@ export default function Coordinator() {
           type="button"
           className="signed-in__switch"
           onClick={() => {
-            setCoordinatorUnlocked(false)
-            setUnlocked(false)
+            setCoordinatorToken(null)
+            setToken(null)
           }}
         >
           Lock again
         </button>
       </p>
-      <h1 className="page__title">This week’s run sheet</h1>
+      <h1 className="page__title">Agent activity</h1>
       <p className="page__blurb">
-        This is where the coordinator will see expected drop-offs and deliveries for the
-        week, with contact details and statuses.
+        Every call the agents have made, in order: what went in, what came out, which
+        tools ran, what the safety review removed, and what it cost.
+      </p>
+
+      <AgentActivity token={token} />
+
+      <h2 className="activity__heading">This week’s run sheet</h2>
+      <p className="page__blurb">
+        Expected drop-offs and deliveries, with contact details and statuses.
       </p>
       <p className="page__tag">Coming in a later step of this build.</p>
     </main>

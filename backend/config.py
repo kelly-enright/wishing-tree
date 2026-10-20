@@ -214,6 +214,25 @@ HTTP_TIMEOUT_S = 45.0              # per model request
 HTTP_MAX_RETRIES = 1               # a wedged call is not worth retrying three times
 
 # --------------------------------------------------------------------------
+# Wish value caps
+# --------------------------------------------------------------------------
+# A wish asking for more than this is held for a human rather than published.
+# Rent and utilities get a higher ceiling because one month's rent legitimately
+# costs more than any item a donor would buy.
+
+MAX_ITEM_WISH_USD = 300.0
+MAX_RENT_UTILITIES_WISH_USD = 1_000.0
+
+
+def wish_value_cap(category: str) -> float:
+    return (
+        MAX_RENT_UTILITIES_WISH_USD
+        if category == "rent_utilities"
+        else MAX_ITEM_WISH_USD
+    )
+
+
+# --------------------------------------------------------------------------
 # Token budgets — the overspending guard
 # --------------------------------------------------------------------------
 

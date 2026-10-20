@@ -50,7 +50,55 @@ export function signUpDonor(form: {
 }
 
 export function unlockCoordinator(passcode: string) {
-  return post<{ unlocked: boolean }>('/api/coordinator/unlock', { passcode })
+  return post<{ unlocked: boolean; token: string }>('/api/coordinator/unlock', { passcode })
+}
+
+export type AgentCall = {
+  timestamp: string
+  agent: string
+  operation: string
+  session_id: string | null
+  request_id: number | null
+  tools_called: string[]
+  input_summary: string
+  output_summary: string
+  removed: string[]
+  flags: { kind: string; reason: string }[]
+  enforced: string[]
+  input_tokens: number
+  cached_input_tokens: number
+  output_tokens: number
+  latency_ms: number
+  cost_usd: number | null
+  ok: boolean
+  error: string | null
+  prompt_version: string | null
+}
+
+export type Activity = {
+  calls: AgentCall[]
+  totals: {
+    calls: number
+    input_tokens: number
+    cached_input_tokens: number
+    output_tokens: number
+    cost_usd: number
+    prices_are_placeholders: boolean
+  }
+  budget: {
+    daily_tokens: number
+    daily_cap: number
+    daily_remaining: number
+    session_cap: number
+  }
+}
+
+export async function getActivity(token: string): Promise<Activity> {
+  const response = await fetch('/api/coordinator/activity', {
+    headers: { 'X-Coordinator-Token': token },
+  })
+  if (!response.ok) throw new Error('Coordinator access has expired.')
+  return response.json()
 }
 
 export async function listAccounts(): Promise<{ families: Account[]; donors: Account[] }> {
@@ -122,11 +170,23 @@ export type IntakeTurn = {
   usage: Usage
 }
 
+export type WishOutcome = {
+  request_id: number
+  published: boolean
+  description: string
+  removed: string[]
+  flags: { kind: string; reason: string }[]
+  enforced: string[]
+  note_to_family: string
+}
+
 export type IntakeApproval = {
   approved: number
-  status: string
+  published: number
+  held: number
   duration_seconds: number
   turns_used: number
+  outcomes: WishOutcome[]
   usage: Usage
 }
 

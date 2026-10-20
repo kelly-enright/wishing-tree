@@ -220,7 +220,7 @@ class Request(BaseModel):
     category: Category
     request_type: RequestType
     item_description: str
-    deadline: date
+    deadline: date | None = None
     occasion: Occasion
     zip: str
     status: RequestStatus = RequestStatus.DRAFT
@@ -230,6 +230,10 @@ class Request(BaseModel):
     estimated_cost_usd: float | None = Field(default=None, ge=0)
     budget_min_usd: float | None = Field(default=None, ge=0)
     budget_max_usd: float | None = Field(default=None, ge=0)
+
+    # True when the cost came from the price guide rather than the family, so
+    # every screen can label it as an estimate rather than a stated price.
+    cost_is_estimate: bool = False
 
     # Specific wishes only.
     product_link: str | None = None
@@ -279,8 +283,16 @@ class Request(BaseModel):
             return self.estimated_cost_usd
         return self.budget_min_usd or 0.0
 
-    def days_until_deadline(self, today: date | None = None) -> int:
+    def days_until_deadline(self, today: date | None = None) -> int | None:
+        """None when the family gave no date. A missing deadline is not urgent
+        and is not overdue; it is simply unknown."""
+        if self.deadline is None:
+            return None
         return (self.deadline - (today or date.today())).days
+
+    def deadline_label(self) -> str:
+        """What every screen shows. Never invents a date."""
+        return self.deadline.isoformat() if self.deadline else "No deadline"
 
 
 # --------------------------------------------------------------------------
@@ -330,6 +342,14 @@ class AgentCallLog(BaseModel):
     error: str | None = None
     session_id: str | None = None
     tools_called: list[str] = Field(default_factory=list)
+
+    # Shape, never content. These are shown on the coordinator's activity page,
+    # so neither may ever contain a family's words: an unmatched school name or
+    # employer would otherwise leak through a summary. Intake records the size
+    # of what went in, not what it said.
+    input_summary: str = ""
+    output_summary: str = ""
+
     request_id: int | None = None
     prompt_version: str | None = None
     estimated_cost_usd: float | None = None
@@ -448,3 +468,57 @@ class IntakeSession(BaseModel):
     turns: int = 0
     status: IntakeStatus = IntakeStatus.ACTIVE
     duration_seconds: float | None = None
+
+
+# --------------------------------------------------------------------------
+# Privacy & Safety review
+# --------------------------------------------------------------------------
+
+class SafetyFlagKind(str, Enum):
+    PROMPT_INJECTION = "prompt_injection"
+    CASH_REQUEST = "cash_request"
+    SCAM = "scam"
+    POLICY_VIOLATION = "policy_violation"
+
+
+class SafetyFlag(BaseModel):
+    kind: SafetyFlagKind
+    reason: str = Field(max_length=200)
+
+
+class CleanedWish(BaseModel):
+    """The parts of a wish the reviewer is allowed to rewrite."""
+
+    item_description: str = Field(max_length=400)
+    size: str | None = None
+    color: str | None = None
+    brand: str | None = None
+    size_preferences: str | None = None
+    product_link: str | None = None
+
+
+class SafetyReview(BaseModel):
+    """What the Privacy & Safety agent returns for one wish.
+
+    `removed` names the *kinds* of things taken out ("a child's name"), never
+    the values. It is read by the family and shown in the coordinator's
+    activity log, so it must be safe to display.
+    """
+
+    approved: bool
+    cleaned: CleanedWish
+    removed: list[str] = Field(default_factory=list)
+    flags: list[SafetyFlag] = Field(default_factory=list)
+    note_to_family: str = Field(max_length=400)
+
+    def flag_kinds(self) -> set[SafetyFlagKind]:
+        return {f.kind for f in self.flags}
+
+
+class WishAmounts(BaseModel):
+    """What `check_wish_limits` is asked about."""
+
+    category: Category
+    estimated_cost_usd: float | None = None
+    budget_min_usd: float | None = None
+    budget_max_usd: float | None = None

@@ -8,8 +8,9 @@ layer on top; every function here takes or returns one of them.
 
 from __future__ import annotations
 
+import json
 import sqlite3
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from backend import config
@@ -54,7 +55,7 @@ CREATE TABLE IF NOT EXISTS requests (
     category           TEXT    NOT NULL,
     request_type       TEXT    NOT NULL,
     item_description   TEXT    NOT NULL,
-    deadline           TEXT    NOT NULL,
+    deadline           TEXT,
     occasion           TEXT    NOT NULL,
     zip                TEXT    NOT NULL,
     status             TEXT    NOT NULL,
@@ -66,6 +67,7 @@ CREATE TABLE IF NOT EXISTS requests (
     size               TEXT,
     color              TEXT,
     open_to_substitute INTEGER NOT NULL DEFAULT 0,
+    cost_is_estimate   INTEGER NOT NULL DEFAULT 0,
     size_preferences   TEXT,
     created_at         TEXT    NOT NULL
 );
@@ -99,6 +101,8 @@ CREATE TABLE IF NOT EXISTS agent_calls (
     model               TEXT    NOT NULL,
     operation           TEXT    NOT NULL,
     tools_called        TEXT    NOT NULL DEFAULT '',
+    input_summary       TEXT    NOT NULL DEFAULT '',
+    output_summary      TEXT    NOT NULL DEFAULT '',
     input_tokens        INTEGER NOT NULL DEFAULT 0,
     cached_input_tokens INTEGER NOT NULL DEFAULT 0,
     output_tokens       INTEGER NOT NULL DEFAULT 0,
@@ -110,6 +114,19 @@ CREATE TABLE IF NOT EXISTS agent_calls (
     prompt_version      TEXT
 );
 
+CREATE TABLE IF NOT EXISTS safety_reviews (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    request_id     INTEGER NOT NULL REFERENCES requests(id),
+    reviewed_at    TEXT    NOT NULL,
+    approved       INTEGER NOT NULL,
+    removed        TEXT    NOT NULL DEFAULT '[]',   -- JSON list of kinds, never values
+    flags          TEXT    NOT NULL DEFAULT '[]',   -- JSON list of {kind, reason}
+    enforced       TEXT    NOT NULL DEFAULT '[]',   -- what the code pass changed
+    note_to_family TEXT    NOT NULL DEFAULT '',
+    session_id     TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_reviews_request   ON safety_reviews(request_id);
 CREATE INDEX IF NOT EXISTS idx_calls_session     ON agent_calls(session_id);
 CREATE INDEX IF NOT EXISTS idx_requests_status   ON requests(status);
 CREATE INDEX IF NOT EXISTS idx_requests_zip      ON requests(zip);
@@ -163,6 +180,7 @@ def _donor(row: sqlite3.Row) -> Donor:
 def _request(row: sqlite3.Row) -> Request:
     data = dict(row)
     data["open_to_substitute"] = bool(data["open_to_substitute"])
+    data["cost_is_estimate"] = bool(data.get("cost_is_estimate", 0))
     return Request(**data)
 
 
@@ -209,14 +227,17 @@ def insert_request(request: Request, conn: sqlite3.Connection) -> int:
         """INSERT INTO requests (family_alias, category, request_type, item_description,
                                  deadline, occasion, zip, status, estimated_cost_usd,
                                  budget_min_usd, budget_max_usd, product_link, brand,
-                                 size, color, open_to_substitute, size_preferences,
-                                 created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                                 size, color, open_to_substitute, cost_is_estimate,
+                                 size_preferences, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (request.family_alias, request.category.value, request.request_type.value,
-         request.item_description, _iso(request.deadline), request.occasion.value,
+         request.item_description,
+         _iso(request.deadline) if request.deadline else None,
+         request.occasion.value,
          request.zip, request.status.value, request.estimated_cost_usd,
          request.budget_min_usd, request.budget_max_usd, request.product_link,
          request.brand, request.size, request.color, int(request.open_to_substitute),
+         int(request.cost_is_estimate),
          request.size_preferences, _iso(request.created_at)),
     )
     return int(cur.lastrowid)
@@ -250,10 +271,11 @@ def list_requests(
     conn: sqlite3.Connection, status: RequestStatus | None = None
 ) -> list[Request]:
     if status is None:
-        rows = conn.execute("SELECT * FROM requests ORDER BY deadline")
+        rows = conn.execute("SELECT * FROM requests ORDER BY deadline IS NULL, deadline")
     else:
         rows = conn.execute(
-            "SELECT * FROM requests WHERE status = ? ORDER BY deadline", (status.value,)
+            "SELECT * FROM requests WHERE status = ? ORDER BY deadline IS NULL, deadline",
+            (status.value,)
         )
     return [_request(r) for r in rows]
 
@@ -370,12 +392,14 @@ def get_intake_session(conn: sqlite3.Connection, session_id: str) -> IntakeSessi
 def insert_agent_call(call: AgentCallLog, conn: sqlite3.Connection) -> int:
     cur = conn.execute(
         """INSERT INTO agent_calls (timestamp, session_id, agent, model, operation,
-                                    tools_called, input_tokens, cached_input_tokens,
+                                    tools_called, input_summary, output_summary,
+                                    input_tokens, cached_input_tokens,
                                     output_tokens, latency_ms, estimated_cost_usd,
                                     ok, error, request_id, prompt_version)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (_iso(call.timestamp), call.session_id, call.agent, call.model, call.operation,
-         ",".join(call.tools_called), call.input_tokens, call.cached_input_tokens,
+         ",".join(call.tools_called), call.input_summary, call.output_summary,
+         call.input_tokens, call.cached_input_tokens,
          call.output_tokens, call.latency_ms, call.estimated_cost_usd,
          int(call.ok), call.error, call.request_id, call.prompt_version),
     )
@@ -407,3 +431,72 @@ def list_agent_calls(
             "SELECT * FROM agent_calls WHERE session_id = ? ORDER BY id", (session_id,)
         )
     return [dict(r) for r in rows]
+
+
+# --------------------------------------------------------------------------
+# Safety reviews
+# --------------------------------------------------------------------------
+
+def insert_safety_review(
+    conn: sqlite3.Connection,
+    request_id: int,
+    approved: bool,
+    removed: list[str],
+    flags: list[dict],
+    enforced: list[str],
+    note_to_family: str,
+    session_id: str | None = None,
+) -> int:
+    cur = conn.execute(
+        """INSERT INTO safety_reviews (request_id, reviewed_at, approved, removed,
+                                       flags, enforced, note_to_family, session_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        (request_id, _iso(datetime.now(timezone.utc)), int(approved),
+         json.dumps(removed), json.dumps(flags), json.dumps(enforced),
+         note_to_family, session_id),
+    )
+    return int(cur.lastrowid)
+
+
+def get_safety_review(conn: sqlite3.Connection, request_id: int) -> dict | None:
+    row = conn.execute(
+        "SELECT * FROM safety_reviews WHERE request_id = ? ORDER BY id DESC LIMIT 1",
+        (request_id,),
+    ).fetchone()
+    if row is None:
+        return None
+    out = dict(row)
+    out["approved"] = bool(out["approved"])
+    for field in ("removed", "flags", "enforced"):
+        out[field] = json.loads(out[field])
+    return out
+
+
+def list_safety_reviews(conn: sqlite3.Connection) -> list[dict]:
+    return [
+        get_safety_review(conn, row["request_id"])
+        for row in conn.execute(
+            "SELECT DISTINCT request_id FROM safety_reviews ORDER BY request_id"
+        )
+    ]
+
+
+def update_request_status(
+    conn: sqlite3.Connection, request_id: int, status: RequestStatus
+) -> None:
+    conn.execute(
+        "UPDATE requests SET status = ? WHERE id = ?", (status.value, request_id)
+    )
+
+
+def update_request_content(conn: sqlite3.Connection, request: Request) -> None:
+    """Write back a wish the safety review rewrote."""
+    conn.execute(
+        """UPDATE requests
+              SET item_description = ?, product_link = ?, brand = ?, size = ?,
+                  color = ?, size_preferences = ?, request_type = ?, status = ?
+            WHERE id = ?""",
+        (request.item_description, request.product_link, request.brand, request.size,
+         request.color, request.size_preferences, request.request_type.value,
+         request.status.value, request.id),
+    )

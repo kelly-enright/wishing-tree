@@ -21,7 +21,7 @@ from pydantic_ai import Agent, RunContext
 from pydantic_ai.messages import ModelMessage, ToolCallPart
 
 from backend import config, db
-from backend.agents import audit
+from backend.agents import audit, budget
 from backend.agents.model import build_model
 from backend.models import AgentCallLog, Category, IntakeReply, Occasion
 
@@ -230,12 +230,28 @@ def _tool_names(messages: list[ModelMessage]) -> list[str]:
     return names
 
 
+def summarize(message: str, reply: IntakeReply) -> tuple[str, str]:
+    """Shape, never content, for the coordinator's activity page.
+
+    The family's words are not summarised, counted into a snippet, or quoted.
+    Only how long the message was and how many wishes came out of it. A name
+    or a school in a family's message cannot reach the activity page by this
+    route, because the words never travel.
+    """
+    return (
+        f"family message, {len(message)} characters",
+        f"{len(reply.draft_wishes)} wish(es) drafted, done={str(reply.done).lower()}",
+    )
+
+
 async def run_turn(
     deps: IntakeDeps,
     message: str,
     history: list[ModelMessage] | None = None,
 ) -> tuple[IntakeReply, list[ModelMessage], AgentCallLog]:
     """One family message in, one reply out, one audit record written."""
+    budget.guard(deps.session_id)     # server-side; no browser can skip this
+
     agent = intake_agent()
     started = time.perf_counter()
     call = AgentCallLog(
@@ -267,6 +283,7 @@ async def run_turn(
     call.output_tokens = usage.output_tokens or 0
     call.latency_ms = int((time.perf_counter() - started) * 1000)
     call.tools_called = _tool_names(result.new_messages())
+    call.input_summary, call.output_summary = summarize(message, result.output)
     call.estimated_cost_usd = config.estimate_cost_usd(
         uncached, cached, call.output_tokens
     )

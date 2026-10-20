@@ -86,6 +86,9 @@ export default function WishReview({
                 className="field__input" type="date" value={wish.deadline ?? ''}
                 onChange={(e) => onChange(index, { deadline: e.target.value || null })}
               />
+              <span className="field__hint">
+                {wish.deadline ? 'A donor will see this date.' : 'No deadline — add one only if a date matters.'}
+              </span>
             </label>
 
             <label className="field">
@@ -129,6 +132,11 @@ export default function WishReview({
               />
             </label>
           </div>
+
+          <p className="wish__hint">
+            Leave the cost empty and we’ll show a typical price for this category,
+            marked as an estimate. You can type over it.
+          </p>
 
           {wish.product_link && (
             <p className="wish__link">

@@ -6,28 +6,51 @@ can be checked quickly and without spending tokens. The two end-to-end intakes
 against the real model are recorded in harness.md and screenshots/.
 """
 
-from datetime import date, timedelta
+from datetime import date
 
 import pytest
 from fastapi.testclient import TestClient
 
 from backend import config, db, intake_api, main, seed
-from backend.agents import audit, intake
+from backend.agents import audit, intake, safety
 from backend.models import (
     AgentCallLog,
     Category,
+    CleanedWish,
     DraftWish,
     IntakeStatus,
     Occasion,
     RequestStatus,
     RequestType,
+    SafetyReview,
 )
+
+
+def _stub_review(approved: bool = True):
+    """Stands in for the Privacy & Safety agent, so approving costs nothing."""
+    async def fake(request, session_id):
+        call = AgentCallLog(
+            agent="safety", model=config.MODEL_NAME, operation="review_wish",
+            session_id=session_id, request_id=request.id,
+            input_tokens=50, cached_input_tokens=800, output_tokens=40, latency_ms=5,
+        )
+        audit.record(call)
+        review = SafetyReview(
+            approved=approved,
+            cleaned=CleanedWish(item_description=request.item_description,
+                                size=request.size, product_link=request.product_link),
+            removed=[], flags=[],
+            note_to_family="Looks good." if approved else "Held for a coordinator.",
+        )
+        return review, [], call
+    return fake
 
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "test.db")
     monkeypatch.setattr(config, "AUDIT_PATH", tmp_path / "audit_trail.json")
+    monkeypatch.setattr(safety, "review_wish", _stub_review(True))
     seed.seed(config.DB_PATH)
     intake_api._HISTORY.clear()
     return TestClient(main.app)
@@ -157,7 +180,7 @@ def test_an_expired_session_is_404(client):
 # Approval
 # --------------------------------------------------------------------------
 
-def test_approval_stores_wishes_as_pending_review(client, monkeypatch):
+def test_approval_publishes_through_the_safety_review(client, monkeypatch):
     monkeypatch.setattr(intake_api, "run_turn", _stub_turn("Got it.", [COAT], done=True))
     session_id = client.post("/api/intake/start", json={"family_alias": "Family A04"}).json()["session_id"]
     client.post("/api/intake/message", json={"session_id": session_id, "message": "coat"})
@@ -167,32 +190,61 @@ def test_approval_stores_wishes_as_pending_review(client, monkeypatch):
     }).json()
 
     assert body["approved"] == 1
-    assert body["status"] == "pending_review"
+    assert body["published"] == 1
+    assert body["held"] == 0
     assert body["duration_seconds"] >= 0
+    assert body["outcomes"][0]["note_to_family"]
 
+    new_id = body["outcomes"][0]["request_id"]
     with db.connect(config.DB_PATH) as conn:
-        stored = [r for r in db.list_requests(conn, RequestStatus.PENDING_REVIEW)
-                  if r.family_alias == "Family A04"]
+        stored = [r for r in db.list_requests(conn) if r.id == new_id][0]
         session = db.get_intake_session(conn, session_id)
-    assert len(stored) == 1
-    assert stored[0].zip == "06511"                       # taken from the family record
+    assert stored.status is RequestStatus.OPEN            # published by the review
+    assert stored.zip == "06511"                          # taken from the family record
     assert session.status is IntakeStatus.APPROVED
     assert session.duration_seconds is not None
 
 
-def test_nothing_goes_public_at_this_stage(client, monkeypatch):
+def test_a_rejected_wish_stays_hidden_and_the_family_is_told_why(client, monkeypatch):
+    monkeypatch.setattr(intake_api, "run_turn", _stub_turn("Got it.", [COAT], done=True))
+    monkeypatch.setattr(safety, "review_wish", _stub_review(False))
+    session_id = client.post("/api/intake/start", json={"family_alias": "Family A04"}).json()["session_id"]
+    client.post("/api/intake/message", json={"session_id": session_id, "message": "coat"})
+
+    body = client.post("/api/intake/approve", json={
+        "session_id": session_id, "wishes": [COAT.model_dump(mode="json")],
+    }).json()
+
+    assert body["published"] == 0 and body["held"] == 1
+    assert "coordinator" in body["outcomes"][0]["note_to_family"].lower()
+
+    new_id = body["outcomes"][0]["request_id"]
+    with db.connect(config.DB_PATH) as conn:
+        stored = [r for r in db.list_requests(conn) if r.id == new_id][0]
+    assert stored.status is RequestStatus.PENDING_REVIEW   # still hidden
+
+
+def test_a_wish_is_never_public_before_the_review_runs(client, monkeypatch):
+    """Approving stores it; only the safety review can make it open."""
     monkeypatch.setattr(intake_api, "run_turn", _stub_turn("Got it.", [COAT], done=True))
     session_id = client.post("/api/intake/start", json={"family_alias": "Family A04"}).json()["session_id"]
     client.post("/api/intake/message", json={"session_id": session_id, "message": "coat"})
 
-    with db.connect(config.DB_PATH) as conn:
-        before = len(db.list_requests(conn, RequestStatus.OPEN))
-    client.post("/api/intake/approve", json={
+    seen: list[str] = []
+
+    async def failing_review(request, session_id):
+        with db.connect(config.DB_PATH) as conn:
+            stored = [r for r in db.list_requests(conn) if r.id == request.id][0]
+        seen.append(stored.status.value)
+        raise RuntimeError("reviewer unavailable")
+
+    monkeypatch.setattr(safety, "review_wish", failing_review)
+    body = client.post("/api/intake/approve", json={
         "session_id": session_id, "wishes": [COAT.model_dump(mode="json")],
-    })
-    with db.connect(config.DB_PATH) as conn:
-        after = len(db.list_requests(conn, RequestStatus.OPEN))
-    assert before == after
+    }).json()
+
+    assert seen == ["pending_review"]        # not public while being reviewed
+    assert body["published"] == 0            # and a failed review publishes nothing
 
 
 def test_approving_more_than_the_cap_is_refused(client, monkeypatch):
@@ -208,14 +260,32 @@ def test_approving_more_than_the_cap_is_refused(client, monkeypatch):
 # Draft -> Request conversion
 # --------------------------------------------------------------------------
 
-def test_a_missing_deadline_becomes_thirty_days_out():
+def test_a_missing_deadline_stays_missing():
+    """Never make up a detail. No date given means no date stored."""
     request = intake_api._to_request(COAT, "Family A04", "06511")
-    assert request.deadline == date.today() + timedelta(days=30)
+    assert request.deadline is None
+    assert request.deadline_label() == "No deadline"
+    assert request.days_until_deadline() is None
 
 
-def test_a_missing_cost_is_filled_from_the_price_guide():
+def test_a_deadline_the_family_gave_is_kept():
+    draft = COAT.model_copy(update={"deadline": date(2026, 12, 1)})
+    request = intake_api._to_request(draft, "Family A04", "06511")
+    assert request.deadline == date(2026, 12, 1)
+    assert request.deadline_label() == "2026-12-01"
+
+
+def test_a_missing_cost_is_filled_from_the_price_guide_and_marked_as_an_estimate():
     request = intake_api._to_request(COAT, "Family A04", "06511")
     assert request.budget_min_usd is not None and request.budget_max_usd is not None
+    assert request.cost_is_estimate is True
+
+
+def test_a_cost_the_family_gave_is_not_marked_as_an_estimate():
+    draft = COAT.model_copy(update={"estimated_cost_usd": 30.0})
+    request = intake_api._to_request(draft, "Family A04", "06511")
+    assert request.estimated_cost_usd == 30.0
+    assert request.cost_is_estimate is False
 
 
 def test_a_specific_wish_with_no_link_becomes_flexible():

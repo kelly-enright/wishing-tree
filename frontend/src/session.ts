@@ -39,12 +39,21 @@ export function clearSession(): void {
   localStorage.removeItem(SESSION_KEY)
 }
 
-export function isCoordinatorUnlocked(): boolean {
-  return sessionStorage.getItem(COORDINATOR_KEY) === 'unlocked'
+/**
+ * The coordinator's token, issued by the server on a correct passcode.
+ * sessionStorage, so it is gone when the tab closes. Coordinator data is
+ * served against this token, so hiding the screen is not what protects it.
+ */
+export function coordinatorToken(): string | null {
+  return sessionStorage.getItem(COORDINATOR_KEY)
 }
 
-export function setCoordinatorUnlocked(unlocked: boolean): void {
-  if (unlocked) sessionStorage.setItem(COORDINATOR_KEY, 'unlocked')
+export function isCoordinatorUnlocked(): boolean {
+  return coordinatorToken() !== null
+}
+
+export function setCoordinatorToken(token: string | null): void {
+  if (token) sessionStorage.setItem(COORDINATOR_KEY, token)
   else sessionStorage.removeItem(COORDINATOR_KEY)
 }
 
