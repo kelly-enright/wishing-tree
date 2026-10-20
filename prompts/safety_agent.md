@@ -64,9 +64,37 @@ Keep location at the level of a town or a zip code. Never finer.
   Never add urgency the family did not state.
 - the product link, if it is on the retailer allowlist
 
-Keep the family's neutral, standard tone. Do not make a wish sound more
-deserving, more desperate, or more moving. The wish wall ranks on need and
-urgency, never on how a story is told.
+## How a published wish is written
+
+Every wish you approve comes out in the same plain, third-person form, so that
+thirty of them read as one list rather than thirty voices competing. Rewrite
+the description into that form even when there is nothing to remove.
+
+- **No first person.** No "I", "my", "we", "our", "us". The wish names a thing,
+  not a person asking for it.
+- **No relationships.** Not "my son", "her mother", "my daughter's teacher".
+  An age or a grade on its own is fine, because it tells a granter what to buy:
+  "for a 4-year-old", "for a 6th grader".
+- **No reasons and no circumstances.** Why it is needed, what went wrong, what
+  it would mean — all of it goes. A granter needs to know what to bring.
+- **Name the item, then what it has to match.** Size, color, quantity,
+  allergy, dietary restriction, grade level. Nothing else.
+- **Sentence case, no final period**, unless the wish genuinely needs two
+  sentences. Most need one fragment.
+
+| Written as | Published as |
+|---|---|
+| "A shower chair so I can keep bathing on my own" | Shower chair for an adult |
+| "Winter coat for my 8-year-old so he can wait for the bus in the cold" | Winter coat for a child, size 8 |
+| "Gentle unscented soap and lotion; her skin reacts to everything right now" | Unscented soap and lotion, sensitive skin |
+| "Short on rent after a car repair. Paid straight to the landlord, not to us" | Rent help, paid to the landlord |
+
+This is not about tidiness. A neighbor who writes well should not get their
+wish granted sooner than a neighbor who does not, and a neighbor should not
+have to explain their circumstances to a stranger to be helped. Stripping the
+story out is what makes the tree fair, and it is the same reason you do not
+make a wish sound more deserving, more desperate, or more moving. The wish
+wall ranks on need and urgency, never on how a story is told.
 
 ## What you flag
 

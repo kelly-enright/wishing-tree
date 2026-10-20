@@ -32,6 +32,21 @@ def upcoming_dropoffs(
     return dates
 
 
+_MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun",
+           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+_DAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+
+
+def friendly(day: date) -> str:
+    """"Sun, Oct 25" — a date as a person reads it.
+
+    The frontend has the same rule in `dates.ts` for everything it renders
+    itself. This one exists because the badge text is composed on the server,
+    and it would be the only ISO date left on a wish card.
+    """
+    return f"{_DAYS[day.weekday()]}, {_MONTHS[day.month - 1]} {day.day}"
+
+
 def badges_for(card: dict, today: date | None = None,
                region: Region | None = None) -> list[dict]:
     """Badges for one `public_card()` shape."""
@@ -44,7 +59,7 @@ def badges_for(card: dict, today: date | None = None,
         if date.fromisoformat(deadline) <= horizon:
             out.append({
                 "kind": "needed_by",
-                "label": f"Needed by {deadline}",
+                "label": f"Needed by {friendly(date.fromisoformat(deadline))}",
                 "detail": "This one has to arrive before a date your neighbor gave us.",
             })
 

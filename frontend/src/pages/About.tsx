@@ -48,10 +48,10 @@ export default function About() {
       <section className="about__section">
         <h2 className="about__heading">How we protect privacy</h2>
         <p className="about__para">
-          Families are never shown by name or address. Wish granters never see who
+          Neighbors are never shown by name or address. Wish granters never see who
           they're helping, and neighbors never see who helped them. Every wish is
           checked for personal details before anyone sees it. Gifts are dropped off at
-          Yale School of Management, and we deliver them to families ourselves.
+          Yale School of Management, and we deliver them to neighbors ourselves.
         </p>
       </section>
 

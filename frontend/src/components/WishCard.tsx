@@ -1,5 +1,7 @@
 import { CATEGORY_LABELS, OCCASION_LABELS, type WishCard as Wish } from '../api'
 import CategoryIcon from './CategoryIcon'
+import { ItemLink } from './ItemLink'
+import { deadline as deadlineText } from '../dates'
 
 function cost(wish: Wish): string {
   if (wish.budget_min_usd != null && wish.budget_max_usd != null) {
@@ -10,8 +12,18 @@ function cost(wish: Wish): string {
   return '—'
 }
 
-/** One wish as a donor sees it. Built from the card the server sends, which
- *  has no contact details on it to begin with. */
+/**
+ * One wish as a wish granter sees it. Built from the card the server sends,
+ * which has no contact details on it to begin with.
+ *
+ * Two tiers. Cost and deadline decide whether someone can help at all, so
+ * they are the only things set large. Category, occasion, area and how long
+ * a wish has waited are worth knowing and not worth a label each — they run
+ * along one quiet line underneath.
+ *
+ * "Waiting 0 days" is not a fact anyone needs, so a wish that went up today
+ * simply does not mention it.
+ */
 export default function WishCard({
   wish, reason, onGrant, granting,
 }: {
@@ -52,39 +64,40 @@ export default function WishCard({
           {wish.cost_is_estimate && <span className="pill-estimate">Estimated</span>}
         </dd></div>
         <div><dt>Needed by</dt><dd>
-          {wish.deadline_label}
-          {wish.days_until_deadline != null && (
-            <span className="card__days">
-              {wish.days_until_deadline < 0
-                ? ` (${Math.abs(wish.days_until_deadline)}d ago)`
-                : ` (${wish.days_until_deadline}d)`}
-            </span>
-          )}
+          {wish.deadline ? deadlineText(wish.deadline) : 'No deadline'}
         </dd></div>
-        <div><dt>Category</dt><dd className="card__cat">
-          <CategoryIcon category={wish.category} size={14} />
-          {CATEGORY_LABELS[wish.category]}
-        </dd></div>
-        <div><dt>Occasion</dt><dd>{OCCASION_LABELS[wish.occasion]}</dd></div>
-        <div><dt>Area</dt><dd>{wish.zip}</dd></div>
-        <div><dt>Waiting</dt><dd>{wish.days_waiting} day{wish.days_waiting === 1 ? '' : 's'}</dd></div>
       </dl>
 
-      {(wish.size || wish.size_preferences) && (
-        <p className="card__extra">Size: {wish.size ?? wish.size_preferences}</p>
-      )}
-      {wish.product_link && (
-        <p className="card__extra card__link">{wish.product_link}</p>
+      <p className="card__meta">
+        <span className="card__cat">
+          <CategoryIcon category={wish.category} size={13} />
+          {CATEGORY_LABELS[wish.category]}
+        </span>
+        <span>{OCCASION_LABELS[wish.occasion]}</span>
+        <span>{wish.zip}</span>
+        {wish.days_waiting > 0 && (
+          <span>waiting {wish.days_waiting} day{wish.days_waiting === 1 ? '' : 's'}</span>
+        )}
+      </p>
+
+      {/* "Size" is only the right word for a size. A preference note —
+          "Partial help is still useful" — is not one, so it stands alone. */}
+      {wish.size && <p className="card__extra">Size: {wish.size}</p>}
+      {!wish.size && wish.size_preferences && (
+        <p className="card__extra">{wish.size_preferences}</p>
       )}
 
-      {onGrant && (
-        <button
-          type="button" className="btn btn--gold card__grant"
-          onClick={() => onGrant(wish)} disabled={granting}
-        >
-          {granting ? 'Granting…' : 'Grant this wish'}
-        </button>
-      )}
+      <div className="card__actions">
+        {wish.product_link && <ItemLink href={wish.product_link} small />}
+        {onGrant && (
+          <button
+            type="button" className="btn btn--gold card__grant"
+            onClick={() => onGrant(wish)} disabled={granting}
+          >
+            {granting ? 'Granting…' : 'Grant this wish'}
+          </button>
+        )}
+      </div>
     </article>
   )
 }

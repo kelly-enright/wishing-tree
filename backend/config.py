@@ -20,6 +20,7 @@ from urllib.parse import urlparse
 from dotenv import load_dotenv
 
 from backend.models import Region, Weekday, Window
+from urllib.parse import quote_plus
 
 # --------------------------------------------------------------------------
 # Paths
@@ -260,6 +261,16 @@ WAITING_BADGE_DAYS = 14
 # A wish asking for more than this is held for a human rather than published.
 # Rent and utilities get a higher ceiling because one month's rent legitimately
 # costs more than any item a donor would buy.
+
+def maps_url(address: str) -> str:
+    """A link that opens an address in whatever maps app the device has.
+
+    A plain Google Maps search URL, which iOS and Android both hand to the
+    installed maps application and a desktop browser opens as a web map. No
+    API key, no SDK, and nothing to configure per region.
+    """
+    return "https://www.google.com/maps/search/?api=1&query=" + quote_plus(address)
+
 
 MAX_ITEM_WISH_USD = 300.0
 MAX_RENT_UTILITIES_WISH_USD = 1_000.0

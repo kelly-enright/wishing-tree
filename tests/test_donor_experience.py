@@ -188,7 +188,11 @@ def test_granted_list_has_friendly_statuses_and_no_family_details(client):
     body = client.get("/api/donors/Granter D01/granted").json()
     assert body["granted"]
     labels = {row["label"] for row in body["granted"]}
-    assert "You granted this" in labels
+    assert "Ready to drop off" in labels
+    # A wish just claimed is coming up, not yet granted.
+    assert {r["pledge_id"] for r in body["coming_up"]} == {
+        r["pledge_id"] for r in body["granted"] if r["status"] == "pledged"
+    }
 
     with db.connect(config.DB_PATH) as conn:
         families = db.list_families(conn)
@@ -368,15 +372,36 @@ def test_a_gold_leaf_carries_only_an_id_and_a_category(client):
         assert set(leaf) == {"id", "category"}
 
 
-def test_granting_a_wish_turns_it_into_a_gold_leaf(client):
+def _deliver(client, pledge_id, status="delivered"):
+    """Drive a pledge forward the way the admin does, from the run sheet."""
+    return client.post(
+        "/api/coordinator/pledge-status",
+        headers=_token(client),
+        json={"pledge_ids": [pledge_id], "status": status},
+    )
+
+
+def test_a_claimed_wish_is_not_gold_until_it_arrives(client):
+    """Gold means granted, and granted means the neighbor has it. A wish
+    someone has claimed is a promise made, not a promise kept."""
     wish = client.get("/api/wishes").json()["wishes"][0]
-    before = {g["id"] for g in client.get("/api/wishes").json()["recently_granted"]}
-    client.post("/api/grant", json={"donor_alias": "Granter D01", "request_id": wish["id"]})
+    granted = client.post("/api/grant", json={
+        "donor_alias": "Granter D01", "request_id": wish["id"],
+    }).json()
 
     after = client.get("/api/wishes").json()
-    assert wish["id"] in {g["id"] for g in after["recently_granted"]}
-    assert wish["id"] not in {w["id"] for w in after["wishes"]}   # off the open list
-    assert wish["id"] not in before
+    assert wish["id"] not in {w["id"] for w in after["wishes"]}      # off the tree
+    assert wish["id"] not in {g["id"] for g in after["recently_granted"]}  # not gold
+
+    _deliver(client, granted["pledge"]["id"], "dropped_off")
+    assert wish["id"] not in {
+        g["id"] for g in client.get("/api/wishes").json()["recently_granted"]
+    }
+
+    _deliver(client, granted["pledge"]["id"], "delivered")
+    assert wish["id"] in {
+        g["id"] for g in client.get("/api/wishes").json()["recently_granted"]
+    }
 
 
 def test_old_grants_fall_off_the_tree(client):
@@ -391,12 +416,14 @@ def test_old_grants_fall_off_the_tree(client):
         "donor_alias": "Granter D01", "request_id": wish["id"],
     }).json()
     pledge_id = granted["pledge"]["id"]
+    _deliver(client, pledge_id, "delivered")
 
     assert wish["id"] in {g["id"] for g in client.get("/api/wishes").json()["recently_granted"]}
 
+    # Dated on the delivery, which is when the wish actually arrived.
     old = (date.today() - timedelta(days=config.GRANTED_LEAF_DAYS + 1)).isoformat()
     with db.connect(config.DB_PATH) as conn:
-        conn.execute("UPDATE pledges SET created_at = ? WHERE id = ?", (old, pledge_id))
+        conn.execute("UPDATE pledges SET delivery_date = ? WHERE id = ?", (old, pledge_id))
         conn.commit()
 
     assert wish["id"] not in {g["id"] for g in client.get("/api/wishes").json()["recently_granted"]}
@@ -412,3 +439,109 @@ def test_a_released_wish_is_not_a_gold_leaf(client):
     after = client.get("/api/wishes").json()
     assert wish["id"] not in {g["id"] for g in after["recently_granted"]}
     assert wish["id"] in {w["id"] for w in after["wishes"]}        # back on the tree
+
+
+# --------------------------------------------------------------------------
+# The three stages, and what "granted" is allowed to mean
+# --------------------------------------------------------------------------
+
+def _granted_rows(client, alias="Granter D01"):
+    return client.get(f"/api/donors/{alias}/granted").json()
+
+
+def test_a_wish_walks_the_three_stages(client):
+    wish = _first_open(client)
+    pledge = client.post("/api/grant", json={
+        "donor_alias": "Granter D01", "request_id": wish["id"],
+    }).json()["pledge"]["id"]
+
+    def row():
+        body = _granted_rows(client)
+        return next(r for r in body["granted"] if r["pledge_id"] == pledge)
+
+    assert row()["label"] == "Ready to drop off"
+    assert row()["section"] == "coming_up"
+
+    _deliver(client, pledge, "dropped_off")
+    assert row()["label"] == "Dropped off, thank you!"
+    assert row()["section"] == "granted"
+
+    _deliver(client, pledge, "delivered")
+    assert row()["label"] == "Delivered, wish granted!"
+    assert row()["section"] == "granted"
+
+
+def test_rent_never_says_drop_off(client):
+    """Nobody carries a rent payment to the hub, so nothing says they did."""
+    rent = next(w for w in client.get("/api/wishes").json()["wishes"]
+                if w["category"] == "rent_utilities")
+    pledge = client.post("/api/grant", json={
+        "donor_alias": "Granter D01", "request_id": rent["id"],
+    }).json()["pledge"]["id"]
+
+    def row():
+        return next(r for r in _granted_rows(client)["granted"]
+                    if r["pledge_id"] == pledge)
+
+    assert row()["label"] == "We'll email you how to pay"
+    _deliver(client, pledge, "dropped_off")
+    assert row()["label"] == "Payment received, thank you!"
+    _deliver(client, pledge, "delivered")
+    assert row()["label"] == "Paid to provider, wish granted!"
+
+    for stage in _granted_rows(client)["granted"]:
+        if stage["paid_directly_to_provider"]:
+            assert "drop" not in stage["label"].lower()
+
+
+def test_coming_up_holds_what_has_not_arrived_yet(client):
+    wish = _first_open(client)
+    pledge = client.post("/api/grant", json={
+        "donor_alias": "Granter D01", "request_id": wish["id"],
+    }).json()["pledge"]["id"]
+
+    body = _granted_rows(client)
+    assert pledge in {r["pledge_id"] for r in body["coming_up"]}
+    assert pledge not in {r["pledge_id"] for r in body["already_granted"]}
+
+    _deliver(client, pledge, "delivered")
+    body = _granted_rows(client)
+    assert pledge not in {r["pledge_id"] for r in body["coming_up"]}
+    assert pledge in {r["pledge_id"] for r in body["already_granted"]}
+
+
+def test_a_released_wish_leaves_the_granters_page(client):
+    wish = _first_open(client)
+    pledge = client.post("/api/grant", json={
+        "donor_alias": "Granter D01", "request_id": wish["id"],
+    }).json()["pledge"]["id"]
+    client.post(f"/api/pledges/{pledge}/release?donor_alias=Granter D01")
+
+    body = _granted_rows(client)
+    assert pledge not in {r["pledge_id"] for r in body["granted"]}
+    assert pledge not in {r["pledge_id"] for r in body["coming_up"]}
+    assert pledge not in {r["pledge_id"] for r in body["already_granted"]}
+
+
+def test_a_missed_dropoff_leaves_the_granters_page_too(client):
+    """It is back on the tree for someone else. Showing it here would only
+    be a reminder of something they did not do."""
+    wish = _first_open(client)
+    pledge = client.post("/api/grant", json={
+        "donor_alias": "Granter D01", "request_id": wish["id"],
+    }).json()["pledge"]["id"]
+    _deliver(client, pledge, "missed")
+
+    body = _granted_rows(client)
+    assert pledge not in {r["pledge_id"] for r in body["granted"]}
+    assert pledge not in {r["pledge_id"] for r in body["coming_up"]}
+
+
+def test_the_hub_address_is_linked_to_a_map(client):
+    wish = _first_open(client)
+    client.post("/api/grant", json={
+        "donor_alias": "Granter D01", "request_id": wish["id"],
+    })
+    body = _granted_rows(client)
+    assert body["hub"]["maps_url"].startswith("https://www.google.com/maps/")
+    assert "New+Haven" in body["hub"]["maps_url"]

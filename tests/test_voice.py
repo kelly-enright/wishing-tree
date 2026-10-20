@@ -149,31 +149,198 @@ def test_the_intake_prompt_carries_the_voice_guide():
 # The counter on the landing page
 # --------------------------------------------------------------------------
 
-def test_the_granted_counter_is_real(client):
+def _admin(client):
+    token = client.post("/api/coordinator/unlock",
+                        json={"passcode": config.COORDINATOR_PASSCODE}).json()["token"]
+    return {"X-Coordinator-Token": token}
+
+
+def _move(client, pledge_id, status):
+    return client.post("/api/coordinator/pledge-status", headers=_admin(client),
+                       json={"pledge_ids": [pledge_id], "status": status})
+
+
+def test_the_counter_moves_only_when_a_wish_arrives(client):
+    """"Granted" on the landing page means a neighbor has the thing. Claiming
+    it and dropping it at the hub are both still on the way."""
     before = client.get("/api/stats").json()["wishes_granted"]
     wish = client.get("/api/wishes").json()["wishes"][0]
-    client.post("/api/grant", json={
+    granted = client.post("/api/grant", json={
         "donor_alias": "Granter D01", "request_id": wish["id"],
-    })
+    }).json()
+    assert client.get("/api/stats").json()["wishes_granted"] == before
+
+    _move(client, granted["pledge"]["id"], "dropped_off")
+    assert client.get("/api/stats").json()["wishes_granted"] == before
+
+    _move(client, granted["pledge"]["id"], "delivered")
     assert client.get("/api/stats").json()["wishes_granted"] == before + 1
 
 
 def test_the_counter_does_not_double_count_a_regranted_wish(client):
-    """A wish released and granted again was still one wish granted."""
+    """A wish released, granted again and delivered is one wish granted."""
     wish = client.get("/api/wishes").json()["wishes"][0]
     first = client.post("/api/grant", json={
         "donor_alias": "Granter D01", "request_id": wish["id"],
     }).json()
-    after_one = client.get("/api/stats").json()["wishes_granted"]
+    before = client.get("/api/stats").json()["wishes_granted"]
 
     client.post(f"/api/pledges/{first['pledge']['id']}/release?donor_alias=Granter D01")
-    client.post("/api/grant", json={
+    second = client.post("/api/grant", json={
         "donor_alias": "Granter D02", "request_id": wish["id"],
-    })
-    assert client.get("/api/stats").json()["wishes_granted"] == after_one
+    }).json()
+    _move(client, second["pledge"]["id"], "delivered")
+    assert client.get("/api/stats").json()["wishes_granted"] == before + 1
 
 
 def test_the_landing_line_names_the_real_region(client):
     body = client.get("/api/stats").json()
     assert body["line"] == "Every wish on this tree is from someone in New Haven."
     assert body["wishes_open"] == len(client.get("/api/wishes").json()["wishes"])
+
+
+# --------------------------------------------------------------------------
+# The two sides of one wish
+# --------------------------------------------------------------------------
+
+def _stage(client, alias, request_id):
+    wishes = client.get(f"/api/families/{alias}/wishes").json()["wishes"]
+    return next(w for w in wishes if w["wish"]["id"] == request_id)
+
+
+def test_the_two_sides_never_contradict_each_other(client):
+    """While a granter is told the wish is ready to drop off, the neighbor
+    must not be told it was granted. Granted means it arrived."""
+    wish = client.get("/api/wishes").json()["wishes"][0]
+    alias = wish["family_alias"]
+    granted = client.post("/api/grant", json={
+        "donor_alias": "Granter D01", "request_id": wish["id"],
+    }).json()
+    pledge = granted["pledge"]["id"]
+
+    def granter_label():
+        rows = client.get("/api/donors/Granter D01/granted").json()["granted"]
+        return next(r for r in rows if r["pledge_id"] == pledge)["label"]
+
+    assert granter_label() == "Ready to drop off"
+    assert _stage(client, alias, wish["id"])["label"] == "A neighbor picked your wish"
+
+    _move(client, pledge, "dropped_off")
+    assert granter_label() == "Dropped off, thank you!"
+    assert _stage(client, alias, wish["id"])["label"] == "On its way"
+
+    _move(client, pledge, "delivered")
+    assert granter_label() == "Delivered, wish granted!"
+    assert _stage(client, alias, wish["id"])["label"] == "Delivered"
+
+
+def test_nothing_says_granted_before_a_wish_arrives(client):
+    wish = client.get("/api/wishes").json()["wishes"][0]
+    alias = wish["family_alias"]
+    pledge = client.post("/api/grant", json={
+        "donor_alias": "Granter D01", "request_id": wish["id"],
+    }).json()["pledge"]["id"]
+
+    for stage in ("pledged", "dropped_off"):
+        if stage != "pledged":
+            _move(client, pledge, stage)
+        seen = _stage(client, alias, wish["id"])
+        assert "granted" not in seen["label"].lower(), seen["label"]
+        assert "granted" not in seen["detail"].lower(), seen["detail"]
+
+
+# --------------------------------------------------------------------------
+# Seeded wishes read like published ones
+# --------------------------------------------------------------------------
+
+FIRST_PERSON = [" i ", " my ", " we ", " our ", " us ", "i'm ", "i've ", "my "]
+RELATIONSHIPS = ["my son", "my daughter", "my mother", "my grandson", "her brother",
+                 "my kids", "my child", "her mother", "my husband", "my wife"]
+
+
+def test_no_seeded_wish_speaks_in_the_first_person(client):
+    """Seed data has to look exactly like what the Safety agent publishes,
+    or the screenshots in the report show something the app never produces."""
+    with db.connect(config.DB_PATH) as conn:
+        for request in db.list_requests(conn):
+            text = f" {request.item_description.lower()} "
+            for word in FIRST_PERSON:
+                assert word not in text, f"{request.item_description!r} says {word!r}"
+            for phrase in RELATIONSHIPS:
+                assert phrase not in text, f"{request.item_description!r} says {phrase!r}"
+
+
+def test_no_seeded_wish_explains_itself(client):
+    """A granter needs to know what to bring, not why it is needed."""
+    with db.connect(config.DB_PATH) as conn:
+        for request in db.list_requests(conn):
+            text = request.item_description.lower()
+            for giveaway in (" so i ", " so he ", " so she ", " because ", " after "):
+                assert giveaway not in f" {text} ", request.item_description
+
+
+def test_the_safety_prompt_asks_for_the_published_form():
+    text = (config.PROMPTS_DIR / "safety_agent.md").read_text()
+    assert "No first person" in text
+    assert "No relationships" in text
+    assert "No reasons and no circumstances" in text
+    assert "Shower chair for an adult" in text
+
+
+# --------------------------------------------------------------------------
+# Dates, as a person reads them
+# --------------------------------------------------------------------------
+
+ISO = re.compile(r"\b20\d{2}-\d{2}-\d{2}\b")
+
+# What the admin run sheet is allowed to keep: it is a working document,
+# scanned in columns, and ISO sorts and lines up.
+ADMIN_PATHS = ("/api/coordinator/",)
+
+
+def test_no_date_a_person_reads_is_still_iso(client):
+    """Dates reach the browser as ISO — that is the right shape for data.
+    What matters is that no composed *sentence* carries one."""
+    for path in PUBLIC_PATHS:
+        body = client.get(path).json()
+        for text in _sentences(body):
+            assert not ISO.search(text), f"{path} shows an ISO date: {text!r}"
+
+
+def _sentences(node):
+    """Every string in a response that reads as prose rather than as data."""
+    DATA_FIELDS = {
+        "deadline", "dropoff_date", "delivery_date", "created_at", "updated_at",
+        "week_start", "week_end", "previous_week", "next_week", "pay_by",
+        "deadline_label", "date",
+    }
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key in DATA_FIELDS:
+                continue
+            yield from _sentences(value)
+    elif isinstance(node, list):
+        for item in node:
+            yield from _sentences(item)
+    elif isinstance(node, str):
+        yield node
+
+
+def test_the_deadline_badge_reads_like_a_date(client):
+    wishes = client.get("/api/wishes").json()["wishes"]
+    labels = [b["label"] for w in wishes for b in (w.get("badges") or [])
+              if b["kind"] == "needed_by"]
+    assert labels, "no deadline badges in the seed to check"
+    for label in labels:
+        assert not ISO.search(label), label
+        assert label.startswith("Needed by ")
+
+
+def test_the_run_sheet_may_keep_its_compact_dates(client):
+    """Stated as a rule so it is a decision rather than an oversight."""
+    token = client.post("/api/coordinator/unlock",
+                        json={"passcode": config.COORDINATOR_PASSCODE}).json()["token"]
+    sheet = client.get("/api/coordinator/run-sheet",
+                       headers={"X-Coordinator-Token": token}).json()
+    assert sheet["week_start"]
+    assert ISO.fullmatch(sheet["week_start"])

@@ -2,7 +2,7 @@
 
 from backend import db, seed
 from backend.config import is_allowed_retailer
-from backend.models import Category, Occasion, RequestType
+from backend.models import Category, Occasion, RequestStatus, RequestType
 
 
 def _seeded(tmp_path):
@@ -16,8 +16,9 @@ def test_counts_match_the_brief(tmp_path):
     with db.connect(path) as conn:
         counts = db.counts(conn)
     assert counts["families"] == 15
-    assert counts["requests"] == 40
     assert counts["donors"] == 8
+    # 40 current wishes, plus the delivered history that gives the tree a past.
+    assert counts["requests"] == 40 + len(seed.HISTORY)
 
 
 def test_every_category_and_occasion_appears(tmp_path):
@@ -29,9 +30,13 @@ def test_every_category_and_occasion_appears(tmp_path):
 
 
 def test_roughly_half_the_wishes_are_specific(tmp_path):
+    """Measured on the live wishes, which is what a wish granter actually
+    chooses between. The delivered history is all flexible and would drag the
+    ratio down without telling us anything about the tree."""
     path = _seeded(tmp_path)
     with db.connect(path) as conn:
-        requests = db.list_requests(conn)
+        requests = [r for r in db.list_requests(conn)
+                    if r.status is not RequestStatus.DELIVERED]
     specific = sum(r.request_type is RequestType.SPECIFIC for r in requests)
     assert 0.4 <= specific / len(requests) <= 0.6
 
@@ -80,7 +85,7 @@ def test_seeding_twice_does_not_duplicate(tmp_path):
     path = _seeded(tmp_path)
     seed.seed_if_empty(path)
     with db.connect(path) as conn:
-        assert db.counts(conn)["requests"] == 40
+        assert db.counts(conn)["requests"] == 40 + len(seed.HISTORY)
 
 
 def test_a_wish_with_no_deadline_survives_a_round_trip(tmp_path):

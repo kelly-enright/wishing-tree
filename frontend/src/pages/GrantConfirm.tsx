@@ -4,6 +4,13 @@ import {
   type GrantOptions, type GrantResponse, type WishCard as Wish,
 } from '../api'
 import WishCard from '../components/WishCard'
+import { MapLink } from '../components/ItemLink'
+import { hours, longDay } from '../dates'
+
+/** The same plain maps search the server builds. No API key. */
+function mapsUrl(address: string): string {
+  return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(address)
+}
 
 /**
  * The last screen before a wish locks to one donor.
@@ -98,7 +105,8 @@ export default function GrantConfirm({
         <section className="confirm__block">
           <h2 className="confirm__heading">When and where</h2>
           <p className="confirm__hub">
-            <strong>{hub.name}</strong><br />{hub.address}<br />
+            <strong>{hub.name}</strong><br />
+            <MapLink href={mapsUrl(hub.address)}>{hub.address}</MapLink><br />
             {hub.dropoff_window}
           </p>
 
@@ -116,7 +124,7 @@ export default function GrantConfirm({
                     <span>
                       {choice.label}
                       <span className="check__sub">
-                        {' '}— delivered {choice.delivery_date}
+                        {' '}— delivered {longDay(choice.delivery_date)}
                         {!choice.arrives_in_time && ' (after the date they asked for)'}
                       </span>
                     </span>
@@ -128,13 +136,20 @@ export default function GrantConfirm({
 
           {choices.length === 1 && picked && (
             <p className="confirm__single">
-              {picked.label}, delivered {picked.delivery_date}.
+              {picked.label}, delivered {longDay(picked.delivery_date)}.
             </p>
           )}
         </section>
       )}
 
-      <label className="confirm__agree">
+      {!agreed && (
+        <p className="confirm__nudge">
+          One last thing before you can grant this: tick the box to say you can
+          make it. Until you do, the wish stays on the tree for another neighbor.
+        </p>
+      )}
+
+      <label className={`confirm__agree${agreed ? '' : ' confirm__agree--waiting'}`}>
         <input
           type="checkbox" checked={agreed}
           onChange={(e) => setAgreed(e.target.checked)}
@@ -142,26 +157,24 @@ export default function GrantConfirm({
         <span>
           {direct
             ? `I can cover $${options.estimated_cost_usd.toFixed(0)} for this.`
-            : `I can drop this off on ${picked?.label ?? 'the chosen day'} between ${hub.dropoff_window.split(' ').slice(1).join(' ')}.`}
+            : `I can drop this off on ${picked?.label ?? 'the chosen day'} between ${hours(hub.dropoff_window)}.`}
         </span>
       </label>
 
       {error && <p className="form__error" role="alert">{error}</p>}
 
       <div className="review__actions">
-        <button className="btn btn--gold" type="button" onClick={confirm} disabled={!ready || busy}>
+        <button
+          className="btn btn--gold" type="button" onClick={confirm}
+          disabled={!ready || busy}
+          title={agreed ? undefined : 'Tick the box above first'}
+        >
           {busy ? 'Granting…' : 'Grant this wish'}
         </button>
         <button className="btn btn--light" type="button" onClick={onCancel} disabled={busy}>
           Not this one
         </button>
       </div>
-      {!agreed && (
-        <p className="confirm__nudge">
-          Tick the box above once you know you can make it — the wish stays on the
-          tree for another neighbor until you do.
-        </p>
-      )}
     </div>
   )
 }

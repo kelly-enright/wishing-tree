@@ -10,6 +10,9 @@ type Health = {
   region: { name: string; hub_name: string; dropoff_window: string; delivery_window: string }
 }
 
+// Two doors, because almost everyone arriving is here for one of them.
+// Admin is a handful of staff and lives in the footer, where it is still one
+// click away without competing with the reason anyone else came.
 const ROLES = [
   {
     to: '/family/signup',
@@ -22,12 +25,6 @@ const ROLES = [
     eyebrow: 'For neighbors',
     title: 'Grant a wish',
     blurb: 'Help a neighbor with something they need.',
-  },
-  {
-    to: '/coordinator',
-    eyebrow: 'For staff',
-    title: 'Admin',
-    blurb: 'This week’s run sheet — who is dropping off, what is arriving, and what goes out on Saturday — plus what the agents have been doing.',
   },
 ]
 
@@ -68,27 +65,24 @@ export default function Landing() {
       <header className="hero">
         <div className="hero__logo"><Logo plain size={52} /></div>
         <p className="hero__tagline">Grant a neighbor's wish, any time of year</p>
-        <ServiceNotice />
 
-        {stats && (
-          <p className="hero__from">
-            {stats.line}
-            {stats.wishes_granted > 0 && (
-              <>
-                {' '}
-                <strong>
-                  {stats.wishes_granted} wish{stats.wishes_granted === 1 ? '' : 'es'} granted
-                </strong>{' '}
-                so far.
-              </>
-            )}
-          </p>
+        {/* The counter and the service area say the same kind of thing — this
+            is real, and it is here — so they say it together, once. */}
+        {stats && stats.wishes_granted > 0 ? (
+          <div className="tally">
+            <strong className="tally__number">{stats.wishes_granted}</strong>
+            <div>
+              <p className="tally__line">
+                wish{stats.wishes_granted === 1 ? '' : 'es'} granted so far
+              </p>
+              <p className="tally__where">{stats.line}</p>
+              <ServiceNotice />
+            </div>
+          </div>
+        ) : (
+          <ServiceNotice />
         )}
-        <p className="hero__lede">
-          A giving tree that stays up all year in New Haven. Ask for what would
-          actually help, or grant a wish for someone nearby. Everything moves
-          through one weekly drop-off.
-        </p>
+
         <div className="hero__monty">
           <Monty size={64} />
           <p className="hero__pick">
@@ -201,6 +195,7 @@ export default function Landing() {
           </p>
           <p className="footer__links">
             <Link to="/about">About Wishing Tree</Link>
+            <Link to="/coordinator">Admin</Link>
           </p>
         </footer>
       )}

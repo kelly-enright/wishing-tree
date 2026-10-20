@@ -737,3 +737,71 @@ the real `<Monty />` component rather than a copy of him, so the two drawings
 cannot drift apart. Appearance is six named constants at the top of the file,
 which is how the corrections to skin, hair and eye color were made without
 touching a single path.
+
+## Problem 13 — What "Granted" Means, and Ten UI Changes
+
+### Prompt 1 (three parts in one brief)
+
+> Thanks. Please make these changes together.
+>
+> PART 1: About page
+> a.) Change two more sentences on the About page: "Families are never shown by name or address" becomes "Neighbors are never shown by name or address," and "we deliver them to families ourselves" becomes "we deliver them to neighbors ourselves." Leave everything else exactly as it is.
+>
+> PART 2: Wish status and the "Grant a wish" pages
+> b.) "Granted" should only mean a wish actually reached the neighbor. For wish granters, use these stages: "Ready to drop off" (with date, window, place, Add to calendar and "I can't make it anymore"), then "Dropped off, thank you!" once the admin marks it received at Yale SOM, then "Delivered, wish granted!" once the admin marks it delivered.
+> c.) Split "My granted wishes" into two sections: "Coming up" at the top for wishes not yet dropped off, and "Wishes you've granted" below for dropped-off and delivered ones, collapsed by default. Released wishes don't appear.
+> d.) Match the neighbor's side so the language never contradicts: "A neighbor picked your wish" (with the delivery date and confirm button), then "On its way," then "Delivered."
+> e.) The landing page "wishes granted" counter and the gold leaves on the tree count only delivered wishes.
+> f.) Show dates in a friendly format everywhere users see them, e.g. "Thursday, Oct 22, 4–7 PM" or "Sat, Oct 25 · 5 days," never "2026-10-22." The admin run sheet can keep a compact format.
+> g.) "Signed in as Donor D09" should not say "donor." Use "Signed in as Wish granter D09" or similar.
+> h.) Rewrite every seeded wish into the same neutral, third-person format the Safety agent produces for real wishes (for example, "Shower chair for an adult," not "A shower chair so I can keep bathing on my own"). Seed data should look exactly like real published wishes, with no first-person wording, relationships, or personal details.
+> i.) Make every product link clickable wherever a wish granter sees it (wish cards, the tree's wish card, the confirmation screen, and "Coming up"), shown as a clear "View item" button that opens the store page in a new tab. Only allowlisted links are ever shown. Also make the Yale SOM address clickable, opening it in the user's maps app (a plain maps link, no API key needed).
+>
+> PART 3: UI improvements from your list
+> j.) #1 … r.) #10, light version [the seven UI items, as listed in harness.md §28]
+>
+> s.) Update tests, take fresh screenshots of every screen, and update harness.md.
+>
+> Ask any questions you have before starting.
+
+**Four questions asked before starting**, because each changed the work:
+
+1. *The Safety agent doesn't actually produce a third-person format — it only
+   strips identifying details and keeps the writer's wording.* Kelly chose to
+   fix both ends: the prompt now specifies the published form, and the seed
+   was rewritten into it.
+2. *Counting only delivered, the seed has 3.* Kelly chose to add a delivered
+   history, so the counter reads 24 and the tree carries 9 gold leaves.
+3. *Rent and utilities never reach the hub.* Kelly wrote their three stages
+   herself: "We'll email you how to pay" → "Payment received, thank you!" →
+   "Paid to provider, wish granted!"
+4. *(c) says released wishes don't appear — what about missed ones?* Hidden
+   too, for the same reason.
+
+**Two assumptions stated rather than asked**, both cheap to reverse. The alias
+stays `Granter D09`, which already avoids "donor" after Problem 12 — renaming
+again would churn the seed, every test and every screenshot for a word nobody
+sees. And for (r) the lede paragraph was the block dropped from the hero
+rather than Monty, since the two cards now explain both doors.
+
+**Outcome:** 290 tests passing, zero model calls spent.
+
+- **The bug the change surfaced.** `recently_granted()` dated the gold leaves
+  on `created_at`. Back-dating 21 history pledges would have put every one of
+  them inside the 30-day window at once, because the rows were written today.
+  It is dated on `delivery_date` now — the day the wish actually arrived,
+  which is what the question was all along.
+- **The two sides are tested against each other**, not separately. A wrong
+  label is easy to spot; two labels that are each fine and contradict each
+  other are not, and that was the whole point of (d).
+- **"Sat, Oct 25" is a Sunday.** The example in the brief was a format, not a
+  date, and the code computes the real weekday — so the test asserts
+  "Sun, Oct 25 · 5 days" and says why.
+- **The date module is tested through Node from pytest.** Node 24 strips
+  TypeScript types on import, so the real `dates.ts` runs under the existing
+  suite: one test command, and no second copy of the rules in Python to drift.
+  One test runs under `TZ=America/New_York`, because `new Date('2026-10-22')`
+  is UTC midnight and renders as the 21st in New Haven.
+- **What this cost.** The Safety prompt is now `f295594b9779`. The live
+  safety-attack results and cache figures in harness §19–20 were measured
+  against the old version and need re-running before they go in the report.

@@ -385,18 +385,32 @@ def grant_options(request_id: int, donor_alias: str) -> dict:
 # What a donor has taken on
 # --------------------------------------------------------------------------
 
+# Granted means the neighbor has it. Until then a wish is on its way, and
+# saying so plainly is the difference between a promise made and one kept.
 DONOR_STATUS = {
-    "pledged": "You granted this",
-    "dropped_off": "Dropped off — thank you, it's on its way",
-    "delivered": "Delivered",
+    "pledged": "Ready to drop off",
+    "dropped_off": "Dropped off, thank you!",
+    "delivered": "Delivered, wish granted!",
     "missed": "Missed",
     "released": "Back on the tree",
     "canceled": "Canceled",
 }
 
+# Rent and utilities never pass through the hub — there is nothing to carry
+# and nothing to drop off — so they get wording that matches what happens.
 DIRECT_STATUS = {
     "pledged": "We'll email you how to pay",
-    "delivered": "Paid",
+    "dropped_off": "Payment received, thank you!",
+    "delivered": "Paid to provider, wish granted!",
+}
+
+# Where a row belongs on the granter's page. A wish released or missed is
+# back on the tree for someone else and appears in neither section: nothing
+# is gained by showing a person a thing they did not end up doing.
+SECTIONS = {
+    "pledged": "coming_up",
+    "dropped_off": "granted",
+    "delivered": "granted",
 }
 
 
@@ -421,14 +435,19 @@ def donor_granted(alias: str) -> dict:
             if wish is None:
                 continue
 
-            paid_direct = wish.category is Category.RENT_UTILITIES
             key = pledge.status.value
+            section = SECTIONS.get(key)
+            if section is None:
+                continue        # released, missed or canceled: not this granter's
+
+            paid_direct = wish.category is Category.RENT_UTILITIES
             label = (DIRECT_STATUS.get(key) if paid_direct else None) or DONOR_STATUS[key]
 
             row = {
                 "pledge_id": pledge.id,
                 "wish": wish.public_card(today),
                 "status": key,
+                "section": section,
                 "label": label,
                 "paid_directly_to_provider": paid_direct,
                 "dropoff_date": pledge.dropoff_date.isoformat(),
@@ -436,6 +455,7 @@ def donor_granted(alias: str) -> dict:
                 "dropoff_window": region.dropoff_window.label(),
                 "hub_name": region.hub_name,
                 "hub_address": region.hub_address,
+                "hub_maps_url": config.maps_url(region.hub_address),
                 "can_release": pledge.status is PledgeStatus.PLEDGED,
             }
             rows.append(row)
@@ -444,14 +464,24 @@ def donor_granted(alias: str) -> dict:
                     and today <= pledge.dropoff_date <= week_end):
                 this_week.append(row)
 
-    order = ["pledged", "dropped_off", "delivered", "released", "missed", "canceled"]
+    order = ["pledged", "dropped_off", "delivered"]
     rows.sort(key=lambda r: (order.index(r["status"]), r["dropoff_date"]))
+
+    # Coming up first and soonest-first; granted below, most recent first.
+    coming_up = [r for r in rows if r["section"] == "coming_up"]
+    granted = sorted(
+        (r for r in rows if r["section"] == "granted"),
+        key=lambda r: r["delivery_date"], reverse=True,
+    )
 
     return {
         "count": len(rows),
         "granted": rows,
+        "coming_up": coming_up,
+        "already_granted": granted,
         "this_week": this_week,
         "hub": {"name": region.hub_name, "address": region.hub_address,
+                "maps_url": config.maps_url(region.hub_address),
                 "dropoff_window": region.dropoff_window.label()},
     }
 

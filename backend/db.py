@@ -697,39 +697,44 @@ def pledges_for_family(conn: sqlite3.Connection, family_alias: str) -> list[Pled
 def recently_granted(
     conn: sqlite3.Connection, since: date, limit: int = 60
 ) -> list[Request]:
-    """Wishes claimed or delivered since `since`.
+    """Wishes *delivered* since `since`.
 
     These are the gold leaves: proof on the tree that wishes do get granted,
-    which an empty-looking wall of open needs never shows.
+    which an empty-looking tree of open needs never shows. Granted means it
+    reached the neighbor, so a wish someone has claimed but not yet dropped
+    off is not gold yet — it is still an open promise.
+
+    Dated on `delivery_date` rather than `created_at`, because the question
+    is when the wish arrived, not when the row was written.
     """
     rows = conn.execute(
         """SELECT r.* FROM requests r
              JOIN pledges p ON p.request_id = r.id
-            WHERE r.status IN (?, ?, ?)
-              AND p.status IN (?, ?, ?)
-              AND p.created_at >= ?
-            ORDER BY p.created_at DESC
+            WHERE r.status = ?
+              AND p.status = ?
+              AND p.delivery_date >= ?
+            ORDER BY p.delivery_date DESC
             LIMIT ?""",
-        (RequestStatus.GRANTED.value, RequestStatus.DROPPED_OFF.value,
-         RequestStatus.DELIVERED.value,
-         PledgeStatus.PLEDGED.value, PledgeStatus.DROPPED_OFF.value,
-         PledgeStatus.DELIVERED.value,
+        (RequestStatus.DELIVERED.value, PledgeStatus.DELIVERED.value,
          since.isoformat(), limit),
     )
     return [_request(r) for r in rows]
 
 
 def granted_ever(conn: sqlite3.Connection) -> int:
-    """How many wishes have been granted, all time.
+    """How many wishes have actually reached a neighbor, all time.
 
-    Counted from pledges that stuck — a wish released or missed and granted
-    again by someone else counts once, because one wish was granted. This is
-    the number on the landing page, and it has to be real.
+    Granted means delivered. A wish someone has claimed, or dropped at the
+    hub, is on its way and is not counted yet — the number on the landing
+    page is a promise kept, not a promise made.
+
+    Counted on distinct wishes, so one released and granted again by someone
+    else counts once. This number is read from the database every time it is
+    shown, and it has to be real.
     """
     row = conn.execute(
         """SELECT COUNT(DISTINCT request_id) AS n FROM pledges
-            WHERE status IN (?, ?, ?)""",
-        (PledgeStatus.PLEDGED.value, PledgeStatus.DROPPED_OFF.value,
-         PledgeStatus.DELIVERED.value),
+            WHERE status = ?""",
+        (PledgeStatus.DELIVERED.value,),
     ).fetchone()
     return int(row["n"])

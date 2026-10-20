@@ -16,8 +16,16 @@ import Monty, { MontySays } from '../components/Monty'
 import GrantConfirm from './GrantConfirm'
 import MyGranted from './MyGranted'
 import { clearSession, getSession } from '../session'
+import { MapLink } from '../components/ItemLink'
+import { longDay, when } from '../dates'
 
 const EMPTY: WallFilters = { categories: [], occasion: '', requestType: '', maxCost: '' }
+
+/** The same plain maps search the server builds, for payloads that carry
+ *  only the address. No API key, opens whatever maps app the device has. */
+function mapsUrl(address: string): string {
+  return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(address)
+}
 
 export default function Donor() {
   const session = getSession()
@@ -124,14 +132,19 @@ export default function Donor() {
           <h2 className="logistics__headline">{logistics.headline}</h2>
           {logistics.kind === 'hub_dropoff' ? (
             <dl className="logistics__facts">
-              <div><dt>Where</dt><dd>{logistics.hub_name}<br />{logistics.hub_address}</dd></div>
-              <div><dt>Drop off on</dt><dd>{logistics.dropoff_date}<br />{logistics.dropoff_window}</dd></div>
-              <div><dt>Delivered</dt><dd>{logistics.delivery_date}<br />{logistics.delivery_window}</dd></div>
+              <div><dt>Where</dt><dd>
+                {logistics.hub_name}<br />
+                <MapLink href={mapsUrl(logistics.hub_address)}>{logistics.hub_address}</MapLink>
+              </dd></div>
+              <div><dt>Drop off on</dt>
+                <dd>{when(logistics.dropoff_date, logistics.dropoff_window)}</dd></div>
+              <div><dt>Delivered</dt>
+                <dd>{when(logistics.delivery_date, logistics.delivery_window)}</dd></div>
             </dl>
           ) : (
             <>
               <p className="logistics__detail">{logistics.detail}</p>
-              <p className="logistics__detail">Paid on {logistics.delivery_date}.</p>
+              <p className="logistics__detail">Paid on {longDay(logistics.delivery_date)}.</p>
             </>
           )}
           {!granted.arrives_in_time && (
@@ -186,6 +199,12 @@ export default function Donor() {
       </div>
 
       <section className="filters" aria-label="Filter the wishes">
+        <p className="filters__how">
+          Filters narrow the tree to the wishes you want to see. <strong>Match
+          me to wishes</strong> reads your budget and the things you like to
+          help with, and picks a few it thinks fit you best.
+        </p>
+
         <div className="filters__row">
           {(Object.keys(CATEGORY_LABELS) as Category[]).map((category) => (
             <button

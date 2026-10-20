@@ -137,7 +137,7 @@ export default function Intake() {
               <div className="intake__title">
                 {/* Calm on this side: present, but not performing. */}
                 <Monty size={46} mood="calm" />
-                <h1 className="page__title">Tell us what you need</h1>
+                <h1 className="page__title">Make a wish</h1>
               </div>
               {bubbles.length <= 1 && <HowItWorks compact />}
               <div className="transcript" ref={transcript}>

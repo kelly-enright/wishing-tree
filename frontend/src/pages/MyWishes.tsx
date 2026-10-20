@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getMyWishes, respondToWindow, userMessage, type WishProgress } from '../api'
 import { MontySays } from '../components/Monty'
+import { when } from '../dates'
 
 const ORDER: WishProgress['stage'][] = [
   'granted', 'on_its_way', 'being_checked', 'on_the_tree', 'not_posted', 'delivered',
@@ -57,10 +58,22 @@ export default function MyWishes({ alias }: { alias: string }) {
   }
 
   const sorted = [...rows].sort((a, b) => ORDER.indexOf(a.stage) - ORDER.indexOf(b.stage))
+  // The honest sentence about the tree is worth saying, and worth saying
+  // once. Three wishes used to repeat it three times, which is how careful
+  // wording starts reading like boilerplate.
+  const anyOnTheTree = sorted.some((row) => row.stage === 'on_the_tree')
 
   return (
     <section className="mywishes" aria-label="My wishes">
       <h2 className="mywishes__title">My wishes</h2>
+
+      {anyOnTheTree && (
+        <p className="mywishes__how">
+          Wishes on the tree are where neighbors can see them. We can't promise
+          someone will grant a wish, but we'll do our best to find a neighbor
+          who can help.
+        </p>
+      )}
 
       {sorted.map((row) => (
         <article key={row.wish.id} className={`track track--${row.stage}`}>
@@ -72,7 +85,7 @@ export default function MyWishes({ alias }: { alias: string }) {
           </header>
 
           <p className="track__item">{row.wish.item_description}</p>
-          <p className="track__detail">{row.detail}</p>
+          {row.stage !== 'on_the_tree' && <p className="track__detail">{row.detail}</p>}
 
           {row.direct_payment && row.direct_payment_note && (
             <p className="track__rent">{row.direct_payment_note}</p>
@@ -87,7 +100,7 @@ export default function MyWishes({ alias }: { alias: string }) {
           {row.delivery && (
             <div className="track__delivery">
               <p>
-                Delivery on <strong>{row.delivery.date}</strong>, {row.delivery.window}.
+                Delivery on <strong>{when(row.delivery.date, row.delivery.window)}</strong>.
               </p>
 
               {row.delivery.window_response === 'pending' && (

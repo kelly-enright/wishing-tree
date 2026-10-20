@@ -561,13 +561,16 @@ export type GrantedRow = {
   dropoff_window: string
   hub_name: string
   hub_address: string
+  hub_maps_url: string
+  section: 'coming_up' | 'granted'
   can_release: boolean
 }
 
 export function getGranted(alias: string) {
   return request<{
     count: number; granted: GrantedRow[]; this_week: GrantedRow[]
-    hub: { name: string; address: string; dropoff_window: string }
+    coming_up: GrantedRow[]; already_granted: GrantedRow[]
+    hub: { name: string; address: string; maps_url: string; dropoff_window: string }
   }>(`/api/donors/${encodeURIComponent(alias)}/granted`, undefined,
     'We could not load what you have granted.')
 }

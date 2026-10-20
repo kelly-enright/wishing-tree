@@ -1178,7 +1178,7 @@ Agents arrive in later problems; these are the ones already standing.
 
 ## 25. Tests
 
-`./.venv/bin/python -m pytest` — **261 passing**, in under two seconds, every agent stubbed.
+`./.venv/bin/python -m pytest` — **290 passing**, in under two seconds, every agent stubbed.
 
 `./.venv/bin/python -m pytest -m live` — **10 more** against the real model, excluded by default because they spend tokens. Every agent is stubbed, so the suite is free to run.
 
@@ -1286,3 +1286,126 @@ Yale blue in the app. Appearance is six named constants at the top of the file,
 which is how the first draft was corrected to dark brown hair and hazel eyes
 without touching a path. On a phone the illustration stacks above the
 paragraph.
+
+## 28. What "granted" means
+
+The word was doing two jobs. A wish someone had claimed said *granted* on the
+tree, on the landing counter and on the granter's own page — while the thing
+itself was still sitting in a shop. That is a promise made, and the app was
+reporting it as a promise kept.
+
+**Granted now means delivered**, everywhere, and the stages say which is which.
+
+| | Wish granter sees | Neighbor sees |
+|---|---|---|
+| claimed | Ready to drop off | A neighbor picked your wish |
+| at the hub | Dropped off, thank you! | On its way |
+| handed over | Delivered, wish granted! | Delivered |
+
+Rent and utilities never pass through the hub, so they get their own three:
+*We'll email you how to pay* → *Payment received, thank you!* → *Paid to
+provider, wish granted!*, and on the neighbor's side *Payment on the way* →
+*Paid*. A test asserts no direct-payment stage contains the word "drop".
+
+The two sides are tested against each other rather than separately
+(`test_the_two_sides_never_contradict_each_other`), because the failure worth
+catching is not a bad label — it is two labels that are each fine and
+disagree.
+
+**The counter and the gold leaves followed.** `granted_ever()` counts distinct
+pledges in `delivered`; `recently_granted()` returns wishes delivered inside
+the 30-day window. The second needed a second change: it was dated on
+`created_at`, so back-dated history would all have landed inside the window at
+once. It is dated on `delivery_date` now, which is the day the thing actually
+arrived.
+
+### The granter's page, in two sections
+
+"Coming up" is the one with something left to do — a date, a thing to buy, a
+drop-off — and is open at the top. "Wishes you've granted" is a record of
+finished things: worth having, not worth scrolling past, so it starts
+collapsed with a count. A wish released or missed appears in neither. Released
+was Kelly's call; missed is the same decision for the same reason — the wish
+went back on the tree for someone else, and nothing is gained by showing
+someone a thing they did not end up doing.
+
+### A past, so the tree has one
+
+A giving tree that stays up all year should look like it has been up all year,
+and counting only deliveries left the seed showing **3**. `seed.HISTORY` adds
+21 delivered wishes dated back across seven months — six inside the gold-leaf
+window, the rest behind it. The landing page reads **24** and the tree carries
+**9** gold leaves. Invented, like every other row in that file.
+
+### Seeded wishes now read like published ones
+
+Every one of the 40 was written in somebody's voice: *"Winter coat for my
+8-year-old so he can wait for the bus in the cold."* Real wishes do not come
+out that way — or rather, they did, because the Safety agent only ever removed
+identifying details and kept the writer's wording. So the format the seed was
+supposed to match did not exist yet.
+
+Both ends were fixed. The Safety prompt now specifies the published form — no
+first person, no relationships, no reasons or circumstances, name the item and
+what it has to match — with a worked before-and-after table. All 40 seeded
+wishes were rewritten into it: *"Winter coat for a child, size 8."* Three
+preference notes went too, where they carried a relationship or a reason.
+
+This is a fairness measure, not a tidiness one, and the prompt says so: a
+neighbor who writes well should not get helped sooner than a neighbor who
+does not, and nobody should have to explain their circumstances to a stranger
+to be helped.
+
+**The cost of this change:** the Safety prompt is now version `f295594b9779`.
+The live safety-attack results and the cache figures in sections 19 and 20
+were measured against the previous version and need re-running before they go
+in the report.
+
+### Dates
+
+`frontend/src/dates.ts` renders every date a neighbor or a granter sees:
+*Thursday, Oct 22, 4–7 PM*, *Sun, Oct 25 · 5 days*. The API keeps sending ISO,
+which is the right shape for data. The admin run sheet keeps ISO too — it is
+scanned in columns, where ISO sorts and lines up.
+
+Two things worth recording. `new Date('2026-10-22')` parses as UTC midnight
+and renders as the 21st in New Haven, so every date is built field by field in
+local time; there is a test that runs under `TZ=America/New_York` to hold
+that. And the module is tested from pytest by running the real TypeScript
+through Node 24, which strips the types on import — one test command for the
+project, and no second copy of the rules to get wrong.
+
+`badges.py` has a four-line `friendly()` of its own, because that one label is
+composed on the server and would otherwise be the last ISO date on a wish card.
+
+### The UI changes from the ranked list
+
+Seven of the ten, as chosen:
+
+| | What changed |
+|---|---|
+| 1 | The honest sentence about the tree is said once above "My wishes" instead of once per card. |
+| 2 | The wish card is two tiers — cost and deadline large, the rest on one quiet line. "Waiting 0 days" is gone. |
+| 4 | The token panel is folded behind "Show AI details" for neighbors and granters; open by default for Admin. |
+| 5 | Admin left the landing page for the footer. Two doors, not three. |
+| 6 | The page behind "Make a wish" is now headed "Make a wish". |
+| 7 | The counter is a 40px number with the sentence beneath it, merged with the service-area line. |
+| 8 | The grant gate explains itself above the checkbox, and the shut state is visible rather than just inert. |
+| 9 | One line saying what the filters do and what matching does. Behavior unchanged, as asked. |
+| 10 | The lede paragraph went, so the two doors sit above the fold. |
+
+Product links are now a **View item** button wherever a granter sees a wish —
+card, tree, confirmation screen, Coming up — opening in a new tab with
+`rel="noreferrer noopener"`, so the store cannot reach back through
+`window.opener`. Only allowlisted links ever reach a card, which was already
+true and is what makes showing them safe. The Yale SOM address is a maps link:
+a plain Google Maps search URL, which every phone hands to its own maps app
+and needs no API key.
+
+| | |
+|---|---|
+| Tests | 290 passing, 10 deselected |
+| New test files | `test_dates.py` (15), plus 18 more in `test_voice.py` |
+| Seeded wishes rewritten | 40, plus 3 preference notes |
+| Delivered history added | 21 wishes across seven months |
+| Model calls spent | 0 |

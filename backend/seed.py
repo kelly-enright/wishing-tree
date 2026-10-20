@@ -51,6 +51,12 @@ def next_weekday(start: date, day: Weekday) -> date:
     return start + timedelta(days=ahead)
 
 
+def previous_weekday(start: date, day: Weekday) -> date:
+    """The last date on or before `start` that falls on `day`."""
+    back = (start.weekday() - _WEEKDAY_INDEX[day]) % 7
+    return start - timedelta(days=back)
+
+
 # --------------------------------------------------------------------------
 # Families — alias, zip, invented street address, fiction-range phone
 # --------------------------------------------------------------------------
@@ -141,213 +147,274 @@ REQUESTS: list[dict] = [
     # --- Family A04: single parent working two jobs ---
     dict(family="Neighbor A04", category=Category.CLOTHING, type=S, days=18,
          occasion="back_to_school", status=RequestStatus.OPEN, cost=42.0,
-         desc="Winter coat for my 8-year-old so he can wait for the bus in the cold.",
+         desc="Winter coat for a child, size 8",
          link="https://www.target.com/p/kids-puffer-jacket/-/A-88204117",
          brand="Cat & Jack", size="Boys 8", color="Navy", sub=True),
     dict(family="Neighbor A04", category=Category.FOOD, type=F, days=9,
          occasion="everyday", status=RequestStatus.OPEN, budget=(40.0, 70.0),
-         desc="A grocery gift card would cover the gap in the week my hours get cut.",
+         desc="Grocery gift card for a household with children",
          prefs="No pork; one child has a peanut allergy."),
     dict(family="Neighbor A04", category=Category.SCHOOL_SUPPLIES, type=S, days=25,
          occasion="back_to_school", status=RequestStatus.OPEN, cost=28.0,
-         desc="Backpack to replace one that split at the seam in September.",
+         desc="Backpack, 17 inch, for a school-age child",
          link="https://www.walmart.com/ip/classic-backpack-17in/553001942",
          brand="JanSport", size="17 in", color="Black", sub=True),
 
     # --- Family A07: child in cancer treatment ---
     dict(family="Neighbor A07", category=Category.OTHER, type=F, days=5,
          occasion="emergency", status=RequestStatus.OPEN, budget=(60.0, 100.0),
-         desc="Gas cards for the drive to my daughter's chemo appointments twice a week.",
-         prefs="Any station near the hospital works."),
+         desc="Gas cards for travel to medical appointments",
+         prefs="Any major station works."),
     dict(family="Neighbor A07", category=Category.ESSENTIALS, type=S, days=12,
          occasion="everyday", status=RequestStatus.OPEN, cost=22.0,
-         desc="Gentle unscented soap and lotion; her skin reacts to everything right now.",
+         desc="Unscented soap and lotion, sensitive skin",
          link="https://www.cvs.com/shop/sensitive-skin-care-bundle-prod9931204",
          brand="Cetaphil", size="16 oz", color=None, sub=True),
     dict(family="Neighbor A07", category=Category.GIFTS, type=S, days=33,
          occasion="birthday", status=RequestStatus.OPEN, cost=34.0,
-         desc="A soft weighted lap blanket for her 7th birthday, for the infusion chair.",
+         desc="Weighted lap blanket for a 7-year-old",
          link="https://www.amazon.com/dp/B0CT7QKMN4",
          brand="Bearaby", size="36x48 in", color="Lavender", sub=True),
     dict(family="Neighbor A07", category=Category.FOOD, type=F, days=3,
          occasion="emergency", status=RequestStatus.PENDING_REVIEW, budget=(50.0, 80.0),
-         desc="Easy freezer meals for the weeks we are at the hospital late.",
+         desc="Freezer meals, microwave only",
          prefs="Nothing that needs more than a microwave."),
 
     # --- Family A12: facing eviction ---
     dict(family="Neighbor A12", category=Category.RENT_UTILITIES, type=F, days=7,
          occasion="emergency", status=RequestStatus.OPEN, budget=(400.0, 600.0),
-         desc="Short on rent after a car repair. Paid straight to the landlord, not to us.",
-         prefs="Partial help still keeps the case out of court."),
+         desc="Rent help, paid to the landlord",
+         prefs="Partial help is still useful."),
     dict(family="Neighbor A12", category=Category.RENT_UTILITIES, type=F, days=14,
          occasion="emergency", status=RequestStatus.OPEN, budget=(120.0, 180.0),
-         desc="Electric bill is past due and the shutoff notice is dated this month.",
+         desc="Electric bill help, paid to the utility company",
          prefs="Paid directly to the utility company."),
     dict(family="Neighbor A12", category=Category.ESSENTIALS, type=F, days=20,
          occasion="everyday", status=RequestStatus.OPEN, budget=(30.0, 50.0),
-         desc="Diapers and wipes for a 14-month-old.",
+         desc="Diapers and wipes for a 14-month-old",
          prefs="Size 4 diapers."),
 
     # --- Family A15: parent needs an interview outfit ---
     dict(family="Neighbor A15", category=Category.CLOTHING, type=S, days=6,
          occasion="job_interview", status=RequestStatus.OPEN, cost=55.0,
-         desc="Interview blazer for a front desk job I was called back for.",
+         desc="Interview blazer for an adult",
          link="https://www.oldnavy.com/product/womens-classic-blazer-p-8814402",
          brand="Old Navy", size="Women's 12", color="Charcoal", sub=True),
     dict(family="Neighbor A15", category=Category.CLOTHING, type=S, days=6,
          occasion="job_interview", status=RequestStatus.GRANTED, cost=45.0,
-         desc="Closed-toe flats to go with the interview outfit.",
+         desc="Closed-toe flats for an adult",
          link="https://www.dsw.com/en/shop/womens-pointed-flat-6618093",
          brand="LifeStride", size="Women's 8.5", color="Black", sub=True),
     dict(family="Neighbor A15", category=Category.OTHER, type=F, days=11,
          occasion="job_interview", status=RequestStatus.OPEN, budget=(25.0, 40.0),
-         desc="Bus pass for the first month until the first paycheck comes in.",
+         desc="One-month bus pass for an adult",
          prefs=None),
 
     # --- Family A19: grandmother raising two grandchildren ---
     dict(family="Neighbor A19", category=Category.SCHOOL_SUPPLIES, type=F, days=16,
          occasion="back_to_school", status=RequestStatus.GRANTED, budget=(35.0, 60.0),
-         desc="Notebooks, folders and pencils for a 4th grader and a 6th grader.",
+         desc="Notebooks, folders and pencils for a 4th grader and a 6th grader",
          prefs="Teacher's list is mostly basics."),
     dict(family="Neighbor A19", category=Category.CLOTHING, type=F, days=22,
          occasion="everyday", status=RequestStatus.OPEN, budget=(50.0, 90.0),
-         desc="Warm layers for two kids who grew out of last winter's clothes.",
+         desc="Warm layers for two children",
          prefs="Girls 10 and boys 12."),
     dict(family="Neighbor A19", category=Category.GIFTS, type=S, days=68,
          occasion="holiday", status=RequestStatus.OPEN, cost=30.0,
-         desc="A build-your-own robot kit my grandson has asked about all year.",
+         desc="Build-your-own robot kit for a child",
          link="https://www.target.com/p/stem-robot-building-kit/-/A-79114502",
          brand="Thames & Kosmos", size=None, color=None, sub=True),
 
     # --- Family A23: recently arrived, in English classes ---
     dict(family="Neighbor A23", category=Category.OTHER, type=F, days=30,
          occasion="everyday", status=RequestStatus.OPEN, budget=(80.0, 150.0),
-         desc="An English workbook set and a dictionary for my evening class.",
+         desc="English workbook set and a dictionary for an adult learner",
          prefs="Beginner level."),
     dict(family="Neighbor A23", category=Category.FOOD, type=S, days=10,
          occasion="everyday", status=RequestStatus.OPEN, cost=50.0,
-         desc="Grocery gift card so I can buy what the kids will actually eat.",
+         desc="Grocery gift card for a household with children",
          link="https://www.stopandshop.com/gift-cards/product/sas-gc-50",
          brand="Stop & Shop", size="$50", color=None, sub=False),
 
     # --- Family A27: mother returning to work after an injury ---
     dict(family="Neighbor A27", category=Category.CLOTHING, type=S, days=8,
          occasion="job_interview", status=RequestStatus.OPEN, cost=38.0,
-         desc="Non-slip work shoes required for the kitchen job I start next month.",
+         desc="Non-slip work shoes for an adult, kitchen work",
          link="https://www.walmart.com/ip/slip-resistant-work-shoe/118920334",
          brand="Tredsafe", size="Women's 9", color="Black", sub=True),
     dict(family="Neighbor A27", category=Category.RENT_UTILITIES, type=F, days=26,
          occasion="everyday", status=RequestStatus.DRAFT, budget=(150.0, 250.0),
-         desc="Gas bill catch-up before the winter rate starts.",
+         desc="Gas bill help, paid to the utility company",
          prefs="Paid directly to the gas company."),
 
     # --- Family A31: father on disability ---
     dict(family="Neighbor A31", category=Category.OTHER, type=S, days=29,
          occasion="everyday", status=RequestStatus.OPEN, cost=65.0,
-         desc="A shower chair so I can keep bathing on my own.",
+         desc="Shower chair for an adult",
          link="https://www.walgreens.com/store/c/shower-chair-with-back/ID=300411227",
          brand="Carex", size="Standard", color=None, sub=True),
     dict(family="Neighbor A31", category=Category.ESSENTIALS, type=F, days=35,
          occasion="everyday", status=RequestStatus.MISSED, days_override=-6,
          budget=(20.0, 35.0),
-         desc="Refill on wound care supplies between pharmacy deliveries.",
+         desc="Wound care supplies for an adult",
          prefs=None),
 
     # --- Family A34: after an apartment fire ---
     dict(family="Neighbor A34", category=Category.ESSENTIALS, type=F, days=2,
          occasion="emergency", status=RequestStatus.DELIVERED, budget=(70.0, 120.0),
-         desc="Replacement basics after a kitchen fire: sheets, towels, a few pots.",
+         desc="Sheets, towels and basic pots and pans",
          prefs="Two twin beds and one full."),
     dict(family="Neighbor A34", category=Category.CLOTHING, type=F, days=15,
          occasion="emergency", status=RequestStatus.OPEN, budget=(100.0, 160.0),
-         desc="School clothes for three kids who lost most of what they had.",
+         desc="School clothes for three children",
          prefs="Boys 6, girls 9, girls 13."),
     dict(family="Neighbor A34", category=Category.OTHER, type=S, days=21,
          occasion="emergency", status=RequestStatus.GRANTED, cost=48.0,
-         desc="A smoke detector set and a small fire extinguisher for the new unit.",
+         desc="Smoke detector set and a small fire extinguisher",
          link="https://www.bestbuy.com/site/smoke-detector-2-pack/6501338.p",
          brand="First Alert", size="2-pack", color=None, sub=True),
 
     # --- Family A38: twins starting kindergarten ---
     dict(family="Neighbor A38", category=Category.SCHOOL_SUPPLIES, type=S, days=17,
          occasion="back_to_school", status=RequestStatus.OPEN, cost=36.0,
-         desc="Two sets of the kindergarten supply list, one for each twin.",
+         desc="Two sets of the kindergarten supply list",
          link="https://www.staples.com/kindergarten-supply-bundle/product_24119087",
          brand="Staples", size="2 sets", color=None, sub=True),
     dict(family="Neighbor A38", category=Category.CLOTHING, type=S, days=24,
          occasion="back_to_school", status=RequestStatus.DROPPED_OFF, cost=52.0,
-         desc="Sneakers for both twins; they wear the same size right now.",
+         desc="Two pairs of sneakers, same size",
          link="https://www.kohls.com/product/prd-6611904/kids-sneakers.jsp",
          brand="Carter's", size="Kids 11", color="Any", sub=True),
     dict(family="Neighbor A38", category=Category.GIFTS, type=F, days=45,
          occasion="birthday", status=RequestStatus.OPEN, budget=(30.0, 50.0),
-         desc="Something to share for the twins' joint 6th birthday.",
+         desc="A shared gift for two 6-year-olds",
          prefs="They both like dinosaurs."),
 
     # --- Family A42: teen aging out of foster care ---
     dict(family="Neighbor A42", category=Category.CLOTHING, type=S, days=9,
          occasion="job_interview", status=RequestStatus.OPEN, cost=40.0,
-         desc="A dress shirt and tie for a retail interview downtown.",
+         desc="Dress shirt and tie for an adult",
          link="https://www.macys.com/shop/product/mens-dress-shirt-tie-set?ID=14920337",
          brand="Van Heusen", size="Men's 15.5 x 33", color="White", sub=True),
     dict(family="Neighbor A42", category=Category.FOOD, type=F, days=12,
          occasion="everyday", status=RequestStatus.PENDING_REVIEW, budget=(45.0, 70.0),
-         desc="Grocery help for the first month on my own.",
+         desc="Grocery gift card for one adult",
          prefs=None),
 
     # --- Family A46: parent recovering from surgery ---
     dict(family="Neighbor A46", category=Category.FOOD, type=F, days=6,
          occasion="emergency", status=RequestStatus.DELIVERED, budget=(50.0, 80.0),
-         desc="Prepared meals for the six weeks I cannot stand at the stove.",
+         desc="Prepared meals for an adult, no cooking required",
          prefs="Soft foods."),
     dict(family="Neighbor A46", category=Category.ESSENTIALS, type=S, days=14,
          occasion="everyday", status=RequestStatus.OPEN, cost=26.0,
-         desc="A grabber tool so I can pick things up without bending.",
+         desc="Reacher grabber tool for an adult",
          link="https://www.amazon.com/dp/B07YFG4K2Q",
          brand="RMS", size='32 in', color=None, sub=True),
 
     # --- Family A51: family with a newborn ---
     dict(family="Neighbor A51", category=Category.ESSENTIALS, type=S, days=5,
          occasion="everyday", status=RequestStatus.GRANTED, cost=44.0,
-         desc="Newborn diapers and wipes; she arrived three weeks early.",
+         desc="Newborn diapers and wipes",
          link="https://www.target.com/p/newborn-diaper-wipes-bundle/-/A-54720118",
          brand="Pampers", size="Newborn", color=None, sub=True),
     dict(family="Neighbor A51", category=Category.GIFTS, type=F, days=70,
          occasion="holiday", status=RequestStatus.OPEN, budget=(40.0, 70.0),
-         desc="A first holiday gift for the baby and something small for her brother.",
-         prefs="Brother is 4."),
+         desc="Holiday gifts for an infant and a young child",
+         prefs="The younger child is 4."),
 
     # --- Family A55: household after a job loss ---
     dict(family="Neighbor A55", category=Category.RENT_UTILITIES, type=F, days=10,
          occasion="emergency", status=RequestStatus.OPEN, budget=(300.0, 500.0),
-         desc="One month of rent while the unemployment claim is still processing.",
+         desc="One month of rent, paid to the landlord",
          prefs="Paid directly to the property manager."),
     dict(family="Neighbor A55", category=Category.SCHOOL_SUPPLIES, type=F, days=23,
          occasion="back_to_school", status=RequestStatus.MISSED, days_override=-3,
          budget=(25.0, 45.0),
-         desc="A calculator required for my son's math class.",
+         desc="Calculator for a middle school math class",
          prefs="The school asked for a graphing one."),
     dict(family="Neighbor A55", category=Category.GIFTS, type=S, days=66,
          occasion="holiday", status=RequestStatus.OPEN, cost=25.0,
-         desc="One holiday gift each for two kids, so the day is not empty.",
+         desc="Holiday gift for each of two children",
          link="https://www.target.com/p/holiday-art-set-kids/-/A-61880294",
          brand="Crayola", size=None, color=None, sub=True),
 
     # --- Family A58: caregiver for a parent with dementia ---
     dict(family="Neighbor A58", category=Category.OTHER, type=F, days=31,
          occasion="everyday", status=RequestStatus.OPEN, budget=(90.0, 140.0),
-         desc="A few hours of respite care so I can go to my own appointments.",
+         desc="A few hours of respite care",
          prefs=None),
     dict(family="Neighbor A58", category=Category.GIFTS, type=S, days=72,
          occasion="holiday", status=RequestStatus.OPEN, cost=32.0,
-         desc="A simple large-button photo frame my mother can use on her own.",
+         desc="Large-button digital photo frame for an older adult",
          link="https://www.amazon.com/dp/B08X9QJ7RT",
          brand="Aura", size='10 in', color="Walnut", sub=True),
     dict(family="Neighbor A58", category=Category.FOOD, type=S, days=20,
          occasion="birthday", status=RequestStatus.DELIVERED, cost=35.0,
-         desc="A small birthday cake and dinner for my mother turning 81.",
+         desc="Small birthday cake and dinner for an 81st birthday",
          link="https://www.shoprite.com/sm/pickup/rsid/3000/product/bakery-cake-8in-600412",
          brand="ShopRite Bakery", size='8 in', color=None, sub=True),
+]
+
+
+# --------------------------------------------------------------------------
+# History — wishes already granted, so the tree is not starting from nothing.
+#
+# A giving tree that stays up all year should look like it has been up all
+# year. These are past wishes: delivered, off the tree, and counted by the
+# landing page. `ago` is days since the delivery, so the spread stays right
+# whenever the seed is run — a handful inside the 30-day gold-leaf window,
+# the rest further back.
+#
+# Invented, like every other row in this file. No real person is described.
+# --------------------------------------------------------------------------
+
+HISTORY: list[dict] = [
+    # --- inside the gold-leaf window: these still show on the tree ---
+    dict(ago=5,   category=Category.CLOTHING,        cost=38.0, occasion="everyday",
+         desc="Rain boots for a child, size 1"),
+    dict(ago=9,   category=Category.FOOD,            cost=60.0, occasion="everyday",
+         desc="Grocery gift card for a household of five"),
+    dict(ago=12,  category=Category.SCHOOL_SUPPLIES, cost=24.0, occasion="back_to_school",
+         desc="Scientific calculator for a high school class"),
+    dict(ago=16,  category=Category.ESSENTIALS,      cost=31.0, occasion="everyday",
+         desc="Toddler diapers, size 5, and wipes"),
+    dict(ago=23,  category=Category.GIFTS,           cost=29.0, occasion="birthday",
+         desc="Art set for a 9-year-old"),
+    dict(ago=27,  category=Category.OTHER,           cost=45.0, occasion="everyday",
+         desc="Laundry card refill for an apartment building"),
+
+    # --- older: counted on the landing page, no longer on the tree ---
+    dict(ago=38,  category=Category.CLOTHING,        cost=52.0, occasion="everyday",
+         desc="Work boots for an adult, steel toe, size 10"),
+    dict(ago=44,  category=Category.RENT_UTILITIES,  cost=310.0, occasion="emergency",
+         desc="Electric bill help, paid to the utility company"),
+    dict(ago=51,  category=Category.SCHOOL_SUPPLIES, cost=36.0, occasion="back_to_school",
+         desc="Two sets of notebooks, folders and pencils"),
+    dict(ago=58,  category=Category.FOOD,            cost=55.0, occasion="everyday",
+         desc="Grocery gift card for one adult"),
+    dict(ago=66,  category=Category.ESSENTIALS,      cost=27.0, occasion="everyday",
+         desc="Unscented laundry detergent and dish soap"),
+    dict(ago=74,  category=Category.CLOTHING,        cost=44.0, occasion="everyday",
+         desc="School shoes for two children, sizes 11 and 13"),
+    dict(ago=83,  category=Category.OTHER,           cost=70.0, occasion="emergency",
+         desc="Gas cards for travel to medical appointments"),
+    dict(ago=91,  category=Category.GIFTS,           cost=33.0, occasion="birthday",
+         desc="Building block set for a 5-year-old"),
+    dict(ago=102, category=Category.RENT_UTILITIES,  cost=420.0, occasion="emergency",
+         desc="Rent help, paid to the landlord"),
+    dict(ago=113, category=Category.FOOD,            cost=48.0, occasion="everyday",
+         desc="Freezer meals, microwave only"),
+    dict(ago=126, category=Category.ESSENTIALS,      cost=22.0, occasion="everyday",
+         desc="Shower chair for an adult"),
+    dict(ago=140, category=Category.SCHOOL_SUPPLIES, cost=19.0, occasion="back_to_school",
+         desc="Backpack, 17 inch, for a school-age child"),
+    dict(ago=158, category=Category.CLOTHING,        cost=41.0, occasion="everyday",
+         desc="Warm layers for two children"),
+    dict(ago=179, category=Category.GIFTS,           cost=26.0, occasion="holiday",
+         desc="Holiday gift for each of two children"),
+    dict(ago=203, category=Category.OTHER,           cost=58.0, occasion="everyday",
+         desc="One-month bus pass for an adult"),
 ]
 
 
@@ -435,6 +502,39 @@ def seed(db_path: Path | None = None, today: date | None = None) -> dict[str, in
                         else WindowResponse.PENDING
                     ),
                     status=pledge_status,
+                ),
+                conn,
+            )
+
+        # Wishes already granted in past weeks. Each one is delivered and off
+        # the tree; together they are what the landing page counts.
+        family_aliases = [alias for alias, *_ in FAMILIES]
+        for i, row in enumerate(HISTORY):
+            delivered = today - timedelta(days=row["ago"])
+            dropped = previous_weekday(delivered, region.dropoff_window.day)
+            alias = family_aliases[i % len(family_aliases)]
+            request_id = db.insert_request(
+                Request(
+                    family_alias=alias,
+                    category=row["category"],
+                    request_type=RequestType.FLEXIBLE,
+                    item_description=row["desc"],
+                    deadline=delivered,
+                    occasion=row["occasion"],
+                    zip=dict((a, z) for a, z, *_ in FAMILIES)[alias],
+                    status=RequestStatus.DELIVERED,
+                    estimated_cost_usd=row["cost"],
+                ),
+                conn,
+            )
+            db.insert_pledge(
+                Pledge(
+                    request_id=request_id,
+                    donor_alias=donor_aliases[i % len(donor_aliases)],
+                    dropoff_date=dropped,
+                    delivery_date=delivered,
+                    window_response=WindowResponse.CONFIRMED,
+                    status=PledgeStatus.DELIVERED,
                 ),
                 conn,
             )

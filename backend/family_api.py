@@ -99,13 +99,24 @@ def respond_to_window(body: WindowAnswer) -> dict:
 # a donor who changes their mind should not become a person a family is
 # waiting on by name.
 
+# These read alongside what the wish granter is told, and the two sides must
+# never contradict each other: while a granter sees "Ready to drop off", the
+# neighbor sees "A neighbor picked your wish", not "Granted". Nothing here
+# says a wish arrived until it has.
 STAGES = {
     "being_checked": "Being checked",
     "on_the_tree": "On the tree",
-    "granted": "A neighbor granted it!",
+    "granted": "A neighbor picked your wish",
     "on_its_way": "On its way",
     "delivered": "Delivered",
     "not_posted": "Not on the tree yet",
+}
+
+# Rent and utilities move as a payment, not a parcel.
+RENT_STAGES = {
+    "granted": "A neighbor picked your wish",
+    "on_its_way": "Payment on the way",
+    "delivered": "Paid",
 }
 
 RENT_NOTE = (
@@ -125,14 +136,23 @@ def _stage_for(wish, pledge, review) -> tuple[str, str, bool]:
         PledgeStatus.MISSED, PledgeStatus.RELEASED
     )
 
+    direct = wish.category is Category.RENT_UTILITIES
+
     if status == "delivered":
-        return "delivered", "This one arrived.", False
+        return "delivered", ("The payment has been made." if direct
+                             else "This one arrived."), False
     if status == "dropped_off":
+        if direct:
+            return "on_its_way", "The payment is on its way to the provider.", False
         return ("on_its_way",
                 "It's at the hub. We bring it to you on the next delivery day.",
                 False)
     if status == "granted":
-        return "granted", "A neighbor nearby is picking this up for you.", False
+        if direct:
+            return ("granted",
+                    "A neighbor picked your wish. A coordinator will be in touch "
+                    "about the payment.", False)
+        return "granted", "A neighbor picked your wish. Here's when it arrives.", False
     if status == "open":
         if dropped_once:
             # Deliberately says nothing about why. A family does not need to
@@ -185,7 +205,7 @@ def family_wishes(alias: str) -> dict:
             rows.append({
                 "wish": wish.public_card(today),
                 "stage": stage,
-                "label": STAGES[stage],
+                "label": (RENT_STAGES.get(stage) if is_rent else None) or STAGES[stage],
                 "detail": detail,
                 "still_looking": still_looking,
                 "delivery": delivery,
