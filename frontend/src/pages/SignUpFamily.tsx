@@ -5,8 +5,10 @@ import HowItWorks from '../components/HowItWorks'
 import { ServiceNotice, ZipField } from '../components/ServiceArea'
 import { setSession } from '../session'
 import FormShell from './FormShell'
+import usePageTitle from '../usePageTitle'
 
 export default function SignUpFamily() {
+  usePageTitle('Make a wish')
   const [zip, setZip] = useState('')
   const [covered, setCovered] = useState<boolean | null>(null)
   const [address, setAddress] = useState('')

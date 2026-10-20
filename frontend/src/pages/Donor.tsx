@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import Logo from '../components/Logo'
 import {
   CATEGORY_LABELS, OCCASION_LABELS, getWishes, requestMatches,
   type Category, type GrantResponse, type Match, type Occasion,
@@ -8,6 +7,7 @@ import {
   userMessage,
 } from '../api'
 import DonorHowItWorks from '../components/DonorHowItWorks'
+import Collapsible from '../components/Collapsible'
 import Thinking from '../components/Thinking'
 import TokenPanel from '../components/TokenPanel'
 import WishCard from '../components/WishCard'
@@ -18,6 +18,12 @@ import MyGranted from './MyGranted'
 import { clearSession, getSession } from '../session'
 import { MapLink } from '../components/ItemLink'
 import { longDay, when } from '../dates'
+import TopBar from '../components/TopBar'
+import { useToast } from '../components/Toast'
+import { TreePine, HeartHandshake, Info, SlidersHorizontal } from 'lucide-react'
+import CategoryIcon from '../components/CategoryIcon'
+import usePageTitle from '../usePageTitle'
+import { SkeletonGrid } from '../components/Skeleton'
 
 const EMPTY: WallFilters = { categories: [], occasion: '', requestType: '', maxCost: '' }
 
@@ -28,7 +34,9 @@ function mapsUrl(address: string): string {
 }
 
 export default function Donor() {
+  usePageTitle('The Wish Tree')
   const session = getSession()
+  const toast = useToast()
   const [filters, setFilters] = useState<WallFilters>(EMPTY)
   const [wishes, setWishes] = useState<Wish[]>([])
   const [region, setRegion] = useState<RegionInfo | null>(null)
@@ -38,6 +46,10 @@ export default function Donor() {
   const [granted, setGranted] = useState<GrantResponse | null>(null)
   const [confirming, setConfirming] = useState<Wish | null>(null)
   const [view, setView] = useState<'tree' | 'list'>('tree')
+  // Two halves of a granter's job: finding a wish, and keeping the promises
+  // already made. They were one long scroll; they are tabs now.
+  const [tab, setTab] = useState<'tree' | 'mine'>('tree')
+  const [moreFilters, setMoreFilters] = useState(false)
   const [gold, setGold] = useState<{ id: number; category: Category }[]>([])
   const [goldDays, setGoldDays] = useState(30)
   const [busy, setBusy] = useState<'wall' | 'match' | number | null>('wall')
@@ -62,7 +74,7 @@ export default function Donor() {
   if (!session || session.role !== 'donor') {
     return (
       <main className="page">
-        <header className="page__nav"><Logo size={26} /></header>
+        <TopBar />
         <h1 className="page__title">Sign in first</h1>
         <p className="page__blurb">
           <Link to="/donor/signup">Create an account</Link> to browse and grant wishes.
@@ -109,11 +121,17 @@ export default function Donor() {
   if (confirming) {
     return (
       <main className="page page--wide">
-        <header className="page__nav"><Logo size={26} /></header>
+        <TopBar />
         <GrantConfirm
           wish={confirming}
           donorAlias={session.alias}
-          onGranted={(result) => { setConfirming(null); setGranted(result) }}
+          onGranted={(result) => {
+            setConfirming(null)
+            setGranted(result)
+            // The thank-you screen says what it meant; the toast says where
+            // the wish went, which is the question right after "thank you".
+            toast('Added to your Coming up list')
+          }}
           onCancel={() => { setConfirming(null); loadWall(filters); setMatches(null) }}
         />
       </main>
@@ -124,7 +142,7 @@ export default function Donor() {
     const { logistics } = granted
     return (
       <main className="page">
-        <header className="page__nav"><Logo size={26} /></header>
+        <TopBar />
         <h1 className="page__title">You just made a neighbor's week. Thank you.</h1>
         <p className="page__blurb">{granted.wish.item_description}</p>
 
@@ -163,23 +181,39 @@ export default function Donor() {
   }
 
   const showing = matches ? matches.map((m) => m.wish) : wishes
+  // How many of the tucked-away filters are actually doing something, so the
+  // button can say so rather than hiding the fact that the tree is narrowed.
+  const extraCount =
+    (filters.occasion ? 1 : 0) + (filters.requestType ? 1 : 0) + (filters.maxCost ? 1 : 0)
+
+  const nav = [
+    {
+      label: 'Wish Tree', short: 'Tree',
+      icon: <TreePine size={17} aria-hidden="true" />,
+      onClick: () => setTab('tree'), active: tab === 'tree',
+    },
+    {
+      label: "Wishes I'm granting", short: 'Granting',
+      icon: <HeartHandshake size={17} aria-hidden="true" />,
+      onClick: () => setTab('mine'), active: tab === 'mine',
+    },
+    {
+      label: 'About', short: 'About',
+      icon: <Info size={17} aria-hidden="true" />, to: '/about',
+    },
+  ]
 
   return (
     <main className="page page--wide">
-      <header className="page__nav"><Logo size={26} /></header>
+      <TopBar
+        links={nav} alias={session.alias}
+        onSwitch={() => { clearSession(); window.location.assign('/') }}
+      />
 
-      <p className="signed-in">
-        Signed in as <strong>{session.alias}</strong> · {session.zip}
-        <button
-          type="button" className="signed-in__switch"
-          onClick={() => { clearSession(); window.location.assign('/') }}
-        >
-          Switch account
-        </button>
-      </p>
+      {tab === 'mine' && <MyGranted alias={session.alias} />}
 
-      <MyGranted alias={session.alias} />
-
+      {tab === 'tree' && (
+      <>
       <div className="donorhead">
         <h1 className="page__title">The Wish Tree</h1>
         <div className="viewtoggle" role="group" aria-label="How to see the wishes">
@@ -205,19 +239,64 @@ export default function Donor() {
           help with, and picks a few it thinks fit you best.
         </p>
 
-        <div className="filters__row">
+        {/* One row that scrolls sideways, so seven categories do not become
+            three lines of buttons on a phone. Icons carry the meaning at a
+            glance; the words are still there for everyone else. */}
+        <div
+          className="chiprow" role="group" aria-label="Categories"
+          ref={(node) => {
+            // Drop the fade once the row is scrolled to its end, so the last
+            // chip is never left looking half-disabled.
+            if (!node) return
+            const sync = () => node.classList.toggle(
+              'chiprow--end',
+              node.scrollLeft + node.clientWidth >= node.scrollWidth - 2,
+            )
+            sync()
+            node.addEventListener('scroll', sync, { passive: true })
+          }}
+        >
           {(Object.keys(CATEGORY_LABELS) as Category[]).map((category) => (
             <button
               key={category} type="button"
-              className={`tag${filters.categories.includes(category) ? ' tag--on' : ''}`}
+              className={`chip${filters.categories.includes(category) ? ' chip--on' : ''}`}
+              aria-pressed={filters.categories.includes(category)}
               onClick={() => toggleCategory(category)}
             >
+              <CategoryIcon category={category} size={14} />
               {CATEGORY_LABELS[category]}
             </button>
           ))}
         </div>
 
         <div className="filters__row filters__row--inputs">
+          <button
+            type="button"
+            className={`btn btn--light btn--small morefilters${extraCount ? ' morefilters--on' : ''}`}
+            aria-expanded={moreFilters}
+            onClick={() => setMoreFilters((was) => !was)}
+          >
+            <SlidersHorizontal size={14} aria-hidden="true" />
+            More filters
+            {extraCount > 0 && <span className="morefilters__count">{extraCount}</span>}
+          </button>
+
+          <button
+            type="button" className="btn btn--primary"
+            onClick={match} disabled={busy === 'match'}
+          >
+            {busy === 'match' ? 'Matching…' : 'Match me to wishes'}
+          </button>
+
+          {matches && (
+            <button type="button" className="btn btn--light" onClick={() => setMatches(null)}>
+              Show the whole tree
+            </button>
+          )}
+        </div>
+
+        {moreFilters && (
+        <div className="filters__row filters__row--inputs filters__more">
           <label className="field field--inline">
             <span className="field__label">Occasion</span>
             <select
@@ -252,19 +331,16 @@ export default function Donor() {
             />
           </label>
 
-          <button
-            type="button" className="btn btn--primary"
-            onClick={match} disabled={busy === 'match'}
-          >
-            {busy === 'match' ? 'Matching…' : 'Match me to wishes'}
-          </button>
-
-          {matches && (
-            <button type="button" className="btn btn--light" onClick={() => setMatches(null)}>
-              Show the whole tree
+          {extraCount > 0 && (
+            <button
+              type="button" className="btn btn--ghost btn--small"
+              onClick={() => update({ occasion: '', requestType: '', maxCost: '' })}
+            >
+              Clear
             </button>
           )}
         </div>
+        )}
       </section>
 
       {error && <p className="form__error" role="alert">{error}</p>}
@@ -280,7 +356,11 @@ export default function Donor() {
         </div>
       )}
 
-      {!matches && <DonorHowItWorks compact />}
+      {!matches && (
+        <Collapsible id="donor-how" title="How it works">
+          <DonorHowItWorks compact />
+        </Collapsible>
+      )}
 
       <div className="wall">
         <div className="wall__cards">
@@ -302,7 +382,12 @@ export default function Donor() {
             </MontySays>
           )}
 
-          {view === 'list' && busy === 'wall' && <p className="wall__empty">Loading wishes…</p>}
+          {view === 'list' && busy === 'wall' && (
+            <>
+              <p className="sr-only" role="status">Loading wishes…</p>
+              <SkeletonGrid count={4} />
+            </>
+          )}
           {view === 'list' && busy !== 'wall' && showing.length === 0 && (
             <div className="wall__empty">
               <Monty size={64} />
@@ -341,6 +426,8 @@ export default function Donor() {
           )}
         </div>
       </div>
+      </>
+      )}
     </main>
   )
 }

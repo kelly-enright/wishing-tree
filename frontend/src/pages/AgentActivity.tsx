@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { getActivity, type Activity,
   userMessage,
 } from '../api'
+import { SkeletonRows } from '../components/Skeleton'
 
 /**
  * Every agent call, in order, with what it did and what it cost.
@@ -20,7 +21,14 @@ export default function AgentActivity({ token }: { token: string }) {
   }, [token])
 
   if (error) return <p className="form__error">{error}</p>
-  if (!data) return <p className="activity__loading">Loading agent activity…</p>
+  if (!data) {
+    return (
+      <>
+        <p className="sr-only" role="status">Loading agent activity…</p>
+        <SkeletonRows count={3} />
+      </>
+    )
+  }
 
   const { totals, budget } = data
   const allInput = totals.input_tokens + totals.cached_input_tokens + (totals.cache_write_tokens ?? 0)

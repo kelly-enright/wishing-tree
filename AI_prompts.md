@@ -805,3 +805,56 @@ rather than Monty, since the two cards now explain both doors.
 - **What this cost.** The Safety prompt is now `f295594b9779`. The live
   safety-attack results and cache figures in harness §19–20 were measured
   against the old version and need re-running before they go in the report.
+
+## Problem 14 — Visual Refresh
+
+### Prompt 1
+
+> Not yet on the live safety suite. We'll rerun it and the token measurements together once the design is frozen.
+>
+> Next, a visual refresh: make Wishing Tree look like a polished, modern product rather than a first version. Change the look only. Do not change how any feature works or any agent prompt, and keep all tests passing. Commit 779326b is our rollback point if anything goes wrong.
+>
+> a.) Navigation: a slim top bar, pinned when scrolling, with the logo on the left, links to Wish Tree, My wishes and About, and an account menu on the right showing the alias with a small initial badge (with "Switch account" inside the menu). On phones, the main links become a bottom tab bar.
+> b.) Split the granter's long page into tabs: "Wish Tree" and "My wishes." The "How it works" box shows on a first visit and is collapsible afterward.
+> c.) Typography: use Fraunces for headlines and Inter for body text (both from Google Fonts). Bring the largest headings down a size so pages feel balanced.
+> d.) Motion: leaves gently lift on hover, cards rise slightly on hover, a smooth transition between Tree and list views, and short confirmation toasts after actions (e.g. "Added to your Coming up list"). When a wish is delivered and turns gold, add a subtle celebratory animation. Respect the user's reduced-motion setting.
+> e.) Make the AI visible: chat bubbles and a typing indicator in the intake chat; Matchmaker results as cards with a small "Why this match" chip; a small "Checked for privacy" badge on every published wish card.
+> f.) Filters: category chips with their icons in a single horizontally scrollable row, and Occasion, Type and Budget tucked into a compact "More filters" control.
+> g.) Finishing details: a favicon using the tree icon, a proper page title for each screen, consistent corner rounding and shadows on all cards, and loading skeletons instead of blank space while data loads.
+> h.) The button that commits someone to a wish should say "I'll grant this wish," not "Grant this wish," since clicking it is a promise, not the finished act.
+> i.) Rebuild and commit the frontend, take fresh screenshots of every screen on desktop and phone, and update harness.md.
+>
+> Ask any questions you have before starting.
+
+**Three questions asked first.** Kelly chose to **self-host** the fonts rather
+than link Google, so the app renders with no internet and sends nothing to a
+third party. She renamed the granter's tab to **"Wishes I'm granting"**
+("Granting" on a phone), because "My wishes" already means a neighbor's own
+requests and one phrase with two meanings does not survive being explained.
+And Admin got **its own slim bar** — same polish, its own links, since
+"Wish Tree" and "My wishes" mean nothing to staff.
+
+**Outcome:** 296 passing, no feature changed, no agent prompt touched.
+
+- **The bug the animation found.** A leaf's position was an inline
+  `transform: translate(-50%,-50%) rotate(Ndeg)`. A hover lift or an arrival
+  animation also wants `transform`, and would have thrown every leaf off its
+  branch. Position moved to the independent `translate` and `rotate`
+  properties, which compose instead of overwriting. A test now asserts the
+  seat style never mentions `transform`.
+- **`tsc --noEmit` is not the gate `npm run build` is.** A broken import sat
+  in two files while `npx tsc --noEmit` reported nothing; `tsc -b && vite
+  build` caught it immediately. The real build command is the one to run.
+- **The favicon in `public/` was a purple framework placeholder** that had
+  been there since the scaffold and was never linked from `index.html`, so
+  nobody had seen it. It is the real tree mark now, drawn from the same
+  geometry as `LogoMark`.
+- **Toasts confirm, never report failures.** An error that disappears after
+  four seconds is worse than no error, so those stay beside the control that
+  failed.
+- **Reduced motion switches movement off rather than slowing it**, because
+  someone who sets that preference usually means it literally.
+
+**Still outstanding, by agreement:** the live safety suite and the token
+measurements, to be re-run together once the design is frozen. The Safety
+prompt has been at `f295594b9779` since Problem 13 and nothing here changed it.

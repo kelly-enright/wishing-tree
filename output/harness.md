@@ -1178,7 +1178,7 @@ Agents arrive in later problems; these are the ones already standing.
 
 ## 25. Tests
 
-`./.venv/bin/python -m pytest` — **290 passing**, in under two seconds, every agent stubbed.
+`./.venv/bin/python -m pytest` — **296 passing**, in under two seconds, every agent stubbed.
 
 `./.venv/bin/python -m pytest -m live` — **10 more** against the real model, excluded by default because they spend tokens. Every agent is stubbed, so the suite is free to run.
 
@@ -1409,3 +1409,107 @@ and needs no API key.
 | Seeded wishes rewritten | 40, plus 3 preference notes |
 | Delivered history added | 21 wishes across seven months |
 | Model calls spent | 0 |
+
+## 29. The visual refresh
+
+Look only. No feature changed, no agent prompt changed, and the 290 tests that
+passed before this section still pass — six more joined them, holding the
+parts of a visual change that can be checked without a browser.
+
+### Type
+
+Fraunces for headlines, Inter for body, **self-hosted**. The latin subsets of
+both variable fonts come to 112 KB and live in `frontend/public/fonts`, which
+means the app renders identically with no internet and opening Wishing Tree
+sends no request to Google. Both are SIL Open Font License; the terms and the
+reasoning are in `frontend/public/fonts/LICENSE`.
+
+The largest headings came down roughly a step — `clamp(2rem, 4.5vw, 2.6rem)`
+to `clamp(1.7rem, 3.4vw, 2.05rem)` — because at the old size a page title
+competed with its own content. A serif is lovely at 32px and tiring at 13px,
+so Fraunces is restricted to the things that *name* a page or section and
+everything read rather than scanned stayed in Inter.
+
+### Navigation
+
+A slim pinned bar: brand, section links, account menu with the alias and a
+badge. The badge carries the **code** — A04, D01 — not a first initial, which
+would read "N" for every neighbor in New Haven and tell you nothing.
+
+On a phone the links leave the bar for a bottom tab bar, where a thumb already
+is. Both are rendered from one array of links and CSS chooses; there is no
+second copy to drift. `short` labels keep the bottom bar honest —
+"Wishes I'm granting" becomes "Granting".
+
+The links differ by role, because the roles differ. A neighbor has no tree to
+grant from, and staff have no wishes of their own:
+
+| Role | Links |
+|---|---|
+| Neighbor | My wishes · Make a wish · About |
+| Wish granter | Wish Tree · Wishes I'm granting · About |
+| Admin | Run sheet · Agent activity · Lock again |
+
+**"Wishes I'm granting", not "My wishes".** Kelly's brief named the granter's
+tab "My wishes", which is already the neighbor's own requests. One phrase with
+two meanings is the kind of thing that reads fine until someone has to explain
+the app to somebody else, so she renamed it.
+
+### One real bug, found by animating
+
+A leaf's position on the tree was written as
+`transform: translate(-50%, -50%) rotate(Ndeg)` in an inline style. Adding a
+hover lift or an arrival animation — both of which want `transform` — would
+have overwritten that and sent every leaf to the wrong place. Position now
+uses the **independent `translate` and `rotate` properties**, which compose
+with `transform` instead of fighting it. There is a test asserting the seat
+style never mentions `transform` again.
+
+### Motion
+
+Small on purpose: leaves lift 3px, cards rise 2px, a view change fades over
+240ms, toasts arrive and leave. Gold leaves get the one celebration in the
+app — a 900ms arrival, staggered 90ms apart so nine of them read as a tree
+lighting up rather than popcorn.
+
+All of it is switched **off**, not slowed, under
+`prefers-reduced-motion: reduce`. Someone who sets that often means it,
+because movement makes them ill.
+
+Toasts are confirmations only, never errors. A message about something going
+wrong needs to stay on screen next to the control that failed; a failure that
+vanishes after four seconds is worse than no message at all.
+
+### The AI, made visible
+
+Monty sits beside what the agent says and beside nothing the neighbor says,
+which is the plainest available way to show which half of a conversation is a
+machine. The Matchmaker's reasoning now arrives under a **"Why this match"**
+chip rather than as a floating sentence — the same words, attributed, which
+turns marketing copy into a model showing its work. And every published wish
+carries a small **"Checked for privacy"** badge, because passing the Privacy
+& Safety agent is the only route to `open` and the card may as well say so.
+
+### Finishing
+
+A favicon drawn from the real `LogoMark` geometry, replacing the purple
+framework placeholder that had been sitting in `public/` since the scaffold.
+Per-screen titles through a `usePageTitle` hook, so a pinned tab and a browser
+history are readable. One rounding scale and one shadow scale as CSS variables,
+applied to every card-shaped thing. Loading skeletons in place of five
+different "Loading…" lines, with the text kept in an `sr-only` live region —
+a screen reader has no use for eleven grey rectangles.
+
+### A promise, not an act
+
+"Grant this wish" became **"I'll grant this wish"**. Clicking it commits
+someone to a drop-off next Thursday; the wish is not granted until it reaches
+the neighbor, which is exactly the distinction section 28 drew.
+
+| | |
+|---|---|
+| Tests | 296 passing, 10 deselected |
+| Fonts added | 112 KB, latin subsets, self-hosted |
+| New components | TopBar, Toast, Collapsible, Skeleton |
+| Agent prompts changed | none |
+| Features changed | none |

@@ -1,22 +1,35 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import Logo from '../components/Logo'
 import {
   approveIntake, sendIntakeMessage, startIntake,
   type DraftWish, type Usage, type WishOutcome,
   userMessage,
 } from '../api'
 import HowItWorks from '../components/HowItWorks'
+import Collapsible from '../components/Collapsible'
+import TopBar from '../components/TopBar'
+import { Info, ListChecks, Sparkles } from 'lucide-react'
+
+/** The neighbor's two halves live on one page, so the links scroll rather
+ *  than switch. Smooth unless the reader has asked for less motion. */
+function scrollTo(id: string) {
+  const target = document.getElementById(id)
+  if (!target) return
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' })
+}
 import Monty from '../components/Monty'
 import Thinking from '../components/Thinking'
 import TokenPanel from '../components/TokenPanel'
 import { clearSession, getSession } from '../session'
 import MyWishes from './MyWishes'
 import WishReview from './WishReview'
+import usePageTitle from '../usePageTitle'
 
 type Bubble = { who: 'family' | 'agent'; text: string }
 
 export default function Intake() {
+  usePageTitle('Make a wish')
   const session = getSession()
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [bubbles, setBubbles] = useState<Bubble[]>([])
@@ -54,7 +67,7 @@ export default function Intake() {
   if (!session || session.role !== 'family') {
     return (
       <main className="page">
-        <header className="page__nav"><Logo size={26} /></header>
+        <TopBar />
         <h1 className="page__title">Sign in first</h1>
         <p className="page__blurb">
           <Link to="/family/signup">Make a wish</Link> to get started.
@@ -116,21 +129,24 @@ export default function Intake() {
 
   return (
     <main className="page page--wide">
-      <header className="page__nav"><Logo size={26} /></header>
-
-      <p className="signed-in">
-        Signed in as <strong>{session.alias}</strong> · {session.zip}
-        <button
-          type="button" className="signed-in__switch"
-          onClick={() => { clearSession(); window.location.assign('/') }}
-        >
-          Switch account
-        </button>
-      </p>
+      <TopBar
+        links={[
+          { label: 'My wishes', short: 'Wishes',
+            icon: <ListChecks size={17} aria-hidden="true" />,
+            onClick: () => scrollTo('mywishes'), active: true },
+          { label: 'Make a wish', short: 'Ask',
+            icon: <Sparkles size={17} aria-hidden="true" />,
+            onClick: () => scrollTo('makeawish') },
+          { label: 'About', short: 'About',
+            icon: <Info size={17} aria-hidden="true" />, to: '/about' },
+        ]}
+        alias={session.alias}
+        onSwitch={() => { clearSession(); window.location.assign('/') }}
+      />
 
       <MyWishes alias={session.alias} />
 
-      <div className="intake">
+      <div className="intake" id="makeawish">
         <div className="intake__main">
           {phase === 'chat' && (
             <>
@@ -139,14 +155,33 @@ export default function Intake() {
                 <Monty size={46} mood="calm" />
                 <h1 className="page__title">Make a wish</h1>
               </div>
-              {bubbles.length <= 1 && <HowItWorks compact />}
+              {bubbles.length <= 1 && (
+                <Collapsible id="family-how" title="How it works">
+                  <HowItWorks compact />
+                </Collapsible>
+              )}
               <div className="transcript" ref={transcript}>
+                {/* Monty sits beside what the agent says, and nothing sits
+                    beside what the neighbor says. It is the plainest way to
+                    show which half of this conversation is a machine. */}
                 {bubbles.map((bubble, i) => (
-                  <p key={i} className={`bubble bubble--${bubble.who}`}>{bubble.text}</p>
+                  <div key={i} className={`turn turn--${bubble.who}`}>
+                    {bubble.who === 'agent' && (
+                      <span className="turn__avatar" aria-hidden="true">
+                        <Monty size={28} mood="calm" />
+                      </span>
+                    )}
+                    <p className={`bubble bubble--${bubble.who}`}>{bubble.text}</p>
+                  </div>
                 ))}
                 {busy && (
-                  <div className="bubble bubble--agent bubble--thinking">
-                    <Thinking label="Reading what you wrote" />
+                  <div className="turn turn--agent">
+                    <span className="turn__avatar" aria-hidden="true">
+                      <Monty size={28} mood="calm" />
+                    </span>
+                    <div className="bubble bubble--agent bubble--thinking">
+                      <Thinking label="Reading what you wrote" />
+                    </div>
                   </div>
                 )}
               </div>

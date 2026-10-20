@@ -109,16 +109,24 @@ export default function WishTree({
 
         {leaves.map((leaf) => {
           const seat = seats[leaf.seat]
+          // Position lives in `translate` and `rotate`, not `transform`.
+          // They are separate CSS properties, so hover lift and the arrival
+          // animation can use `transform` without knocking a leaf off its
+          // branch — which is exactly what happened when all three shared it.
           const style = {
             left: `${seat.left}%`,
             top: `${seat.top}%`,
-            transform: `translate(-50%, -50%) rotate(${seat.tilt}deg)`,
+            translate: '-50% -50%',
+            rotate: `${seat.tilt}deg`,
           }
 
           if (leaf.kind === 'granted') {
             return (
               <span
-                key={`gold-${leaf.seat}`} style={style}
+                key={`gold-${leaf.seat}`}
+                // Staggered, so nine arriving at once reads as a tree
+                // lighting up rather than popcorn.
+                style={{ ...style, animationDelay: `${(leaf.seat % 9) * 90}ms` }}
                 className="leaf leaf--granted"
                 title={`Already granted, in the last ${grantedWindowDays} days`}
                 aria-label="A wish already granted"

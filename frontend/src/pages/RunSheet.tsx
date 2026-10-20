@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { getRunSheet, setPledgeStatus, type RunSheet as Sheet,
   userMessage,
 } from '../api'
+import { SkeletonRows } from '../components/Skeleton'
 
 /**
  * One week of logistics. The only screen in Wishing Tree that shows a family's
@@ -35,7 +36,14 @@ export default function RunSheet({ token }: { token: string }) {
   }
 
   if (error) return <p className="form__error">{error}</p>
-  if (!sheet) return <p className="activity__loading">Loading the run sheet…</p>
+  if (!sheet) {
+    return (
+      <>
+        <p className="sr-only" role="status">Loading the run sheet…</p>
+        <SkeletonRows count={3} />
+      </>
+    )
+  }
 
   return (
     <section className="sheet">

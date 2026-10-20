@@ -6,6 +6,7 @@ import { CATEGORY_LABELS, formatPhone, signUpDonor, type Category, type Preferen
 import { ServiceNotice, ZipField } from '../components/ServiceArea'
 import { setSession } from '../session'
 import FormShell from './FormShell'
+import usePageTitle from '../usePageTitle'
 
 const PREFERENCES: { value: Preference; label: string }[] = [
   { value: 'specific', label: 'Specific items — an exact thing to buy' },
@@ -14,6 +15,7 @@ const PREFERENCES: { value: Preference; label: string }[] = [
 ]
 
 export default function SignUpDonor() {
+  usePageTitle('Grant a wish')
   const [zip, setZip] = useState('')
   const [covered, setCovered] = useState<boolean | null>(null)
   const [email, setEmail] = useState('')

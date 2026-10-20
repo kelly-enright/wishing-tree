@@ -1,12 +1,22 @@
 import { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
-import Logo from '../components/Logo'
 import { unlockCoordinator,
   userMessage,
 } from '../api'
 import AgentActivity from './AgentActivity'
 import RunSheet from './RunSheet'
 import { coordinatorToken, setCoordinatorToken } from '../session'
+import TopBar from '../components/TopBar'
+import { Activity, ClipboardList, Lock } from 'lucide-react'
+import usePageTitle from '../usePageTitle'
+
+/** Admin's two halves are one long document; the links jump rather than switch. */
+function scrollTo(id: string) {
+  const target = document.getElementById(id)
+  if (!target) return
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' })
+}
 
 /**
  * The admin screens are the only ones that show a family's home address,
@@ -19,6 +29,7 @@ import { coordinatorToken, setCoordinatorToken } from '../session'
  * refusing to ever show it is not.
  */
 export default function Coordinator() {
+  usePageTitle('Admin')
   const [token, setToken] = useState<string | null>(coordinatorToken())
   const [passcode, setPasscode] = useState('')
   const [showPasscode, setShowPasscode] = useState(false)
@@ -43,7 +54,7 @@ export default function Coordinator() {
   if (!token) {
     return (
       <main className="page">
-        <header className="page__nav"><Logo size={26} /></header>
+        <TopBar />
         <h1 className="page__title">Admin</h1>
         <p className="page__blurb">
           These screens show neighbors’ home addresses, emails and phone numbers,
@@ -79,21 +90,25 @@ export default function Coordinator() {
 
   return (
     <main className="page page--wide">
-      <header className="page__nav"><Logo size={26} /></header>
-      <p className="signed-in">
-        Admin view unlocked
-        <button
-          type="button"
-          className="signed-in__switch"
-          onClick={() => {
-            setCoordinatorToken(null)
-            setToken(null)
-          }}
-        >
-          Lock again
-        </button>
-      </p>
-      <h1 className="page__title">Run sheet</h1>
+      <TopBar
+        links={[
+          { label: 'Run sheet', short: 'Run sheet',
+            icon: <ClipboardList size={17} aria-hidden="true" />,
+            onClick: () => scrollTo('runsheet'), active: true },
+          { label: 'Agent activity', short: 'Agents',
+            icon: <Activity size={17} aria-hidden="true" />,
+            onClick: () => scrollTo('agentactivity') },
+        ]}
+        trailing={
+          <button
+            type="button" className="btn btn--light btn--small"
+            onClick={() => { setCoordinatorToken(null); setToken(null) }}
+          >
+            <Lock size={14} aria-hidden="true" /> Lock again
+          </button>
+        }
+      />
+      <h1 className="page__title" id="runsheet">Run sheet</h1>
       <p className="page__blurb">
         Drop-offs and deliveries for the week, with contact details and statuses.
         The only screens that show a neighbor’s address, email or phone.
@@ -101,7 +116,7 @@ export default function Coordinator() {
 
       <RunSheet token={token} />
 
-      <h2 className="activity__heading">Agent activity</h2>
+      <h2 className="activity__heading" id="agentactivity">Agent activity</h2>
       <p className="page__blurb">
         Every call the agents have made, in order: what went in, what came out, which
         tools ran, what the safety review removed, and what it cost.

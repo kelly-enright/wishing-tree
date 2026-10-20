@@ -1,6 +1,7 @@
 import { CATEGORY_LABELS, OCCASION_LABELS, type WishCard as Wish } from '../api'
 import CategoryIcon from './CategoryIcon'
 import { ItemLink } from './ItemLink'
+import { ShieldCheck, Sparkles } from 'lucide-react'
 import { deadline as deadlineText } from '../dates'
 
 function cost(wish: Wish): string {
@@ -56,7 +57,18 @@ export default function WishCard({
 
       <p className="card__desc">{wish.item_description}</p>
 
-      {reason && <p className="card__reason">{reason}</p>}
+      {/* The Matchmaker's reasoning, attributed. A sentence that just appears
+          on a card reads as marketing; the same sentence under a chip that
+          says where it came from reads as the model showing its work. */}
+      {reason && (
+        <div className="why">
+          <span className="why__chip">
+            <Sparkles size={12} aria-hidden="true" />
+            Why this match
+          </span>
+          <p className="why__text">{reason}</p>
+        </div>
+      )}
 
       <dl className="card__facts">
         <div><dt>Cost</dt><dd>
@@ -82,6 +94,14 @@ export default function WishCard({
 
       {/* "Size" is only the right word for a size. A preference note —
           "Partial help is still useful" — is not one, so it stands alone. */}
+      {/* Every wish here has been through the Privacy & Safety agent — that
+          is the only route to `open`. Saying so on the card is the quiet
+          reassurance that makes a stranger's wish feel safe to read. */}
+      <p className="card__checked" title="A Privacy & Safety agent checked this wish for names, addresses and anything identifying before it went up.">
+        <ShieldCheck size={12} aria-hidden="true" />
+        Checked for privacy
+      </p>
+
       {wish.size && <p className="card__extra">Size: {wish.size}</p>}
       {!wish.size && wish.size_preferences && (
         <p className="card__extra">{wish.size_preferences}</p>
@@ -94,7 +114,7 @@ export default function WishCard({
             type="button" className="btn btn--gold card__grant"
             onClick={() => onGrant(wish)} disabled={granting}
           >
-            {granting ? 'Granting…' : 'Grant this wish'}
+            {granting ? 'Granting…' : "I'll grant this wish"}
           </button>
         )}
       </div>

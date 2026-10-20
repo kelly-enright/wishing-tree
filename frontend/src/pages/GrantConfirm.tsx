@@ -169,7 +169,7 @@ export default function GrantConfirm({
           disabled={!ready || busy}
           title={agreed ? undefined : 'Tick the box above first'}
         >
-          {busy ? 'Granting…' : 'Grant this wish'}
+          {busy ? 'Granting…' : "I'll grant this wish"}
         </button>
         <button className="btn btn--light" type="button" onClick={onCancel} disabled={busy}>
           Not this one

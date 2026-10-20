@@ -1,3 +1,26 @@
+/* ------------------------------------------------------------------- type */
+/* Fraunces for headlines, Inter for everything else, both self-hosted.
+   Latin subset only — this app is in English, and the Vietnamese, Greek and
+   Cyrillic cuts would triple the bytes for glyphs nothing here renders.
+   Both are variable fonts covering 400-700, so one file per family does the
+   whole range. SIL Open Font License; see frontend/public/fonts/LICENSE. */
+
+@font-face {
+  font-family: 'Fraunces';
+  src: url('/fonts/fraunces-latin.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter-latin.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Wishing Tree.
    Evergreen for structure, warm cream for the page, gold for the one action
    that matters most on a screen, terracotta only when something needs
@@ -31,7 +54,17 @@
   --ink-soft:       #5F5A53;
   --white:          #FFFFFF;
 
+  --body: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+  --display: 'Fraunces', Georgia, 'Times New Roman', serif;
+
+  /* One rounding scale and one shadow scale, so every card on every screen
+     agrees. --radius stays the card default; the others are for the pieces
+     that sit inside or around one. */
   --radius: 14px;
+  --radius-sm: 9px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
   --shadow: 0 6px 20px rgba(34, 70, 60, 0.08);
   --shadow-lift: 0 12px 30px rgba(34, 70, 60, 0.14);
   --line: rgba(47, 93, 80, 0.16);
@@ -45,7 +78,9 @@ html, body, #root { height: 100%; }
 
 body {
   margin: 0;
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--body);
+  font-size: 15.5px;
+  line-height: 1.6;
   color: var(--ink);
   background:
     radial-gradient(1000px 460px at 10% -12%, var(--evergreen-pale) 0%, transparent 62%),
@@ -344,7 +379,10 @@ a { color: var(--evergreen); }
 
 .page__title {
   margin: 0 0 14px;
-  font-size: clamp(2rem, 4.5vw, 2.6rem);
+  font-family: var(--display);
+  font-size: clamp(1.7rem, 3.4vw, 2.05rem);
+  font-optical-sizing: auto;
+  letter-spacing: -0.012em;
   color: var(--evergreen-deep);
   letter-spacing: -0.02em;
 }
@@ -1110,7 +1148,7 @@ textarea.field__input { resize: vertical; font: inherit; }
 /* ---------------------------------------------------------------- hero */
 
 .hero__logo { display: flex; justify-content: center; margin-bottom: 14px; }
-.hero__logo .logo__word { font-size: clamp(2rem, 5.5vw, 2.9rem); }
+.hero__logo .logo__word { font-size: clamp(1.8rem, 4.4vw, 2.4rem); }
 
 .hero__tagline {
   margin: 0 auto 18px;
@@ -1698,7 +1736,7 @@ textarea.field__input { resize: vertical; font: inherit; }
   cursor: pointer;
   padding: 0;
   box-shadow: 0 2px 5px rgba(34, 70, 60, 0.18);
-  transition: transform 0.14s ease, box-shadow 0.14s ease;
+  transition: transform 170ms ease, box-shadow 170ms ease, filter 170ms ease;
 }
 
 .leaf--open:hover, .leaf--open:focus-visible {
@@ -1791,7 +1829,9 @@ textarea.field__input { resize: vertical; font: inherit; }
 
 .about .page__title {
   margin-bottom: 20px;
-  font-size: clamp(1.9rem, 4.4vw, 2.5rem);
+  font-family: var(--display);
+  font-size: clamp(1.6rem, 3.2vw, 1.95rem);
+  letter-spacing: -0.012em;
 }
 
 .about__para {
@@ -1953,4 +1993,323 @@ textarea.field__input { resize: vertical; font: inherit; }
   margin: 2px 0 0; padding: 0; background: none;
   font-size: 12.5px; color: var(--ink-soft); text-align: left;
   font-weight: 400;
+}
+
+/* ------------------------------------------------- the display face, placed */
+/* Fraunces carries the things that name a page or a section. Everything that
+   is read rather than scanned stays in Inter — a serif is lovely at 32px and
+   tiring at 13px. */
+.logo__word,
+.hero__tagline,
+.accounts__title,
+.mywishes__title,
+.granted__title,
+.about__heading,
+.tally__number,
+.topbar__brand .logo__word {
+  font-family: var(--display);
+  font-optical-sizing: auto;
+  letter-spacing: -0.008em;
+}
+
+.hero__tagline { font-size: clamp(1.25rem, 2.6vw, 1.55rem); }
+
+/* One rounding and one shadow for every card-shaped thing in the app. */
+.card, .gcard, .track, .confirm__block, .tokens, .accounts__card,
+.weekbanner, .granted, .mywishes, .logistics, .row, .sheet__block {
+  border-radius: var(--radius);
+}
+
+/* ===================================================================== nav */
+/* Pinned, slim, and quiet. It has to stay out of the way of a long tree while
+   still being the thing you reach for without looking. */
+.topbar {
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(251, 246, 238, 0.86);
+  backdrop-filter: saturate(150%) blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar__inner {
+  max-width: 1120px; margin: 0 auto; padding: 0 20px;
+  height: 56px; display: flex; align-items: center; gap: 18px;
+}
+.topbar__brand { display: flex; align-items: center; text-decoration: none; }
+.topbar__links { display: flex; align-items: center; gap: 4px; flex: 1; }
+.topbar__right { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+
+.topbar__link {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 11px; border: 0; border-radius: var(--radius-pill);
+  background: none; color: var(--ink-soft); cursor: pointer;
+  font: inherit; font-size: 14px; text-decoration: none;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+.topbar__link:hover { background: var(--evergreen-pale); color: var(--evergreen-deep); }
+.topbar__link--on { background: var(--evergreen-pale); color: var(--evergreen-deep); font-weight: 600; }
+
+/* --------------------------------------------------------- account menu */
+.account { position: relative; }
+.account__btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 5px 10px 5px 5px; border: 1px solid var(--line);
+  border-radius: var(--radius-pill); background: var(--white);
+  cursor: pointer; font: inherit; font-size: 13.5px; color: var(--ink);
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+.account__btn:hover { border-color: var(--evergreen-soft); box-shadow: var(--shadow); }
+.account__badge {
+  display: grid; place-items: center; min-width: 30px; height: 26px;
+  padding: 0 7px; border-radius: var(--radius-pill);
+  background: var(--evergreen); color: var(--white);
+  font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em;
+}
+.account__menu {
+  position: absolute; right: 0; top: calc(100% + 8px); min-width: 210px;
+  padding: 6px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--white); box-shadow: var(--shadow-lift); z-index: 50;
+}
+.account__who {
+  margin: 0; padding: 9px 11px; font-size: 12.5px; color: var(--ink-soft);
+  border-bottom: 1px solid var(--line); line-height: 1.45;
+}
+.account__who strong { color: var(--ink); font-size: 13.5px; }
+.account__item {
+  display: block; width: 100%; margin-top: 4px; padding: 9px 11px;
+  border: 0; border-radius: var(--radius-sm); background: none;
+  text-align: left; cursor: pointer; font: inherit; font-size: 13.5px;
+  color: var(--ink);
+}
+.account__item:hover { background: var(--evergreen-pale); color: var(--evergreen-deep); }
+
+/* ------------------------------------------------- bottom tabs, on a phone */
+.tabbar { display: none; }
+
+@media (max-width: 720px) {
+  .topbar__links { display: none; }
+  .account__alias { display: none; }
+
+  .tabbar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+    display: flex; align-items: stretch;
+    background: rgba(251, 246, 238, 0.94);
+    backdrop-filter: saturate(150%) blur(10px);
+    border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tabbar__link {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    gap: 3px; padding: 9px 4px 8px; border: 0; background: none;
+    color: var(--ink-soft); cursor: pointer; font: inherit; font-size: 11px;
+    text-decoration: none;
+  }
+  .tabbar__link--on { color: var(--evergreen-deep); font-weight: 600; }
+  .tabbar__link--on svg { stroke-width: 2.4; }
+
+  /* Room for the bar, so the last card is never trapped under it. */
+  .page, .landing { padding-bottom: 76px; }
+}
+
+/* ------------------------------------------------------------- folding box */
+.fold {
+  margin-bottom: 14px; border: 1px solid var(--line);
+  border-radius: var(--radius); background: var(--white);
+  box-shadow: var(--shadow); overflow: hidden;
+}
+.fold__head {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: 12px 16px; border: 0; background: none;
+  cursor: pointer; font: inherit; text-align: left; color: var(--evergreen-deep);
+}
+.fold__head svg { transition: transform 160ms ease; color: var(--ink-soft); }
+.fold--open .fold__head svg { transform: rotate(180deg); }
+.fold__title {
+  font-size: 11.5px; font-weight: 700; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--ink-soft);
+}
+.fold__body { padding: 0 16px 14px; }
+/* Inside a fold the box has already been introduced by the fold's own
+   header, so the inner card drops its chrome and its duplicate title. */
+.fold__body .how {
+  margin: 0; border: 0; box-shadow: none; padding: 0; background: none;
+}
+.fold__body .how__title { display: none; }
+
+/* ================================================================= filters */
+/* One sideways row. Seven categories wrap to three lines on a phone
+   otherwise, which pushes the tree itself below the fold. */
+.chiprow {
+  display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 8px;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  /* Fade the right edge so a half-cut chip reads as "keep scrolling" rather
+     than as a layout that ran out of room. The mask only appears once the
+     row actually overflows, because `--chiprow-end` is set by the scroll
+     handler; before that the row is plain. */
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent);
+}
+.chiprow::-webkit-scrollbar { display: none; }
+.chiprow--end { mask-image: none; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto;
+  padding: 7px 13px; border: 1px solid var(--line);
+  border-radius: var(--radius-pill); background: var(--white);
+  color: var(--ink-soft); cursor: pointer; font: inherit; font-size: 13px;
+  white-space: nowrap; scroll-snap-align: start;
+  transition: background-color 140ms ease, color 140ms ease,
+              border-color 140ms ease, transform 140ms ease;
+}
+.chip:hover { border-color: var(--evergreen-soft); color: var(--evergreen-deep); }
+.chip--on {
+  background: var(--evergreen); border-color: var(--evergreen);
+  color: var(--white); font-weight: 600;
+}
+.chip--on svg { color: var(--white); }
+
+.morefilters { display: inline-flex; align-items: center; gap: 7px; }
+.morefilters--on { border-color: var(--evergreen-soft); color: var(--evergreen-deep); }
+.morefilters__count {
+  display: grid; place-items: center; min-width: 18px; height: 18px;
+  padding: 0 5px; border-radius: var(--radius-pill);
+  background: var(--evergreen); color: var(--white);
+  font-size: 11px; font-weight: 700;
+}
+.filters__more {
+  margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--line);
+}
+
+/* ====================================================== the AI, made visible */
+.why {
+  margin: 0; padding: 10px 12px; border-radius: var(--radius-sm);
+  background: var(--evergreen-pale);
+}
+.why__chip {
+  display: inline-flex; align-items: center; gap: 5px; margin-bottom: 5px;
+  padding: 2px 8px; border-radius: var(--radius-pill);
+  background: var(--evergreen); color: var(--white);
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.why__text {
+  margin: 0; color: var(--evergreen-deep); font-size: 0.88rem; line-height: 1.5;
+}
+
+.card__checked {
+  display: inline-flex; align-items: center; gap: 5px; margin: 10px 0 0;
+  color: var(--evergreen-soft); font-size: 11.5px; cursor: help;
+}
+
+/* ------------------------------------------------------------ chat turns */
+.turn { display: flex; align-items: flex-end; gap: 8px; max-width: 100%; }
+.turn--agent { justify-content: flex-start; }
+.turn--family { justify-content: flex-end; }
+.turn__avatar {
+  flex: none; width: 30px; height: 30px; display: grid; place-items: center;
+  border-radius: var(--radius-pill); background: var(--cream-deep);
+  overflow: hidden;
+}
+.turn .bubble { max-width: min(84%, 520px); }
+
+/* A new turn arrives rather than appearing. */
+.turn .bubble { animation: bubble-in 220ms ease-out both; }
+
+@keyframes bubble-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ================================================================== motion */
+/* Everything here is small on purpose. Movement should tell you something
+   happened, not perform. The whole block is switched off at the bottom of
+   this file for anyone who has asked for less of it. */
+
+.toasts {
+  position: fixed; left: 50%; bottom: 24px; z-index: 60;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; gap: 8px; align-items: center;
+  pointer-events: none;
+}
+.toast {
+  display: inline-flex; align-items: center; gap: 8px; margin: 0;
+  padding: 10px 16px; border-radius: var(--radius-pill);
+  background: var(--evergreen-deep); color: var(--white);
+  font-size: 13.5px; box-shadow: var(--shadow-lift);
+  animation: toast-in 220ms ease-out both;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+@media (max-width: 720px) { .toasts { bottom: 84px; } }
+
+/* Cards rise a little under the pointer, enough to say "this is a thing". */
+.card, .gcard, .accounts__card {
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.card:hover, .accounts__card:hover {
+  transform: translateY(-2px); box-shadow: var(--shadow-lift);
+}
+
+/* Leaves lift off the branch. */
+.leaf--open:hover, .leaf--open:focus-visible {
+  transform: translateY(-3px) scale(1.06);
+  filter: drop-shadow(0 4px 8px rgba(34, 70, 60, 0.22));
+}
+
+/* Tree and list are the same wishes seen two ways, so one gives way to the
+   other rather than the page jumping. */
+.wall__cards > * { animation: view-in 240ms ease-out both; }
+@keyframes view-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* A wish that has arrived. The only celebration in the app, and it happens
+   once, when a gold leaf first appears on the tree. */
+.leaf--granted { animation: gold-arrive 900ms ease-out both; }
+@keyframes gold-arrive {
+  0%   { transform: scale(0.6) rotate(-8deg); opacity: 0; }
+  55%  { transform: scale(1.14) rotate(3deg); opacity: 1; }
+  75%  { transform: scale(0.97) rotate(-1deg); }
+  100% { transform: none; }
+}
+
+.skeleton {
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg, var(--cream-deep) 25%, rgba(255, 255, 255, 0.72) 37%, var(--cream-deep) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.3s ease-in-out infinite;
+}
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to   { background-position: 0 0; }
+}
+
+/* ------------------------------------------------------- less of all that */
+/* Not "slightly slower" — off. Someone who sets this often means it, because
+   movement makes them ill, so nothing here animates or slides. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .card:hover, .accounts__card:hover, .leaf:hover, .leaf:focus-visible {
+    transform: none;
+  }
+  .skeleton { animation: none; background: var(--cream-deep); }
+}
+
+/* A card with nothing in it yet. Same box, same spacing, no hover lift —
+   there is nothing here to interact with. */
+.card--ghost { pointer-events: none; }
+.card--ghost:hover { transform: none; box-shadow: var(--shadow); }
+
+/* Said to a screen reader, drawn for nobody. */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }

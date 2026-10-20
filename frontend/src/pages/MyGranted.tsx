@@ -5,6 +5,8 @@ import CategoryIcon from '../components/CategoryIcon'
 import { MontySays } from '../components/Monty'
 import { ItemLink, MapLink } from '../components/ItemLink'
 import { longDay, when } from '../dates'
+import { useToast } from '../components/Toast'
+import { SkeletonRows } from '../components/Skeleton'
 
 /**
  * What a wish granter has taken on.
@@ -22,6 +24,7 @@ import { longDay, when } from '../dates'
  * address, no contact. The same wall of separation the other side keeps.
  */
 export default function MyGranted({ alias }: { alias: string }) {
+  const toast = useToast()
   const [comingUp, setComingUp] = useState<GrantedRow[] | null>(null)
   const [done, setDone] = useState<GrantedRow[]>([])
   const [thisWeek, setThisWeek] = useState<GrantedRow[]>([])
@@ -47,6 +50,7 @@ export default function MyGranted({ alias }: { alias: string }) {
     try {
       const result = await releasePledge(pledgeId, alias)
       setNote(result.message)
+      toast('Back on the tree for another neighbor')
       load()
     } catch (e) {
       setError(userMessage(e, 'We could not release that just now.'))
@@ -56,7 +60,14 @@ export default function MyGranted({ alias }: { alias: string }) {
   }
 
   if (error) return <p className="form__error">{error}</p>
-  if (!comingUp) return <p className="activity__loading">Loading…</p>
+  if (!comingUp) {
+    return (
+      <>
+        <p className="sr-only" role="status">Loading what you have granted…</p>
+        <SkeletonRows count={2} />
+      </>
+    )
+  }
 
   const nothingYet = comingUp.length === 0 && done.length === 0
 

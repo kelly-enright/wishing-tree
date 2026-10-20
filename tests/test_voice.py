@@ -344,3 +344,63 @@ def test_the_run_sheet_may_keep_its_compact_dates(client):
                        headers={"X-Coordinator-Token": token}).json()
     assert sheet["week_start"]
     assert ISO.fullmatch(sheet["week_start"])
+
+
+# --------------------------------------------------------------------------
+# The visual refresh — the parts that can be checked without a browser
+# --------------------------------------------------------------------------
+
+FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
+
+
+def test_the_fonts_are_served_by_this_app():
+    """Self-hosted, so the app looks the same with no internet and opening it
+    sends nothing to a third party."""
+    css = (FRONTEND / "src" / "styles.css").read_text()
+    assert "fonts.googleapis.com" not in css
+    assert "fonts.gstatic.com" not in css
+    for family in ("fraunces-latin.woff2", "inter-latin.woff2"):
+        assert f"/fonts/{family}" in css
+        assert (FRONTEND / "public" / "fonts" / family).exists()
+    assert (FRONTEND / "public" / "fonts" / "LICENSE").exists()
+
+
+def test_the_built_app_carries_the_fonts_and_the_favicon():
+    """The built frontend is what ships, so the files have to be in it."""
+    dist = FRONTEND / "dist"
+    assert (dist / "favicon.svg").exists()
+    for family in ("fraunces-latin.woff2", "inter-latin.woff2"):
+        assert (dist / "fonts" / family).exists()
+    index = (dist / "index.html").read_text()
+    assert 'rel="icon"' in index
+    assert "favicon.svg" in index
+
+
+def test_the_favicon_is_the_tree_not_the_scaffold():
+    """The file started life as a framework placeholder in purple."""
+    svg = (FRONTEND / "public" / "favicon.svg").read_text()
+    assert "#2F5D50" in svg and "#E0A84B" in svg      # evergreen and gold
+    assert "863bff" not in svg.lower()                 # the old purple
+
+
+def test_motion_is_switched_off_for_anyone_who_asks():
+    css = (FRONTEND / "src" / "styles.css").read_text()
+    block = css[css.index("@media (prefers-reduced-motion: reduce)"):]
+    assert "animation-duration: 0.001ms !important" in block
+    assert "transition-duration: 0.001ms !important" in block
+
+
+def test_a_leaf_does_not_use_transform_for_its_position():
+    """Position lives in `translate`/`rotate` so hover and the arrival
+    animation can use `transform` without knocking leaves off the tree."""
+    tree = (FRONTEND / "src" / "components" / "WishTree.tsx").read_text()
+    seat = tree[tree.index("const style = {"): tree.index("const style = {") + 400]
+    assert "translate:" in seat and "rotate:" in seat
+    assert "transform:" not in seat
+
+
+def test_the_promise_button_says_it_is_a_promise():
+    for rel in ("src/components/WishCard.tsx", "src/pages/GrantConfirm.tsx"):
+        text = (FRONTEND / rel).read_text()
+        assert "I'll grant this wish" in text
+        assert "'Grant this wish'" not in text

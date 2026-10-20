@@ -1,5 +1,6 @@
 import Logo from '../components/Logo'
 import KellyAndMonty from '../components/KellyAndMonty'
+import usePageTitle from '../usePageTitle'
 
 /**
  * About.
@@ -9,6 +10,7 @@ import KellyAndMonty from '../components/KellyAndMonty'
  * Wishing Tree is not in her words below, it is not here.
  */
 export default function About() {
+  usePageTitle('About')
   return (
     <main className="page about">
       <header className="page__nav"><Logo size={26} /></header>

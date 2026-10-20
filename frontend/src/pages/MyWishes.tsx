@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { getMyWishes, respondToWindow, userMessage, type WishProgress } from '../api'
 import { MontySays } from '../components/Monty'
 import { when } from '../dates'
+import { useToast } from '../components/Toast'
+import { SkeletonRows } from '../components/Skeleton'
 
 const ORDER: WishProgress['stage'][] = [
   'granted', 'on_its_way', 'being_checked', 'on_the_tree', 'not_posted', 'delivered',
@@ -15,6 +17,7 @@ const ORDER: WishProgress['stage'][] = [
  * drops out should not become a person a family is waiting on by name.
  */
 export default function MyWishes({ alias }: { alias: string }) {
+  const toast = useToast()
   const [rows, setRows] = useState<WishProgress[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState<number | null>(null)
@@ -33,6 +36,9 @@ export default function MyWishes({ alias }: { alias: string }) {
     try {
       const result = await respondToWindow(alias, pledgeId, response)
       setNotes((n) => ({ ...n, [pledgeId]: result.message }))
+      toast(response === 'confirmed'
+        ? 'Delivery confirmed'
+        : 'Thanks — a coordinator will be in touch')
       load()
     } catch (e) {
       setNotes((n) => ({
@@ -45,7 +51,15 @@ export default function MyWishes({ alias }: { alias: string }) {
   }
 
   if (error) return <p className="form__error">{error}</p>
-  if (!rows) return <p className="activity__loading">Loading your wishes…</p>
+  if (!rows) {
+    return (
+      <section className="mywishes" id="mywishes" aria-label="My wishes">
+        <h2 className="mywishes__title">My wishes</h2>
+        <p className="sr-only" role="status">Loading your wishes…</p>
+        <SkeletonRows count={2} />
+      </section>
+    )
+  }
 
   if (rows.length === 0) {
     return (
@@ -64,7 +78,7 @@ export default function MyWishes({ alias }: { alias: string }) {
   const anyOnTheTree = sorted.some((row) => row.stage === 'on_the_tree')
 
   return (
-    <section className="mywishes" aria-label="My wishes">
+    <section className="mywishes" id="mywishes" aria-label="My wishes">
       <h2 className="mywishes__title">My wishes</h2>
 
       {anyOnTheTree && (
