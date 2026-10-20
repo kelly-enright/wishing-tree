@@ -1,0 +1,351 @@
+"""The donor side added in Problem 10: badges, confirmation, release, calendar."""
+
+from datetime import date, timedelta
+
+import pytest
+from fastapi.testclient import TestClient
+
+from backend import badges, config, coordinator_auth, db, main, seed
+from backend.models import (
+    Category,
+    Occasion,
+    PledgeStatus,
+    Request,
+    RequestStatus,
+    RequestType,
+)
+
+TUESDAY = date(2026, 10, 20)
+
+
+@pytest.fixture
+def client(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "test.db")
+    monkeypatch.setattr(config, "AUDIT_PATH", tmp_path / "audit_trail.json")
+    seed.seed(config.DB_PATH)
+    coordinator_auth.clear()
+    return TestClient(main.app)
+
+
+def _token(client) -> dict:
+    token = client.post("/api/coordinator/unlock",
+                        json={"passcode": config.COORDINATOR_PASSCODE}).json()["token"]
+    return {"X-Coordinator-Token": token}
+
+
+# --------------------------------------------------------------------------
+# Badges
+# --------------------------------------------------------------------------
+
+def test_needed_by_appears_only_within_the_next_two_dropoffs():
+    soon, later = badges.upcoming_dropoffs(2, TUESDAY)
+    assert soon == date(2026, 10, 22) and later == date(2026, 10, 29)
+
+    inside = badges.badges_for({"deadline": later.isoformat(), "days_waiting": 0}, TUESDAY)
+    assert [b["kind"] for b in inside] == ["needed_by"]
+
+    outside = badges.badges_for(
+        {"deadline": (later + timedelta(days=1)).isoformat(), "days_waiting": 0}, TUESDAY
+    )
+    assert outside == []
+
+
+def test_waiting_appears_after_the_threshold():
+    assert badges.badges_for({"deadline": None, "days_waiting": 14}, TUESDAY) == []
+    assert badges.badges_for({"deadline": None, "days_waiting": 8}, TUESDAY) == []
+
+    # The threshold is 14 days, so the first badge a wish can earn is two
+    # weeks. There is no "Waiting 1 week" state, by construction.
+    waiting = badges.badges_for({"deadline": None, "days_waiting": 15}, TUESDAY)
+    assert waiting[0]["label"] == "Waiting 2 weeks"
+    assert badges.badges_for({"deadline": None, "days_waiting": 29}, TUESDAY)[0]["label"] == "Waiting 4 weeks"
+
+
+def test_a_wish_with_no_deadline_only_gets_the_waiting_badge():
+    got = badges.badges_for({"deadline": None, "days_waiting": 30}, TUESDAY)
+    assert [b["kind"] for b in got] == ["waiting"]
+
+
+def test_the_thresholds_come_from_config(monkeypatch):
+    monkeypatch.setattr(config, "WAITING_BADGE_DAYS", 3)
+    got = badges.badges_for({"deadline": None, "days_waiting": 4}, TUESDAY)
+    assert got and got[0]["kind"] == "waiting"
+
+
+def test_no_badge_shouts():
+    """Gentle by design: a date and a count, never a red URGENT."""
+    everything = badges.badges_for({"deadline": "2026-10-22", "days_waiting": 40}, TUESDAY)
+    for badge in everything:
+        assert "urgent" not in badge["label"].lower()
+        assert badge["label"] == badge["label"].strip()
+        assert not badge["label"].isupper()
+
+
+def test_the_wall_carries_badges(client):
+    wishes = client.get("/api/wishes").json()["wishes"]
+    assert all("badges" in w for w in wishes)
+    assert any(w["badges"] for w in wishes)
+
+
+# --------------------------------------------------------------------------
+# The confirmation screen
+# --------------------------------------------------------------------------
+
+def _first_open(client, category: str | None = None) -> dict:
+    url = "/api/wishes" + (f"?category={category}" if category else "")
+    return client.get(url).json()["wishes"][0]
+
+
+def test_a_specific_wish_says_exactly_what_to_bring(client):
+    wish = _first_open(client, "clothing")
+    while wish["request_type"] != "specific":
+        rest = [w for w in client.get("/api/wishes?request_type=specific").json()["wishes"]]
+        wish = rest[0]
+        break
+
+    body = client.get(
+        f"/api/grant/options?request_id={wish['id']}&donor_alias=Donor D01"
+    ).json()
+    bring = body["what_to_bring"]
+    assert bring["kind"] == "specific"
+    assert bring["item"]
+    assert "substitute" in bring["substitute_note"].lower()
+    assert body["estimated_cost_usd"] > 0
+
+
+def test_a_flexible_wish_says_what_matters(client):
+    flexible = client.get("/api/wishes?request_type=flexible").json()["wishes"][0]
+    body = client.get(
+        f"/api/grant/options?request_id={flexible['id']}&donor_alias=Donor D01"
+    ).json()
+    assert body["what_to_bring"]["kind"] == "flexible"
+    assert body["what_to_bring"]["substitute_ok"] is True
+
+
+def test_a_rent_wish_confirms_the_amount_and_who_pays(client):
+    rent = _first_open(client, "rent_utilities")
+    body = client.get(
+        f"/api/grant/options?request_id={rent['id']}&donor_alias=Donor D06"
+    ).json()
+    assert body["paid_directly_to_provider"] is True
+    assert body["what_to_bring"] is None
+    assert body["dropoff_choices"] == []
+    assert "coordinator will email" in body["direct_payment_note"]
+    assert "directly" in body["direct_payment_note"]
+
+
+def test_the_options_offer_every_dropoff_that_still_arrives(client):
+    far = client.get("/api/wishes").json()["wishes"]
+    distant = max(far, key=lambda w: w["days_until_deadline"] or 0)
+    body = client.get(
+        f"/api/grant/options?request_id={distant['id']}&donor_alias=Donor D01"
+    ).json()
+    assert len(body["dropoff_choices"]) > 1
+    assert all(c["arrives_in_time"] for c in body["dropoff_choices"])
+
+
+def test_a_donor_can_pick_a_later_dropoff(client):
+    far = client.get("/api/wishes").json()["wishes"]
+    distant = max(far, key=lambda w: w["days_until_deadline"] or 0)
+    options = client.get(
+        f"/api/grant/options?request_id={distant['id']}&donor_alias=Donor D01"
+    ).json()
+    second = options["dropoff_choices"][1]["dropoff_date"]
+
+    body = client.post("/api/grant", json={
+        "donor_alias": "Donor D01", "request_id": distant["id"], "dropoff_date": second,
+    }).json()
+    assert body["logistics"]["dropoff_date"] == second
+
+
+def test_a_dropoff_day_we_do_not_run_is_refused(client):
+    wish = _first_open(client)
+    response = client.post("/api/grant", json={
+        "donor_alias": "Donor D01", "request_id": wish["id"],
+        "dropoff_date": "2026-10-21",          # a Wednesday
+    })
+    assert response.status_code == 422
+    assert "isn't one we're running" in response.json()["detail"]
+
+
+def test_options_refuse_a_wish_someone_else_took(client):
+    wish = _first_open(client)
+    client.post("/api/grant", json={"donor_alias": "Donor D02", "request_id": wish["id"]})
+    response = client.get(
+        f"/api/grant/options?request_id={wish['id']}&donor_alias=Donor D01"
+    )
+    assert response.status_code == 409
+
+
+# --------------------------------------------------------------------------
+# My granted wishes
+# --------------------------------------------------------------------------
+
+def test_granted_list_has_friendly_statuses_and_no_family_details(client):
+    wish = _first_open(client)
+    client.post("/api/grant", json={"donor_alias": "Donor D01", "request_id": wish["id"]})
+
+    body = client.get("/api/donors/Donor D01/granted").json()
+    assert body["granted"]
+    labels = {row["label"] for row in body["granted"]}
+    assert "Granted" in labels
+
+    with db.connect(config.DB_PATH) as conn:
+        families = db.list_families(conn)
+    text = str(body)
+    for family in families:
+        assert family.contact_address not in text
+        assert family.contact_email not in text
+
+
+def test_a_rent_pledge_reads_differently(client):
+    rent = _first_open(client, "rent_utilities")
+    client.post("/api/grant", json={"donor_alias": "Donor D06", "request_id": rent["id"]})
+    body = client.get("/api/donors/Donor D06/granted").json()
+    row = [r for r in body["granted"] if r["wish"]["id"] == rent["id"]][0]
+    assert row["label"] == "We'll email you how to pay"
+
+
+def test_a_dropoff_this_week_shows_in_the_banner(client):
+    wish = _first_open(client)
+    client.post("/api/grant", json={"donor_alias": "Donor D01", "request_id": wish["id"]})
+    body = client.get("/api/donors/Donor D01/granted").json()
+    assert body["this_week"], "expected the coming drop-off in the banner"
+
+
+# --------------------------------------------------------------------------
+# Releasing
+# --------------------------------------------------------------------------
+
+def test_releasing_puts_the_wish_straight_back(client):
+    wish = _first_open(client)
+    granted = client.post("/api/grant", json={
+        "donor_alias": "Donor D01", "request_id": wish["id"],
+    }).json()
+    pledge_id = granted["pledge"]["id"]
+
+    body = client.post(f"/api/pledges/{pledge_id}/release?donor_alias=Donor D01").json()
+    assert body["released"] is True
+    assert body["wish_status"] == "open"
+    assert wish["id"] in {w["id"] for w in client.get("/api/wishes").json()["wishes"]}
+
+
+def test_a_release_is_not_a_missed_dropoff(client):
+    """Someone who tells you in advance has done the right thing."""
+    wish = _first_open(client)
+    granted = client.post("/api/grant", json={
+        "donor_alias": "Donor D01", "request_id": wish["id"],
+    }).json()
+    client.post(f"/api/pledges/{granted['pledge']['id']}/release?donor_alias=Donor D01")
+
+    with db.connect(config.DB_PATH) as conn:
+        pledge = db.get_pledge(conn, granted["pledge"]["id"])
+    assert pledge.status is PledgeStatus.RELEASED
+    assert pledge.status is not PledgeStatus.MISSED
+
+    sheet = client.get("/api/coordinator/run-sheet", headers=_token(client)).json()
+    row = [d for d in sheet["dropoffs"] if d["pledge_id"] == granted["pledge"]["id"]][0]
+    assert row["status"] == "released"
+
+
+def test_a_released_wish_leaves_the_delivery_round(client):
+    wish = _first_open(client)
+    granted = client.post("/api/grant", json={
+        "donor_alias": "Donor D01", "request_id": wish["id"],
+    }).json()
+    client.post(f"/api/pledges/{granted['pledge']['id']}/release?donor_alias=Donor D01")
+
+    sheet = client.get("/api/coordinator/run-sheet", headers=_token(client)).json()
+    for delivery in sheet["deliveries"]:
+        assert granted["pledge"]["id"] not in delivery["pledge_ids"]
+
+
+def test_the_family_is_not_told_why_a_wish_came_back(client):
+    """Only 'Still looking for the right neighbor.'"""
+    wish = _first_open(client)
+    granted = client.post("/api/grant", json={
+        "donor_alias": "Donor D01", "request_id": wish["id"],
+    }).json()
+    client.post(f"/api/pledges/{granted['pledge']['id']}/release?donor_alias=Donor D01")
+
+    rows = client.get(f"/api/families/{wish['family_alias']}/wishes").json()["wishes"]
+    row = [r for r in rows if r["wish"]["id"] == wish["id"]][0]
+    assert row["detail"] == "Still looking for the right neighbor."
+    assert "couldn't" not in row["detail"]
+    assert "donor" not in str(row).lower()
+
+
+def test_only_the_donor_who_granted_it_can_release_it(client):
+    wish = _first_open(client)
+    granted = client.post("/api/grant", json={
+        "donor_alias": "Donor D01", "request_id": wish["id"],
+    }).json()
+    response = client.post(
+        f"/api/pledges/{granted['pledge']['id']}/release?donor_alias=Donor D02"
+    )
+    assert response.status_code == 403
+
+
+def test_releasing_twice_is_refused(client):
+    wish = _first_open(client)
+    granted = client.post("/api/grant", json={
+        "donor_alias": "Donor D01", "request_id": wish["id"],
+    }).json()
+    url = f"/api/pledges/{granted['pledge']['id']}/release?donor_alias=Donor D01"
+    assert client.post(url).status_code == 200
+    assert client.post(url).status_code == 409
+
+
+# --------------------------------------------------------------------------
+# The calendar file
+# --------------------------------------------------------------------------
+
+def test_the_calendar_file_is_a_real_ics(client):
+    wish = _first_open(client)
+    granted = client.post("/api/grant", json={
+        "donor_alias": "Donor D01", "request_id": wish["id"],
+    }).json()
+    pledge_id = granted["pledge"]["id"]
+
+    response = client.get(f"/api/pledges/{pledge_id}/calendar.ics?donor_alias=Donor D01")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/calendar")
+    assert ".ics" in response.headers["content-disposition"]
+
+    body = response.text
+    assert body.startswith("BEGIN:VCALENDAR")
+    assert body.strip().endswith("END:VCALENDAR")
+    for field in ("DTSTART:", "DTEND:", "SUMMARY:", "LOCATION:", "UID:", "BEGIN:VALARM"):
+        assert field in body
+
+    day = granted["pledge"]["dropoff_date"].replace("-", "")
+    region = config.get_region()
+    assert f"DTSTART:{day}T{region.dropoff_window.start.strftime('%H%M%S')}" in body
+    assert region.hub_name.replace(",", "\\,") in body or region.hub_name in body
+
+
+def test_the_calendar_file_carries_no_family_details(client):
+    wish = _first_open(client)
+    granted = client.post("/api/grant", json={
+        "donor_alias": "Donor D01", "request_id": wish["id"],
+    }).json()
+    body = client.get(
+        f"/api/pledges/{granted['pledge']['id']}/calendar.ics?donor_alias=Donor D01"
+    ).text
+
+    with db.connect(config.DB_PATH) as conn:
+        families = db.list_families(conn)
+    for family in families:
+        assert family.contact_address not in body
+        assert family.contact_email not in body
+
+
+def test_someone_elses_calendar_is_refused(client):
+    wish = _first_open(client)
+    granted = client.post("/api/grant", json={
+        "donor_alias": "Donor D01", "request_id": wish["id"],
+    }).json()
+    response = client.get(
+        f"/api/pledges/{granted['pledge']['id']}/calendar.ics?donor_alias=Donor D02"
+    )
+    assert response.status_code == 403

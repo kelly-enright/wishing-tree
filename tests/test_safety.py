@@ -1,6 +1,6 @@
 """The Privacy & Safety layer.
 
-The agent's judgement is not tested here — that is what the two recorded
+The agent's judgment is not tested here — that is what the two recorded
 end-to-end runs in harness.md are for. What is tested here is everything that
 has to hold whatever the agent says: the deterministic checks, the second pass
 that re-runs them over the agent's own output, the spending caps, and the

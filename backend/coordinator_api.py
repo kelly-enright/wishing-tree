@@ -95,10 +95,11 @@ def run_sheet(week_of: str | None = None) -> dict:
                     "pledge_status": pledge.status.value,
                 })
 
-            # A missed or cancelled drop-off still belongs in the drop-off
+            # A missed or canceled drop-off still belongs in the drop-off
             # list, so the coordinator can see what happened — but there is
             # nothing to deliver, so it must not sit in a delivery round.
-            if pledge.status in (PledgeStatus.MISSED, PledgeStatus.CANCELLED):
+            if pledge.status in (PledgeStatus.MISSED, PledgeStatus.RELEASED,
+                                 PledgeStatus.CANCELED):
                 continue
 
             if start <= pledge.delivery_date <= end:

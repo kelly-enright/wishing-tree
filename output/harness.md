@@ -104,9 +104,9 @@ project defines a shape anywhere else.
 
 - **Categories:** rent/utilities, essentials, clothing, school supplies, gifts, food, other
 - **Occasions:** holiday, birthday, back-to-school, job interview, emergency, everyday
-- **Request type:** `specific` (exact item, product link, brand/size/colour, open-to-substitute) or `flexible` (described need, essentials only, optional budget range)
+- **Request type:** `specific` (exact item, product link, brand/size/color, open-to-substitute) or `flexible` (described need, essentials only, optional budget range)
 - **Request status:** `draft` → `pending_review` → `open` → `granted` → `dropped_off` → `delivered`, or `missed`
-- **Pledge status:** `pledged` → `dropped_off` → `delivered`, or `missed` / `cancelled`
+- **Pledge status:** `pledged` → `dropped_off` → `delivered`, or `missed` / `canceled`
 
 ### Rules the types enforce on their own
 
@@ -161,7 +161,7 @@ person comes back to the same account. Nothing sensitive is stored in the
 browser — the alias is already public.
 
 **"Continue as…"** on the landing page lists every existing family and donor by
-alias so a tester can switch accounts without typing. It is labelled *Demo
+alias so a tester can switch accounts without typing. It is labeled *Demo
 shortcut — not part of the real product*. It is safe to leave open because
 `GET /api/accounts` returns `AccountSummary` rows: alias, zip, and a count
 ("3 wishes", "$75 budget"). A street address or phone number cannot reach that
@@ -645,7 +645,7 @@ The missed drop-off — Donor D03's interview blazer — reopened wish #11 to
 
 A missed drop-off was still appearing as a scheduled delivery. Nothing had been
 dropped off, so there was nothing to deliver, and the coordinator would have
-driven to a house for an item that was never there. Missed and cancelled
+driven to a house for an item that was never there. Missed and canceled
 pledges now leave the delivery round while staying in the drop-off list, where
 the coordinator can see what actually happened. Two tests hold it.
 
@@ -653,7 +653,7 @@ the coordinator can see what actually happened. Two tests hold it.
 
 ### The palette
 
-| Role | Colour | Where |
+| Role | Color | Where |
 |---|---|---|
 | Evergreen | `#2F5D50` | headers, buttons, structure |
 | Warm cream | `#FBF6EE` | the page itself |
@@ -679,7 +679,7 @@ this project, on your instruction.
 `frontend/src/components/Logo.tsx` — inline SVG, drawn by hand: a trunk, two
 evergreen leaves, and one gold crown leaf, beside the words "Wishing Tree". No
 image files, nothing copied from anywhere, and it inherits the palette through
-CSS variables so it recolours with the theme. It appears at 52px on the landing
+CSS variables so it recolors with the theme. It appears at 52px on the landing
 page and 26px as the header on every other screen, where it doubles as the way
 home.
 
@@ -903,14 +903,14 @@ look right"*) rather than a 500, which is what it was until a test caught it.
 
 After intake, each wish is shown as **the exact card a donor will see** —
 the same `WishCard` component the wish wall renders. A family checks what is
-being shared rather than trusting a description of it. The cost is labelled
+being shared rather than trusting a description of it. The cost is labeled
 "Estimated" when it came from the price guide, and editable either way.
 
 Editing sits behind **"Make a change"**, because the point of the screen is
 reading. The link field is optional, names six of the twenty accepted stores,
 and a link from anywhere else gets a sentence rather than an error: *"We can't
 post a link from that site — but that's no problem. Leave it out and a
-neighbour will pick something that fits your description."*
+neighbor will pick something that fits your description."*
 
 The buttons now say **"Looks right, post my wish"** / **"Post my 3 wishes"**,
 with **"Go back to the chat"** beside them and the line *"We'll check it for
@@ -930,8 +930,8 @@ for help deserves to know that before they hope.
 | Stage | What it says |
 |---|---|
 | Being checked | we're checking this for anything that shouldn't be public |
-| On the tree | up where neighbours can see it |
-| Granted! | a neighbour has claimed this one, with the delivery date, window and the confirm buttons |
+| On the tree | up where neighbors can see it |
+| Granted! | a neighbor has claimed this one, with the delivery date, window and the confirm buttons |
 | On its way | dropped at the hub, coming on the next delivery day |
 | Delivered | this one arrived |
 | Couldn't be posted | the safety review's own plain-language reason |
@@ -942,7 +942,7 @@ donor who drops out should not become a person a family is waiting on by name.
 A test asserts the whole response contains no donor field.
 
 When a drop-off is missed the wish returns to **On the tree** with *"Still
-looking for the right neighbour. The last one couldn't make it, so your wish
+looking for the right neighbor. The last one couldn't make it, so your wish
 went straight back up."* — see
 `screenshots/p9-my-wishes-back-on-the-tree.jpg`.
 
@@ -963,7 +963,102 @@ range would have their wish held rather than posted, with no obvious reason
 why. The report now flags any guide entry above its own cap in a section of its
 own, because that mismatch is invisible from either file alone.
 
-## 22. Safety measures so far
+## 22. The donor experience
+
+### Gentle badges
+
+Two, from `backend/badges.py`, computed from the same two numbers the
+Matchmaker ranks on — so a donor reading the wall and the agent ranking it see
+the same facts:
+
+| Badge | When | Threshold |
+|---|---|---|
+| **Needed by `<date>`** | the deadline falls on or before the second upcoming drop-off | `URGENCY_DROPOFFS_AHEAD = 2` |
+| **Waiting N weeks** | the wish has been open longer than this | `WAITING_BADGE_DAYS = 14` |
+
+A wish with no deadline can only earn the waiting badge, because a wish with
+no date is not urgent — the same rule that made the deadline optional in the
+first place.
+
+**No red URGENT, deliberately.** Every wish on this wall matters to somebody,
+and shouting about one quietly says the others can wait. A wish that needs a
+donor soon says so with a date; a wish nobody has picked up says so with a
+number of weeks. A test asserts no badge is uppercase or says "urgent".
+
+Because the threshold is 14 days, the first waiting badge a wish can earn is
+**two** weeks — there is no "Waiting 1 week" state, by construction.
+
+### Category icons
+
+Lucide (**ISC licensed**, installed as `lucide-react`): a house for rent and
+utilities, a spray can for essentials, a shirt for clothing, a pencil for
+school supplies, a gift, an apple for food, a star for other. Shape and color
+before words, which is how a wall of thirty wishes gets read on a phone.
+
+### The confirmation screen
+
+Nothing about a grant is a surprise later. Before a wish locks, a donor sees:
+
+- **what to bring** — for a specific wish the exact item, brand, size and
+  color with the link; for a flexible one, what actually matters
+- **whether a substitute is fine**, in words either way
+- **the estimated cost**, still labelled "Estimated" when it came from the
+  price guide
+- **when and where**, and if more than one drop-off still arrives in time,
+  which one they want
+
+Then a checkbox: *"I can drop this off on Thursday, October 22 between
+4:00 PM-7:00 PM."* **Grant this wish is disabled until it is ticked.** That is
+not a formality — a donor who cannot make the window should find that out now,
+while the wish is still on the tree for someone else.
+
+Rent and utility wishes get their own version: the amount, that a coordinator
+will email about paying, and that Wishing Tree pays the provider directly —
+never the family, and never the donor to them.
+
+### My granted wishes, and releasing one
+
+Friendly statuses: **Granted**, **Dropped off — thank you, it's on its way**,
+**Delivered**; and for rent and utilities, **We'll email you how to pay** then
+**Paid**. The page carries the wish card and nothing else about the family —
+no name, no address, no contact — which a test checks against every seeded
+family.
+
+**"I can't make it anymore"** puts the wish straight back on the tree and is
+recorded as `released`, a new pledge status distinct from `missed`. The run
+sheet shows it as *released*. Someone who tells you in advance has done the
+right thing, and the coordinator's screen should not read as if they let a
+family down.
+
+The family's side says only **"Still looking for the right neighbor."** It does
+not say a donor fell through, and it does not distinguish a release from a
+no-show. A family does not need to carry a stranger's change of plans.
+
+### This week, and the calendar file
+
+A banner on the donor's home screen when a drop-off falls in the next seven
+days, with **Add to calendar** — a real `.ics` generated by
+`GET /api/pledges/{id}/calendar.ics`. No outside service: an `.ics` is a few
+lines of text with the right field names, so the app writes them. It carries a
+one-day-ahead alarm, the hub as the location, and what to bring in the
+description — and nothing about the family. Times are floating local, so the
+4-7pm window is 4-7pm on whatever calendar opens it.
+
+### Two fixes that came in with this
+
+**The price guide conflict is gone.** "first apartment basics" is now
+$180 typical, $120–$300, under the $300 item cap. No guide entry sits above its
+category cap, and `price_guide_review.md` no longer has an over-cap section.
+
+**The Intake agent now offers to split a broad request.** "We need to set up a
+whole apartment" is a list wearing a single sentence: one wish for all of it is
+one a donor cannot picture, cannot cost, and mostly cannot afford. The prompt
+tells the agent to offer three specific wishes instead, and says plainly not to
+split a need that is genuinely one thing.
+
+**American spelling throughout** — 18 files, prompts included.
+
+## 23. Safety measures so far
 
 Agents arrive in later problems; these are the ones already standing.
 
@@ -999,9 +1094,9 @@ Agents arrive in later problems; these are the ones already standing.
 | One family cannot answer for another | `respond_to_window` checks the pledge's family | Confirming or cancelling someone else's delivery. |
 | A missed drop-off reopens the wish | `set_pledge_status` | A family quietly going without because a donor did not turn up. |
 
-## 23. Tests
+## 24. Tests
 
-`./.venv/bin/python -m pytest` — **198 passing**, in under two seconds, every agent stubbed.
+`./.venv/bin/python -m pytest` — **223 passing**, in under two seconds, every agent stubbed.
 
 `./.venv/bin/python -m pytest -m live` — **10 more** against the real model, excluded by default because they spend tokens. Every agent is stubbed, so the suite is free to run.
 
@@ -1010,11 +1105,12 @@ Agents arrive in later problems; these are the ones already standing.
 - `test_seed.py` — counts, category and occasion coverage, specific/flexible balance, all links allowlisted, fiction-range phone numbers, re-seeding does not duplicate
 - `test_api.py` — sign-up creates records and assigns aliases, responses never echo contact details, the accounts list leaks no address or phone, out-of-region and malformed zips are refused, the passcode accepts only the right value and never ships to the browser
 - `test_delivery.py` — the privacy proof across every public endpoint, window confirmation and the no-reschedule rule, week boundaries and stepping, grouped deliveries, each one-click status, a missed drop-off reopening its wish, and a whole week start to finish
+- `test_donor_experience.py` — badge thresholds and the no-shouting rule, what the confirmation screen promises for each wish type, picking a later drop-off, releasing a pledge and how it differs from a miss, and the `.ics` being a real calendar file with no family details in it
 - `test_donor.py` — the schedule in every case including a deadline nothing can reach, the wall's filters and what it refuses to carry, the candidate limit both ways, what `enforce()` throws away, the two-donor race, and rent skipping the hub
 - `test_safety.py` — the patterns (and what they must *not* match), the second pass narrowing in every direction it can, both token caps, and the activity feed refusing an unauthenticated request and carrying no contact details
 - `test_intake.py` — the agent's deps carry no contact details, turn and wish caps (the turn cap spending zero calls), approval storing `pending_review` and nothing public, draft-to-request conversion, price-guide matching, and the audit trail recording to both the file and the table with cached input kept separate. The model is stubbed, so the suite is fast and free; the two real runs are the table above.
 
-## 24. Specs
+## 25. Specs
 
 _Filled in as the agents are built._
 

@@ -1,4 +1,5 @@
 import { CATEGORY_LABELS, OCCASION_LABELS, type WishCard as Wish } from '../api'
+import CategoryIcon from './CategoryIcon'
 
 function cost(wish: Wish): string {
   if (wish.budget_min_usd != null && wish.budget_max_usd != null) {
@@ -25,10 +26,21 @@ export default function WishCard({
     <article className={`card${urgent ? ' card--urgent' : ''}`}>
       <header className="card__head">
         <span className="card__kind">
+          <CategoryIcon category={wish.category} size={15} />
           {wish.request_type === 'specific' ? 'Specific item' : 'Flexible need'}
         </span>
         <span className="card__alias">{wish.family_alias}</span>
       </header>
+
+      {wish.badges && wish.badges.length > 0 && (
+        <p className="card__badges">
+          {wish.badges.map((badge) => (
+            <span key={badge.kind} className={`badge badge--${badge.kind}`} title={badge.detail}>
+              {badge.label}
+            </span>
+          ))}
+        </p>
+      )}
 
       <p className="card__desc">{wish.item_description}</p>
 
@@ -49,7 +61,10 @@ export default function WishCard({
             </span>
           )}
         </dd></div>
-        <div><dt>Category</dt><dd>{CATEGORY_LABELS[wish.category]}</dd></div>
+        <div><dt>Category</dt><dd className="card__cat">
+          <CategoryIcon category={wish.category} size={14} />
+          {CATEGORY_LABELS[wish.category]}
+        </dd></div>
         <div><dt>Occasion</dt><dd>{OCCASION_LABELS[wish.occasion]}</dd></div>
         <div><dt>Area</dt><dd>{wish.zip}</dd></div>
         <div><dt>Waiting</dt><dd>{wish.days_waiting} day{wish.days_waiting === 1 ? '' : 's'}</dd></div>

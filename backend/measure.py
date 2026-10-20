@@ -204,7 +204,7 @@ def average(rows: list[dict], field: str) -> float:
     return statistics.mean(values) if values else 0.0
 
 
-def summarise(rows: list[dict], per_call: bool = True) -> dict:
+def summarize(rows: list[dict], per_call: bool = True) -> dict:
     flat = []
     for row in rows:
         flat.extend(row["calls"]) if "calls" in row else flat.append(row)

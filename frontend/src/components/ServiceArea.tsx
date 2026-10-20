@@ -32,16 +32,16 @@ export function ZipField({
       return
     }
     setChecking(true)
-    let cancelled = false
+    let canceled = false
     getServiceArea(value)
       .then((result) => {
-        if (cancelled) return
+        if (canceled) return
         setArea(result)
         onCovered(result.covered ?? null)
       })
-      .catch(() => { if (!cancelled) { setArea(null); onCovered(null) } })
-      .finally(() => { if (!cancelled) setChecking(false) })
-    return () => { cancelled = true }
+      .catch(() => { if (!canceled) { setArea(null); onCovered(null) } })
+      .finally(() => { if (!canceled) setChecking(false) })
+    return () => { canceled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value])
 

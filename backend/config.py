@@ -104,7 +104,7 @@ REGIONS: list[Region] = [
     Region(
         slug="new_haven",
         name="New Haven, CT",
-        # New Haven city only for now. The neighbouring towns that used to be
+        # New Haven city only for now. The neighboring towns that used to be
         # in this list — East Haven (06512), Hamden (06514/06517/06518),
         # West Haven (06516), Bethany (06524) and Woodbridge (06525) — are a
         # later expansion, not a quiet extension of one delivery run.
@@ -208,7 +208,7 @@ def is_allowed_retailer(url: str | None) -> bool:
 COORDINATOR_PASSCODE = "wishingtree-demo"
 
 # --------------------------------------------------------------------------
-# Limits — app behaviour
+# Limits — app behavior
 # --------------------------------------------------------------------------
 
 MAX_OPEN_WISHES_PER_FAMILY = 5     # stops one family filling the wall
@@ -228,6 +228,22 @@ MAX_DESCRIPTION_CHARS = 400        # longest wish description shown publicly
 AGENT_TIMEOUT_S = 60.0             # wall clock for one agent run
 HTTP_TIMEOUT_S = 45.0              # per model request
 HTTP_MAX_RETRIES = 1               # a wedged call is not worth retrying three times
+
+# --------------------------------------------------------------------------
+# Urgency badges
+# --------------------------------------------------------------------------
+# Deliberately gentle. A wish that needs a donor soon says so with a date, not
+# with the word URGENT in red — every wish on this wall matters to somebody,
+# and shouting about one quietly says the others can wait.
+
+# "Needed by <date>" when the deadline falls on or before this many drop-offs
+# from now. Two gives a donor one window to miss and still make it.
+URGENCY_DROPOFFS_AHEAD = 2
+
+# "Waiting N weeks" once a wish has been open this long. This is the badge
+# that stops a quiet, undramatic need being scrolled past week after week.
+WAITING_BADGE_DAYS = 14
+
 
 # --------------------------------------------------------------------------
 # Wish value caps

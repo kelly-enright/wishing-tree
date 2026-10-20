@@ -208,7 +208,7 @@ export default function Intake() {
                 {result.published > 0 && (
                   <>{result.published} wish{result.published === 1 ? '' : 'es'} went through the
                   privacy and safety check and {result.published === 1 ? 'is' : 'are'} now visible
-                  to neighbours. </>
+                  to neighbors. </>
                 )}
                 {result.held > 0 && (
                   <>{result.held} {result.held === 1 ? 'wish is' : 'wishes are'} being held for a

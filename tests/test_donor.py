@@ -1,6 +1,6 @@
 """The donor side: the wall, the schedule, ranking, and claiming a wish.
 
-The Matchmaker's judgement is not tested here — the recorded end-to-end run in
+The Matchmaker's judgment is not tested here — the recorded end-to-end run in
 harness.md is the evidence for that. What is tested is everything that has to
 hold whatever it answers: what a donor can see, what the schedule says, what
 the code throws away, and what happens when two donors want the same wish.
@@ -332,7 +332,7 @@ def test_a_donor_zip_means_their_region_not_their_postcode(client):
 
 
 def test_the_service_area_is_new_haven_city_only(client):
-    """Six city zips. The neighbouring towns are a later expansion."""
+    """Six city zips. The neighboring towns are a later expansion."""
     body = client.get("/api/service-area").json()
     assert body["zip_codes"] == ["06510", "06511", "06513", "06515", "06519", "06520"]
     assert "New Haven" in body["notice"]

@@ -129,7 +129,7 @@ what the first prompt was lacking, and the answer recorded under
 - **One command:** `python run.py` checks the key, creates and seeds the database, and serves the API plus the committed `frontend/dist` on one port. Reloader off. A busy port gets a clear message instead of a traceback.
 - **37 tests pass.** Screenshots of the landing page and a placeholder are in `screenshots/`.
 
-Three judgement calls I made rather than stopping to ask, all easy to change:
+Three judgment calls I made rather than stopping to ask, all easy to change:
 the 20 retailers on the allowlist (a config value); four pledged wishes seeded
 so the coordinator's run sheet has rows; and `/api/health` as the only endpoint,
 since the problem asked for no features yet.
@@ -145,11 +145,11 @@ behind them are still placeholders.
 
 - **Sign-up endpoints.** `POST /api/families` and `POST /api/donors` create the record, assign the next alias (`Family A59`, `Donor D09`), and return the alias and zip only — never the address or phone that was just typed. Both refuse a zip outside a configured region with a message naming where Wishing Tree operates.
 - **Remembered in the browser.** `{role, alias, zip}` goes into `localStorage`. The landing page shows a "This browser is signed in as Family A04" strip with Continue and Sign out; a full reload keeps it.
-- **"Continue as…"** lists all 15 families and 8 donors by alias with their zip and a count ("3 wishes", "$75 budget"), labelled *Demo shortcut — not part of the real product*. `GET /api/accounts` returns alias-and-zip shapes only, and a test asserts no seeded address or phone appears in the response.
+- **"Continue as…"** lists all 15 families and 8 donors by alias with their zip and a count ("3 wishes", "$75 budget"), labeled *Demo shortcut — not part of the real product*. `GET /api/accounts` returns alias-and-zip shapes only, and a test asserts no seeded address or phone appears in the response.
 - **Coordinator passcode** in `config.COORDINATOR_PASSCODE` (`wishingtree-demo`), checked server-side by `POST /api/coordinator/unlock`. A test greps the whole built frontend to prove the passcode never ships to the browser. Unlock is kept in `sessionStorage`, so closing the tab re-locks it.
 - **53 tests pass** (16 new). Screenshots of all four screens, plus the passcode refusing a wrong value, are in `screenshots/`.
 
-One judgement call: the coordinator gate uses `sessionStorage` rather than
+One judgment call: the coordinator gate uses `sessionStorage` rather than
 `localStorage`, so it does not persist the way a family or donor session does.
 Those screens show home addresses, so re-entering the passcode in a new tab
 seemed right. Easy to change.
@@ -211,7 +211,7 @@ recorded.
 **Outcome:** `Request.deadline` is now optional. A wish with no date given is stored
 with no deadline and reads "No deadline" wherever it appears, instead of being
 given a date the family never said. A cost filled from the price guide is kept,
-but it is now marked `cost_is_estimate` and labelled "Estimated" in the
+but it is now marked `cost_is_estimate` and labeled "Estimated" in the
 interface, and the family can edit it on the approval screen before anything is
 stored.
 
@@ -396,7 +396,7 @@ back on the public wall immediately. Six screenshots.
 
 **One bug this found:** a missed drop-off was still showing as a scheduled
 delivery — the coordinator would have driven to a house for an item that was
-never dropped off. Missed and cancelled pledges now leave the delivery round
+never dropped off. Missed and canceled pledges now leave the delivery round
 while staying in the drop-off list, where what happened is visible.
 
 ---
@@ -536,11 +536,11 @@ addresses; a test now asserts no seeded person sits outside it.
 
 - **Zip first, checked live.** Five digits triggers `GET /api/service-area`, and the rest of the form stays hidden until it clears. Out of area reads as a "not yet", with the six zips listed.
 - **Email required, phone optional**, formatted as typed by a pure function. Email now has exactly the protection address and phone had — off `public_view()`, out of every agent's context, and in the sweep that checks every public endpoint against every seeded person.
-- **The preview shows the real donor card**, the same component the wish wall renders, so a family checks what is shared rather than a description of it. Editing sits behind "Make a change". Costs from the price guide are labelled "Estimated" and editable.
+- **The preview shows the real donor card**, the same component the wish wall renders, so a family checks what is shared rather than a description of it. Editing sits behind "Make a change". Costs from the price guide are labeled "Estimated" and editable.
 - **The link field** names six of the twenty accepted stores and answers an unaccepted link with a sentence, not an error.
 - **"Looks right, post my wish" / "Post my 3 wishes"**, with the privacy line underneath.
 - **How it works** on the first screen and after posting, honest that a wish isn't guaranteed.
-- **My wishes** with the six friendly stages. Nothing on the page mentions a donor — not an alias, not a count — and a test asserts it. A missed drop-off returns the wish to "On the tree" with "Still looking for the right neighbour."
+- **My wishes** with the six friendly stages. Nothing on the page mentions a donor — not an alias, not a count — and a test asserts it. A missed drop-off returns the wish to "On the tree" with "Still looking for the right neighbor."
 - **198 tests pass.** Five screenshots.
 
 **Two things worth knowing:**
@@ -556,3 +556,55 @@ so a family landing on the top of that range would have their wish held rather
 than posted, with no visible reason why. The report now flags any entry above
 its own cap in a section of its own. Worth deciding which way to fix — lower
 the range or raise the cap — both are one line.
+
+---
+
+## Problem 10 — Donor Experience
+
+### Prompt 1 (two fixes, then the problem)
+
+> Two quick fixes before Problem 10:
+> a.) Keep the $300 item cap. Lower the "first apartment basics" price range so its top is $300, and if the Intake agent hears a broad request like that, it should suggest splitting it into a few specific wishes.
+> b.) On My wishes, when a drop-off is missed, show only "Still looking for the right neighbor." Don't mention that someone couldn't make it. Also use American spelling throughout the app ("neighbor," not "neighbour").
+>
+> Problem 10: "Donor experience"
+>
+> Now the donor side. Keep everything that already works.
+>
+> a.) A short three-step "How it works" for donors: 1) Find a wish that fits you. 2) Grant it and drop it off at Yale SOM during the weekly window. 3) We deliver it to the family, and you never see each other's personal details, on purpose.
+> b.) Gentle urgency badges on wish cards: "Needed by [date]" when the deadline falls before the next two drop-offs, and "Waiting [N] weeks" when a wish has been open more than 14 days. Wishes with no deadline only get the waiting badge. No red "URGENT" labels. Put the thresholds in config.py, and use the same facts the Matchmaker uses.
+> c.) A confirmation screen before a wish locks. It shows what to bring (exact item, size and color for specific wishes; essentials and budget for flexible ones), whether a substitute is fine, the estimated cost, and the drop-off date, window and place. If more than one drop-off still arrives in time, the donor picks one. A checkbox, "I can drop this off on [day, date] between [window]," must be ticked before "Grant this wish" works. For rent/utilities, the screen confirms the amount and says the coordinator will email them how to pay, and that Wishing Tree pays the provider directly.
+> d.) A "My granted wishes" page with friendly statuses: "Granted" (with date, window, place, and an "I can't make it anymore" button), "Dropped off — thank you, it's on its way," "Delivered," and for rent/utilities "We'll email you how to pay," then "Paid." Never show family details beyond the wish card.
+> e.) "I can't make it anymore" releases the wish straight back to the tree and shows on the coordinator's run sheet as released, not missed.
+> f.) A banner on the donor's home screen when they have a drop-off this week, and an "Add to calendar" button that downloads a calendar file (.ics) for the drop-off. No outside services.
+> g.) Category icons on every wish card from an openly licensed icon set like Lucide: rent/utilities a house, essentials a toothbrush or soap, clothing a shirt, school supplies a pencil or backpack, gifts a gift, food a basket or apple, other a star.
+> h.) Update the tests, take fresh screenshots, and update harness.md.
+>
+> Ask any questions you have before starting.
+
+**The two fixes:** "first apartment basics" is now $180 typical, $120–$300, so
+no guide entry sits above its category cap and the over-cap section of
+`price_guide_review.md` is gone. The Intake prompt now offers to split a broad
+request into a few specific wishes — with a line saying not to split a need
+that is genuinely one thing, because a winter coat is a winter coat. The
+family's missed-drop-off line is just "Still looking for the right neighbor."
+American spelling across 18 files, prompts included.
+
+**Outcome:** all of a–h.
+
+- **Badges** from `backend/badges.py`, computed from the same `days_until_deadline` and `days_waiting` the Matchmaker ranks on, with both thresholds in `config.py`. A test asserts no badge is uppercase or says "urgent".
+- **Lucide icons** (ISC licensed) on every card.
+- **The confirmation screen** with what to bring, the substitute note either way, the estimated cost still labelled "Estimated", the drop-off choice when more than one arrives in time, and a checkbox that gates the button.
+- **My granted wishes** with the friendly statuses, carrying the wish card and nothing else about the family.
+- **Release** as a new pledge status distinct from `missed` — the run sheet says *released*, and the family's side still says only "Still looking for the right neighbor."
+- **The week banner and a real `.ics`**, generated by the app with a one-day alarm and no family details in it. No outside service: an `.ics` is a few lines of text with the right field names.
+- **223 tests pass.** Five screenshots.
+
+Two things worth noting. Because the waiting threshold is 14 days, the first
+badge a wish can earn is **two** weeks — there is no "Waiting 1 week" state,
+and a test now says so rather than leaving it as a surprise.
+
+And the spelling sweep changed `PledgeStatus.CANCELLED`'s *value* from
+"cancelled" to "canceled". Nothing referenced the literal, so tests stayed
+green, but I renamed the member to `CANCELED` too rather than leave a member
+and its value spelled differently.

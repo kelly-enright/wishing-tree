@@ -75,7 +75,8 @@ class PledgeStatus(str, Enum):
     DROPPED_OFF = "dropped_off"
     DELIVERED = "delivered"
     MISSED = "missed"          # donor did not make the drop-off window
-    CANCELLED = "cancelled"
+    RELEASED = "released"      # donor said in advance they cannot; not a no-show
+    CANCELED = "canceled"
 
 
 class WindowResponse(str, Enum):
@@ -392,6 +393,8 @@ class Pledge(BaseModel):
 
     def dropoff_status(self) -> str:
         """What the run sheet shows in the drop-off column."""
+        if self.status is PledgeStatus.RELEASED:
+            return "released"
         if self.status is PledgeStatus.MISSED:
             return "missed"
         if self.status in (PledgeStatus.DROPPED_OFF, PledgeStatus.DELIVERED):
@@ -644,6 +647,9 @@ class MatchmakerResult(BaseModel):
 class GrantRequest(BaseModel):
     donor_alias: str
     request_id: int
+    # Which weekly drop-off the donor chose. None means "whichever the
+    # schedule picks", which is what the matchmaker's one-click path does.
+    dropoff_date: date | None = None
 
 
 class DonorFilters(BaseModel):

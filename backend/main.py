@@ -129,7 +129,7 @@ def retailers() -> dict:
         "count": len(stores),
         "stores": stores,
         "note": "Links from anywhere else can't be posted, but you can still "
-                "describe what you need and a neighbour will choose it.",
+                "describe what you need and a neighbor will choose it.",
     }
 
 

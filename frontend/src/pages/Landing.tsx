@@ -18,7 +18,7 @@ const ROLES = [
   },
   {
     to: '/donor/signup',
-    eyebrow: 'For neighbours',
+    eyebrow: 'For neighbors',
     title: 'I want to give',
     blurb: 'Browse wishes near you, or get matched to the ones your budget and interests fit best.',
   },
@@ -67,7 +67,7 @@ export default function Landing() {
         <ServiceNotice />
         <p className="hero__lede">
           A giving tree that stays up all year in New Haven. Families ask for what they
-          actually need, neighbours grant a wish, and everything moves through one
+          actually need, neighbors grant a wish, and everything moves through one
           weekly drop-off.
         </p>
         <p className="hero__pick">Pick the one that sounds like you.</p>
@@ -171,7 +171,7 @@ export default function Landing() {
             {health.region.dropoff_window} · Delivery {health.region.delivery_window}
           </p>
           <p className="footer__note">
-            No cash ever changes hands between neighbours. Rent and utilities are paid
+            No cash ever changes hands between neighbors. Rent and utilities are paid
             directly to the landlord or provider.
           </p>
         </footer>

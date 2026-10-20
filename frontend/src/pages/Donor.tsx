@@ -2,14 +2,17 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Logo from '../components/Logo'
 import {
-  CATEGORY_LABELS, OCCASION_LABELS, getWishes, grantWish, requestMatches,
+  CATEGORY_LABELS, OCCASION_LABELS, getWishes, requestMatches,
   type Category, type GrantResponse, type Match, type Occasion,
   type RegionInfo, type Usage, type WallFilters, type WishCard as Wish,
   userMessage,
 } from '../api'
+import DonorHowItWorks from '../components/DonorHowItWorks'
 import Thinking from '../components/Thinking'
 import TokenPanel from '../components/TokenPanel'
 import WishCard from '../components/WishCard'
+import GrantConfirm from './GrantConfirm'
+import MyGranted from './MyGranted'
 import { clearSession, getSession } from '../session'
 
 const EMPTY: WallFilters = { categories: [], occasion: '', requestType: '', maxCost: '' }
@@ -23,6 +26,7 @@ export default function Donor() {
   const [note, setNote] = useState('')
   const [usage, setUsage] = useState<Usage | null>(null)
   const [granted, setGranted] = useState<GrantResponse | null>(null)
+  const [confirming, setConfirming] = useState<Wish | null>(null)
   const [busy, setBusy] = useState<'wall' | 'match' | number | null>('wall')
   const [error, setError] = useState<string | null>(null)
 
@@ -79,18 +83,23 @@ export default function Donor() {
     }
   }
 
-  async function grant(wish: Wish) {
-    setBusy(wish.id)
+  function openConfirmation(wish: Wish) {
     setError(null)
-    try {
-      setGranted(await grantWish(session!.alias, wish.id))
-    } catch (e) {
-      setError(userMessage(e, 'We could not grant that wish just now. Please try again.'))
-      loadWall(filters)
-      setMatches(null)
-    } finally {
-      setBusy(null)
-    }
+    setConfirming(wish)
+  }
+
+  if (confirming) {
+    return (
+      <main className="page page--wide">
+        <header className="page__nav"><Logo size={26} /></header>
+        <GrantConfirm
+          wish={confirming}
+          donorAlias={session.alias}
+          onGranted={(result) => { setConfirming(null); setGranted(result) }}
+          onCancel={() => { setConfirming(null); loadWall(filters); setMatches(null) }}
+        />
+      </main>
+    )
   }
 
   if (granted) {
@@ -145,6 +154,8 @@ export default function Donor() {
           Switch account
         </button>
       </p>
+
+      <MyGranted alias={session.alias} />
 
       <h1 className="page__title">Wishes near you</h1>
 
@@ -224,6 +235,8 @@ export default function Donor() {
         </div>
       )}
 
+      {!matches && <DonorHowItWorks compact />}
+
       <div className="wall">
         <div className="wall__cards">
           {busy === 'wall' && <p className="wall__empty">Loading wishes…</p>}
@@ -242,7 +255,7 @@ export default function Donor() {
               key={wish.id}
               wish={wish}
               reason={matches?.find((m) => m.request_id === wish.id)?.reason}
-              onGrant={grant}
+              onGrant={openConfirmation}
               granting={busy === wish.id}
             />
           ))}

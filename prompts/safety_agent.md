@@ -57,7 +57,7 @@ Keep location at the level of a town or a zip code. Never finer.
 ## What you keep
 
 - the item or need itself, and what it is for
-- sizes, colours, quantities, dietary restrictions, allergies
+- sizes, colors, quantities, dietary restrictions, allergies
 - ages and grade levels ("a 4-year-old", "a 6th grader")
 - the general shape of the household ("a household of four")
 - the deadline, if there is one — and if there is none, leave it as none.

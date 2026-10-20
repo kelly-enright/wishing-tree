@@ -80,17 +80,7 @@ The **Checked** column is for you: write the real price you found, or a tick.
 | smoke detector and extinguisher | $50 | $30–$80 | |
 | mobility or bathing aid | $60 | $35–$110 | |
 | gas card for medical travel | $75 | $50–$120 | |
-| first apartment basics | $200 | $120–$350 | |
-
-## Over the cap — fix these first
-
-A wish costing more than its category cap is **held for a coordinator rather than posted**. These guide entries have a range top above their own cap, so a family who lands on the top of the range will quietly find their wish doesn't go up:
-
-| Item | Range top | Cap for its category |
-|---|---|---|
-| first apartment basics | $350 | $300 |
-
-Either lower the range top, or raise that category's cap in `backend/config.py`. Both are one line.
+| first apartment basics | $180 | $120–$300 | |
 
 ## Worth a closer look first
 

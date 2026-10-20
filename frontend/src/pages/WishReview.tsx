@@ -85,7 +85,7 @@ export default function WishReview({
   return (
     <div className="review">
       <p className="review__intro">
-        This is exactly what a neighbour will see — no names, no address, nothing
+        This is exactly what a neighbor will see — no names, no address, nothing
         that points back to you. Have a read, change anything that isn't right, and
         post when you're happy.
       </p>
@@ -95,7 +95,7 @@ export default function WishReview({
         return (
           <article className="preview" key={index}>
             <header className="preview__head">
-              <span className="preview__eyebrow">What a neighbour will see</span>
+              <span className="preview__eyebrow">What a neighbor will see</span>
               <button type="button" className="wish__remove" onClick={() => onRemove(index)}>
                 Remove
               </button>
@@ -232,7 +232,7 @@ export default function WishReview({
                 {!linkOk && (
                   <p className="preview__linknote">
                     We can't post a link from that site — but that's no problem. Leave
-                    it out and a neighbour will pick something that fits your
+                    it out and a neighbor will pick something that fits your
                     description.
                   </p>
                 )}

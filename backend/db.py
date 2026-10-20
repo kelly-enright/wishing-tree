@@ -655,7 +655,8 @@ _WISH_STATUS_FOR_PLEDGE = {
     PledgeStatus.DROPPED_OFF: RequestStatus.DROPPED_OFF,
     PledgeStatus.DELIVERED: RequestStatus.DELIVERED,
     PledgeStatus.MISSED: RequestStatus.OPEN,
-    PledgeStatus.CANCELLED: RequestStatus.OPEN,
+    PledgeStatus.RELEASED: RequestStatus.OPEN,
+    PledgeStatus.CANCELED: RequestStatus.OPEN,
 }
 
 

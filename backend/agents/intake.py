@@ -235,7 +235,7 @@ def _tool_names(messages: list[ModelMessage]) -> list[str]:
 def summarize(message: str, reply: IntakeReply) -> tuple[str, str]:
     """Shape, never content, for the coordinator's activity page.
 
-    The family's words are not summarised, counted into a snippet, or quoted.
+    The family's words are not summarized, counted into a snippet, or quoted.
     Only how long the message was and how many wishes came out of it. A name
     or a school in a family's message cannot reach the activity page by this
     route, because the words never travel.

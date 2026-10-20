@@ -1453,3 +1453,147 @@ textarea.field__input { resize: vertical; font: inherit; }
 }
 
 .track__delivery p { margin: 0 0 10px; color: var(--ink); }
+
+/* ------------------------------------------------------------- donor extras */
+
+.caticon { flex: none; vertical-align: -2px; }
+.card__kind { display: inline-flex; align-items: center; gap: 6px; }
+.card__cat { display: flex; align-items: center; gap: 6px; }
+
+.card__badges { margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+
+.badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: default;
+}
+
+/* Gentle on purpose: a date and a count, not an alarm. */
+.badge--needed_by { background: var(--gold-pale); color: #7a5415; }
+.badge--waiting { background: var(--evergreen-pale); color: var(--evergreen); }
+
+/* ------------------------------------------------------------ week banner */
+
+.weekbanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 0 20px;
+  padding: 16px 20px;
+  border-radius: var(--radius);
+  background: var(--gold-pale);
+  border-left: 4px solid var(--gold);
+}
+
+.weekbanner__title { margin: 0 0 3px; font-weight: 800; color: #7a5415; }
+.weekbanner__detail { margin: 0; color: #7a5415; font-size: 0.9rem; }
+
+/* ----------------------------------------------------------- my granted */
+
+.granted { margin: 0 0 26px; }
+
+.granted__title {
+  margin: 0 0 12px;
+  font-size: 0.74rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--evergreen);
+}
+
+.gcard {
+  margin-bottom: 10px;
+  padding: 15px 18px;
+  border-radius: 12px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--evergreen-soft);
+}
+
+.gcard--pledged { border-left-color: var(--gold); }
+.gcard--delivered { border-left-color: var(--evergreen); background: var(--evergreen-pale); }
+.gcard--released, .gcard--missed { border-left-color: var(--ink-soft); opacity: 0.8; }
+
+.gcard__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.gcard__item { margin: 0 0 6px; font-weight: 600; color: var(--evergreen-deep); line-height: 1.5; }
+.gcard__when { margin: 0; color: var(--ink-soft); font-size: 0.9rem; line-height: 1.6; }
+.gcard__actions { margin-top: 11px; display: flex; flex-wrap: wrap; gap: 8px; }
+
+.track__stage--pledged { background: var(--gold); color: var(--ink); }
+.track__stage--dropped_off { background: var(--evergreen-pale); color: var(--evergreen); }
+.track__stage--released, .track__stage--missed { background: var(--cream-deep); color: var(--ink-soft); }
+
+/* ------------------------------------------------------------- confirm */
+
+.confirm { max-width: 640px; }
+
+.confirm__block {
+  margin: 18px 0;
+  padding: 18px 20px;
+  border-radius: var(--radius);
+  background: var(--white);
+  border: 1px solid var(--line);
+}
+
+.confirm__block--direct { background: var(--evergreen-pale); }
+
+.confirm__heading {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  color: var(--evergreen-deep);
+}
+
+.confirm__item { margin: 0 0 12px; color: var(--ink); line-height: 1.6; }
+
+.confirm__facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.confirm__facts dt {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 2px;
+}
+
+.confirm__facts dd { margin: 0; font-weight: 700; color: var(--ink); }
+.confirm__link { margin: 12px 0 0; font-size: 0.84rem; color: var(--ink-soft); word-break: break-all; }
+
+.confirm__sub {
+  margin: 12px 0 0;
+  padding: 10px 13px;
+  border-radius: 9px;
+  font-size: 0.89rem;
+  line-height: 1.55;
+}
+
+.confirm__sub--ok { background: var(--evergreen-pale); color: var(--evergreen); }
+.confirm__sub--no { background: var(--gold-pale); color: #7a5415; }
+
+.confirm__hub { margin: 0 0 14px; color: var(--ink); line-height: 1.7; }
+.confirm__single { margin: 0; color: var(--ink-soft); }
+.check__sub { color: var(--ink-soft); }
+
+.confirm__agree {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin: 18px 0;
+  padding: 15px 18px;
+  border-radius: var(--radius);
+  background: var(--cream-deep);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  line-height: 1.6;
+}
+
+.confirm__agree input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--evergreen); flex: none; }
+.confirm__nudge { margin: 10px 0 0; font-size: 0.88rem; color: var(--ink-soft); }

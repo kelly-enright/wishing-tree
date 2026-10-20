@@ -43,7 +43,8 @@ def family_deliveries(alias: str) -> dict:
         today = date.today()
         rows = []
         for pledge in db.pledges_for_family(conn, alias):
-            if pledge.status in (PledgeStatus.CANCELLED, PledgeStatus.MISSED):
+            if pledge.status in (PledgeStatus.CANCELED, PledgeStatus.MISSED,
+                                 PledgeStatus.RELEASED):
                 continue
             wish = db.get_request(conn, pledge.request_id)
             if wish is None:
@@ -117,23 +118,30 @@ RENT_NOTE = (
 def _stage_for(wish, pledge, review) -> tuple[str, str, bool]:
     """The stage, the line under it, and whether this wish was dropped once."""
     status = wish.status.value
-    dropped_once = pledge is not None and pledge.status is PledgeStatus.MISSED
+    # A donor who missed the window and one who said in advance they couldn't
+    # come are the same thing from here: the wish is back up, and the family
+    # is not told which it was.
+    dropped_once = pledge is not None and pledge.status in (
+        PledgeStatus.MISSED, PledgeStatus.RELEASED
+    )
 
     if status == "delivered":
         return "delivered", "This one arrived. Thank you for letting us help.", False
     if status == "dropped_off":
         return ("on_its_way",
-                "A neighbour has dropped this at the hub. It comes to you on the "
+                "A neighbor has dropped this at the hub. It comes to you on the "
                 "next delivery day.", False)
     if status == "granted":
-        return "granted", "A neighbour has claimed this one.", False
+        return "granted", "A neighbor has claimed this one.", False
     if status == "open":
         if dropped_once:
-            return ("on_the_tree",
-                    "Still looking for the right neighbour. The last one couldn't "
-                    "make it, so your wish went straight back up.", True)
+            # Deliberately says nothing about why. A family does not need to
+            # carry a stranger's change of plans, and "someone couldn't make
+            # it" invites a disappointment that the wish going straight back
+            # up has already answered.
+            return "on_the_tree", "Still looking for the right neighbor.", True
         return ("on_the_tree",
-                "Up on the tree where neighbours can see it. We can't promise "
+                "Up on the tree where neighbors can see it. We can't promise "
                 "someone will grant it, but most wishes find someone.", False)
     if status == "pending_review":
         if review is not None and not review["approved"]:

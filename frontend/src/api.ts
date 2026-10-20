@@ -261,6 +261,7 @@ export type WishCard = {
   open_to_substitute: boolean
   size_preferences: string | null
   status: string
+  badges?: Badge[]
 }
 
 export type RegionInfo = {
@@ -333,10 +334,11 @@ export function requestMatches(donorAlias: string, filters: WallFilters) {
   })
 }
 
-export function grantWish(donorAlias: string, requestId: number) {
+export function grantWish(donorAlias: string, requestId: number, dropoffDate?: string) {
   return post<GrantResponse>('/api/grant', {
     donor_alias: donorAlias,
     request_id: requestId,
+    dropoff_date: dropoffDate ?? null,
   })
 }
 
@@ -498,4 +500,78 @@ export function getMyWishes(alias: string): Promise<{
 }> {
   return request(`/api/families/${encodeURIComponent(alias)}/wishes`, undefined,
     'We could not load your wishes just now.')
+}
+
+// ------------------------------------------------------------- donor extras
+
+export type Badge = { kind: 'needed_by' | 'waiting'; label: string; detail: string }
+
+export type WhatToBring = {
+  kind: 'specific' | 'flexible'
+  headline: string
+  item: string
+  brand?: string | null
+  size?: string | null
+  color?: string | null
+  link?: string | null
+  essentials?: string | null
+  substitute_ok: boolean
+  substitute_note: string
+}
+
+export type DropoffChoice = {
+  dropoff_date: string
+  delivery_date: string
+  arrives_in_time: boolean
+  label: string
+}
+
+export type GrantOptions = {
+  wish: WishCard
+  donor_alias: string
+  what_to_bring: WhatToBring | null
+  estimated_cost_usd: number
+  cost_is_estimate: boolean
+  paid_directly_to_provider: boolean
+  direct_payment_note: string | null
+  dropoff_choices: DropoffChoice[]
+  hub: { name: string; address: string; dropoff_window: string; delivery_window: string }
+}
+
+export function getGrantOptions(requestId: number, donorAlias: string) {
+  return request<GrantOptions>(
+    `/api/grant/options?request_id=${requestId}&donor_alias=${encodeURIComponent(donorAlias)}`,
+    undefined, 'We could not open that wish just now.')
+}
+
+export type GrantedRow = {
+  pledge_id: number
+  wish: WishCard
+  status: string
+  label: string
+  paid_directly_to_provider: boolean
+  dropoff_date: string
+  delivery_date: string
+  dropoff_window: string
+  hub_name: string
+  hub_address: string
+  can_release: boolean
+}
+
+export function getGranted(alias: string) {
+  return request<{
+    count: number; granted: GrantedRow[]; this_week: GrantedRow[]
+    hub: { name: string; address: string; dropoff_window: string }
+  }>(`/api/donors/${encodeURIComponent(alias)}/granted`, undefined,
+    'We could not load what you have granted.')
+}
+
+export function releasePledge(pledgeId: number, donorAlias: string) {
+  return request<{ released: boolean; message: string }>(
+    `/api/pledges/${pledgeId}/release?donor_alias=${encodeURIComponent(donorAlias)}`,
+    { method: 'POST' }, 'We could not release that just now.')
+}
+
+export function calendarUrl(pledgeId: number, donorAlias: string): string {
+  return `/api/pledges/${pledgeId}/calendar.ics?donor_alias=${encodeURIComponent(donorAlias)}`
 }
