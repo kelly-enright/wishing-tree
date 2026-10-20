@@ -6,10 +6,11 @@ import {
   type DraftWish, type Usage, type WishOutcome,
   userMessage,
 } from '../api'
-import Deliveries from '../components/Deliveries'
+import HowItWorks from '../components/HowItWorks'
 import Thinking from '../components/Thinking'
 import TokenPanel from '../components/TokenPanel'
 import { clearSession, getSession } from '../session'
+import MyWishes from './MyWishes'
 import WishReview from './WishReview'
 
 type Bubble = { who: 'family' | 'agent'; text: string }
@@ -126,13 +127,14 @@ export default function Intake() {
         </button>
       </p>
 
-      <Deliveries familyAlias={session.alias} />
+      <MyWishes alias={session.alias} />
 
       <div className="intake">
         <div className="intake__main">
           {phase === 'chat' && (
             <>
               <h1 className="page__title">Tell us what you need</h1>
+              {bubbles.length <= 1 && <HowItWorks compact />}
               <div className="transcript" ref={transcript}>
                 {bubbles.map((bubble, i) => (
                   <p key={i} className={`bubble bubble--${bubble.who}`}>{bubble.text}</p>
@@ -183,17 +185,16 @@ export default function Intake() {
               {busy && (
                 <Thinking label="Checking these over before anyone sees them" />
               )}
-              <button type="button" className="page__back" onClick={() => setPhase('chat')}>
-                ← Back to the chat
-              </button>
               <WishReview
                 wishes={drafts}
+                alias={session.alias}
                 busy={busy}
                 error={error}
                 onChange={(i, patch) =>
                   setDrafts((d) => d.map((w, j) => (j === i ? { ...w, ...patch } : w)))}
                 onRemove={(i) => setDrafts((d) => d.filter((_, j) => j !== i))}
                 onApprove={approve}
+                onBack={() => setPhase('chat')}
               />
             </>
           )}
@@ -234,6 +235,8 @@ export default function Intake() {
                   </li>
                 ))}
               </ul>
+
+              <HowItWorks />
 
               <p className="page__tag">
                 This intake took {Math.round(result.seconds)} seconds from first message to approval.

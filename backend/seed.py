@@ -3,7 +3,10 @@
 EVERYTHING HERE IS INVENTED. There is no real data in this project.
  - Family and donor aliases are made up labels, never real names.
  - Street names are invented; they are not real New Haven addresses.
- - Phone numbers all use the 555-01xx range, which is reserved for fiction.
+ - Phone numbers all use the 555-01xx range, which is reserved for fiction,
+   and some people have none at all, because phone is optional.
+ - Email addresses are all at example.com, which is reserved for
+   documentation and reaches nobody.
  - Product links point at allowlisted retailers with made-up product paths.
    No part of this app ever fetches them.
 
@@ -52,22 +55,40 @@ def next_weekday(start: date, day: Weekday) -> date:
 # Families — alias, zip, invented street address, fiction-range phone
 # --------------------------------------------------------------------------
 
-FAMILIES: list[tuple[str, str, str, str]] = [
-    ("Family A04", "06511", "118 Larkspur St, Apt 3B, New Haven, CT 06511", "(203) 555-0104"),
-    ("Family A07", "06513", "42 Ridgewillow Ave, New Haven, CT 06513",      "(203) 555-0107"),
-    ("Family A12", "06519", "9 Tannery Row, Unit 2, New Haven, CT 06519",   "(203) 555-0112"),
-    ("Family A15", "06511", "260 Fernbrook Ln, New Haven, CT 06511",        "(203) 555-0115"),
-    ("Family A19", "06515", "77 Hollowmill Rd, New Haven, CT 06515",        "(203) 555-0119"),
-    ("Family A23", "06512", "515 Candleberry Dr, East Haven, CT 06512",     "(203) 555-0123"),
-    ("Family A27", "06513", "31 Quarry Bend, Apt 1, New Haven, CT 06513",   "(203) 555-0127"),
-    ("Family A31", "06516", "804 Saltmeadow Way, West Haven, CT 06516",     "(203) 555-0131"),
-    ("Family A34", "06510", "16 Printers Ct, Apt 5, New Haven, CT 06510",   "(203) 555-0134"),
-    ("Family A38", "06514", "233 Thistledown Rd, Hamden, CT 06514",         "(203) 555-0138"),
-    ("Family A42", "06511", "58 Copperleaf St, Apt 2C, New Haven, CT 06511", "(203) 555-0142"),
-    ("Family A46", "06519", "140 Millpond Walk, New Haven, CT 06519",       "(203) 555-0146"),
-    ("Family A51", "06517", "67 Brambleton Ave, Hamden, CT 06517",          "(203) 555-0151"),
-    ("Family A55", "06518", "390 Winterbourne Rd, Hamden, CT 06518",        "(203) 555-0155"),
-    ("Family A58", "06525", "12 Stonefield Ln, Woodbridge, CT 06525",       "(203) 555-0158"),
+FAMILIES: list[tuple[str, str, str, str, str]] = [
+    # alias, zip, address, email, phone
+    # Every zip is inside the New Haven city service area. Emails use
+    # example.com, which is reserved for documentation and reaches nobody.
+    ("Family A04", "06511", "118 Larkspur St, Apt 3B, New Haven, CT 06511",
+     "familya04@example.com", "(203) 555-0104"),
+    ("Family A07", "06513", "42 Ridgewillow Ave, New Haven, CT 06513",
+     "familya07@example.com", "(203) 555-0107"),
+    ("Family A12", "06519", "9 Tannery Row, Unit 2, New Haven, CT 06519",
+     "familya12@example.com", "(203) 555-0112"),
+    ("Family A15", "06511", "260 Fernbrook Ln, New Haven, CT 06511",
+     "familya15@example.com", "(203) 555-0115"),
+    ("Family A19", "06515", "77 Hollowmill Rd, New Haven, CT 06515",
+     "familya19@example.com", "(203) 555-0119"),
+    ("Family A23", "06513", "515 Candleberry Dr, New Haven, CT 06513",
+     "familya23@example.com", None),
+    ("Family A27", "06513", "31 Quarry Bend, Apt 1, New Haven, CT 06513",
+     "familya27@example.com", "(203) 555-0127"),
+    ("Family A31", "06519", "804 Saltmeadow Way, New Haven, CT 06519",
+     "familya31@example.com", "(203) 555-0131"),
+    ("Family A34", "06510", "16 Printers Ct, Apt 5, New Haven, CT 06510",
+     "familya34@example.com", "(203) 555-0134"),
+    ("Family A38", "06515", "233 Thistledown Rd, New Haven, CT 06515",
+     "familya38@example.com", "(203) 555-0138"),
+    ("Family A42", "06511", "58 Copperleaf St, Apt 2C, New Haven, CT 06511",
+     "familya42@example.com", None),
+    ("Family A46", "06519", "140 Millpond Walk, New Haven, CT 06519",
+     "familya46@example.com", "(203) 555-0146"),
+    ("Family A51", "06511", "67 Brambleton Ave, New Haven, CT 06511",
+     "familya51@example.com", "(203) 555-0151"),
+    ("Family A55", "06513", "390 Winterbourne Rd, New Haven, CT 06513",
+     "familya55@example.com", "(203) 555-0155"),
+    ("Family A58", "06515", "12 Stonefield Ln, New Haven, CT 06515",
+     "familya58@example.com", "(203) 555-0158"),
 ]
 
 # --------------------------------------------------------------------------
@@ -76,35 +97,35 @@ FAMILIES: list[tuple[str, str, str, str]] = [
 
 DONORS: list[dict] = [
     dict(alias="Donor D01", zip="06511", contact_address="88 Elmcrest Ter, New Haven, CT 06511",
-         contact_phone="(203) 555-0201", budget_usd=75.0,
+         contact_email="donord01@example.com", contact_phone="(203) 555-0201", budget_usd=75.0,
          preferred_categories=[Category.CLOTHING, Category.SCHOOL_SUPPLIES],
          preference=DonorPreference.SPECIFIC),
-    dict(alias="Donor D02", zip="06517", contact_address="451 Harrowgate Rd, Hamden, CT 06517",
-         contact_phone="(203) 555-0202", budget_usd=200.0,
+    dict(alias="Donor D02", zip="06511", contact_address="451 Harrowgate Rd, New Haven, CT 06511",
+         contact_email="donord02@example.com", contact_phone="(203) 555-0202", budget_usd=200.0,
          preferred_categories=[Category.RENT_UTILITIES, Category.FOOD],
          preference=DonorPreference.FLEXIBLE),
     dict(alias="Donor D03", zip="06510", contact_address="7 Clocktower Sq, Apt 9, New Haven, CT 06510",
-         contact_phone="(203) 555-0203", budget_usd=50.0,
+         contact_email="donord03@example.com", contact_phone="(203) 555-0203", budget_usd=50.0,
          preferred_categories=[Category.ESSENTIALS, Category.FOOD],
          preference=DonorPreference.EITHER),
     dict(alias="Donor D04", zip="06515", contact_address="202 Birchfield Ave, New Haven, CT 06515",
-         contact_phone="(203) 555-0204", budget_usd=120.0,
+         contact_email="donord04@example.com", contact_phone="(203) 555-0204", budget_usd=120.0,
          preferred_categories=[Category.GIFTS, Category.CLOTHING],
          preference=DonorPreference.SPECIFIC),
     dict(alias="Donor D05", zip="06520", contact_address="1 Gateway Hall, Box 414, New Haven, CT 06520",
-         contact_phone="(203) 555-0205", budget_usd=40.0,
+         contact_email="donord05@example.com", contact_phone=None, budget_usd=40.0,
          preferred_categories=[Category.SCHOOL_SUPPLIES],
          preference=DonorPreference.EITHER),
-    dict(alias="Donor D06", zip="06518", contact_address="315 Foxglove Dr, Hamden, CT 06518",
-         contact_phone="(203) 555-0206", budget_usd=350.0,
+    dict(alias="Donor D06", zip="06515", contact_address="315 Foxglove Dr, New Haven, CT 06515",
+         contact_email="donord06@example.com", contact_phone="(203) 555-0206", budget_usd=350.0,
          preferred_categories=[Category.RENT_UTILITIES, Category.OTHER],
          preference=DonorPreference.FLEXIBLE),
-    dict(alias="Donor D07", zip="06512", contact_address="60 Seabright Ct, East Haven, CT 06512",
-         contact_phone="(203) 555-0207", budget_usd=90.0,
+    dict(alias="Donor D07", zip="06513", contact_address="60 Seabright Ct, New Haven, CT 06513",
+         contact_email="donord07@example.com", contact_phone="(203) 555-0207", budget_usd=90.0,
          preferred_categories=[Category.CLOTHING, Category.ESSENTIALS, Category.GIFTS],
          preference=DonorPreference.EITHER),
-    dict(alias="Donor D08", zip="06525", contact_address="24 Orchard Gate, Woodbridge, CT 06525",
-         contact_phone="(203) 555-0208", budget_usd=500.0,
+    dict(alias="Donor D08", zip="06519", contact_address="24 Orchard Gate, New Haven, CT 06519",
+         contact_email="donord08@example.com", contact_phone="(203) 555-0208", budget_usd=500.0,
          preferred_categories=[Category.RENT_UTILITIES, Category.FOOD, Category.OTHER],
          preference=DonorPreference.FLEXIBLE),
 ]
@@ -335,7 +356,7 @@ REQUESTS: list[dict] = [
 # --------------------------------------------------------------------------
 
 def _build_requests(today: date) -> list[Request]:
-    by_alias = {alias: zipc for alias, zipc, _addr, _phone in FAMILIES}
+    by_alias = {alias: zipc for alias, zipc, _addr, _email, _phone in FAMILIES}
     out: list[Request] = []
     for row in REQUESTS:
         offset = row.get("days_override", row["days"])
@@ -374,10 +395,11 @@ def seed(db_path: Path | None = None, today: date | None = None) -> dict[str, in
 
     db.init_db(db_path)
     with db.connect(db_path) as conn:
-        for alias, zipc, address, phone in FAMILIES:
+        for alias, zipc, address, email, phone in FAMILIES:
             db.insert_family(
                 Family(alias=alias, zip=zipc, region_slug=region.slug,
-                       contact_address=address, contact_phone=phone),
+                       contact_address=address, contact_email=email,
+                       contact_phone=phone),
                 conn,
             )
 

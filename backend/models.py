@@ -169,8 +169,12 @@ class Family(BaseModel):
     region_slug: str = "new_haven"
 
     # Coordinator-only, never public, never sent to an agent.
+    # Email is how the coordinator reaches people — there is no sending in this
+    # MVP; a person writes the email by hand. Phone is for delivery day only,
+    # and plenty of people would rather not give one, so it is optional.
     contact_address: str
-    contact_phone: str
+    contact_email: str
+    contact_phone: str | None = None
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -180,6 +184,13 @@ class Family(BaseModel):
         if not (len(z) == 5 and z.isdigit()):
             raise ValueError(f"zip code {z!r} must be five digits")
         return z
+
+    @field_validator("contact_email")
+    @classmethod
+    def _looks_like_an_email(cls, value: str) -> str:
+        if "@" not in value or "." not in value.split("@")[-1]:
+            raise ValueError("that does not look like an email address")
+        return value.strip()
 
     def public_view(self) -> dict:
         """The only shape allowed off the coordinator's screen."""
@@ -194,9 +205,10 @@ class Donor(BaseModel):
     zip: str
     region_slug: str = "new_haven"
 
-    # Coordinator-only.
+    # Coordinator-only, same as a family's.
     contact_address: str
-    contact_phone: str
+    contact_email: str
+    contact_phone: str | None = None
 
     budget_usd: float = Field(ge=0, description="what this donor can spend per wish")
     preferred_categories: list[Category] = Field(default_factory=list)
@@ -210,6 +222,13 @@ class Donor(BaseModel):
         if not (len(z) == 5 and z.isdigit()):
             raise ValueError(f"zip code {z!r} must be five digits")
         return z
+
+    @field_validator("contact_email")
+    @classmethod
+    def _looks_like_an_email(cls, value: str) -> str:
+        if "@" not in value or "." not in value.split("@")[-1]:
+            raise ValueError("that does not look like an email address")
+        return value.strip()
 
     def public_view(self) -> dict:
         return {
@@ -443,7 +462,8 @@ class AgentCallLog(BaseModel):
 class FamilySignUp(BaseModel):
     zip: str
     contact_address: str = Field(min_length=4)
-    contact_phone: str = Field(min_length=7)
+    contact_email: str = Field(min_length=5)
+    contact_phone: str | None = None
 
     @field_validator("zip")
     @classmethod
@@ -456,7 +476,8 @@ class FamilySignUp(BaseModel):
 class DonorSignUp(BaseModel):
     zip: str
     contact_address: str = Field(min_length=4)
-    contact_phone: str = Field(min_length=7)
+    contact_email: str = Field(min_length=5)
+    contact_phone: str | None = None
     budget_usd: float = Field(ge=0)
     preferred_categories: list[Category] = Field(default_factory=list)
     preference: DonorPreference = DonorPreference.EITHER

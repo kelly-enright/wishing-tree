@@ -28,6 +28,7 @@ def test_family_signup_creates_a_record_and_returns_an_alias(client):
     response = client.post("/api/families", json={
         "zip": "06511",
         "contact_address": "4 Nightingale Ct, New Haven, CT 06511",
+        "contact_email": "new.family@example.com",
         "contact_phone": "(203) 555-0191",
     })
     assert response.status_code == 201
@@ -42,23 +43,27 @@ def test_signup_response_never_echoes_the_contact_details(client):
     response = client.post("/api/families", json={
         "zip": "06511",
         "contact_address": "4 Nightingale Ct, New Haven, CT 06511",
+        "contact_email": "new.family@example.com",
         "contact_phone": "(203) 555-0191",
     })
     text = response.text
     assert "Nightingale" not in text
     assert "555-0191" not in text
+    assert "new.family@example.com" not in text
 
 
 def test_the_contact_details_are_stored_for_the_coordinator(client):
     client.post("/api/families", json={
         "zip": "06511",
         "contact_address": "4 Nightingale Ct, New Haven, CT 06511",
+        "contact_email": "new.family@example.com",
         "contact_phone": "(203) 555-0191",
     })
     with db.connect(config.DB_PATH) as conn:
         family = db.get_family(conn, "Family A59")
     assert family is not None
     assert family.contact_address.startswith("4 Nightingale Ct")
+    assert family.contact_email == "new.family@example.com"
     assert family.contact_phone == "(203) 555-0191"
 
 
@@ -66,6 +71,7 @@ def test_two_signups_get_different_aliases(client):
     form = {
         "zip": "06511",
         "contact_address": "4 Nightingale Ct, New Haven, CT 06511",
+        "contact_email": "new.family@example.com",
         "contact_phone": "(203) 555-0191",
     }
     first = client.post("/api/families", json=form).json()
@@ -77,15 +83,52 @@ def test_a_zip_outside_the_region_is_refused_with_a_useful_message(client):
     response = client.post("/api/families", json={
         "zip": "90210",
         "contact_address": "1 Palm Dr, Beverly Hills, CA 90210",
+        "contact_email": "someone@example.com",
         "contact_phone": "(310) 555-0100",
     })
     assert response.status_code == 400
-    assert "New Haven" in response.json()["detail"]
+    detail = response.json()["detail"]
+    assert "90210" in detail and "New Haven" in detail
+    assert "coming soon" in detail        # a "not yet", not a "no"
+
+
+def test_phone_is_optional_but_email_is_not(client):
+    """Plenty of people would rather not give a phone number."""
+    no_phone = client.post("/api/families", json={
+        "zip": "06511",
+        "contact_address": "4 Nightingale Ct, New Haven, CT 06511",
+        "contact_email": "no.phone@example.com",
+    })
+    assert no_phone.status_code == 201
+
+    with db.connect(config.DB_PATH) as conn:
+        family = db.get_family(conn, no_phone.json()["alias"])
+    assert family.contact_phone is None
+    assert family.contact_email == "no.phone@example.com"
+
+    no_email = client.post("/api/families", json={
+        "zip": "06511",
+        "contact_address": "4 Nightingale Ct, New Haven, CT 06511",
+        "contact_phone": "(203) 555-0191",
+    })
+    assert no_email.status_code == 422
+
+
+@pytest.mark.parametrize("bad", ["not-an-email", "@example.com", "me@nodot", "me@x."])
+def test_a_malformed_email_reads_as_a_typo_not_a_server_error(client, bad):
+    response = client.post("/api/families", json={
+        "zip": "06511",
+        "contact_address": "4 Nightingale Ct, New Haven, CT 06511",
+        "contact_email": bad,
+    })
+    assert response.status_code == 400
+    assert "doesn't look right" in response.json()["detail"]
 
 
 def test_a_malformed_zip_is_rejected(client):
     response = client.post("/api/families", json={
-        "zip": "651", "contact_address": "somewhere", "contact_phone": "2035550100",
+        "zip": "651", "contact_address": "somewhere",
+        "contact_email": "someone@example.com", "contact_phone": "2035550100",
     })
     assert response.status_code == 422
 
@@ -96,8 +139,9 @@ def test_a_malformed_zip_is_rejected(client):
 
 def test_donor_signup_stores_preferences(client):
     response = client.post("/api/donors", json={
-        "zip": "06517",
-        "contact_address": "12 Rookery Ln, Hamden, CT 06517",
+        "zip": "06511",
+        "contact_address": "12 Rookery Ln, New Haven, CT 06511",
+        "contact_email": "new.donor@example.com",
         "contact_phone": "(203) 555-0292",
         "budget_usd": 150,
         "preferred_categories": ["clothing", "food"],
@@ -124,7 +168,7 @@ def test_accounts_lists_every_seeded_family_and_donor(client):
     assert body["families"][0]["alias"].startswith("Family ")
 
 
-def test_the_accounts_list_leaks_no_address_or_phone(client):
+def test_the_accounts_list_leaks_no_contact_details(client):
     """This list is open in the demo, so it must carry aliases and zips only."""
     text = client.get("/api/accounts").text
     with db.connect(config.DB_PATH) as conn:
@@ -132,9 +176,13 @@ def test_the_accounts_list_leaks_no_address_or_phone(client):
         donors = db.list_donors(conn)
     for person in [*families, *donors]:
         assert person.contact_address not in text
-        assert person.contact_phone not in text
+        assert person.contact_email not in text
+        if person.contact_phone:
+            assert person.contact_phone not in text
     assert "555-" not in text
+    assert "@example.com" not in text
     assert "contact_address" not in text
+    assert "contact_email" not in text
 
 
 def test_a_remembered_alias_can_be_confirmed(client):

@@ -69,12 +69,15 @@ def run_sheet(week_of: str | None = None) -> dict:
                 direct_payments.append({
                     "pledge_id": pledge.id,
                     "family_alias": wish.family_alias,
+                    "family_email": family.contact_email if family else None,
                     "donor_alias": pledge.donor_alias,
                     "item": wish.item_description,
                     "amount_usd": wish.cost_ceiling_usd(),
                     "pay_by": pledge.delivery_date.isoformat(),
                     "status": pledge.status.value,
-                    "note": "Paid to the landlord or provider. Simulated in this MVP.",
+                    "note": "Email the family to confirm the amount and who to pay. "
+                            "Paid to the landlord or provider, never to the "
+                            "family. Simulated in this MVP.",
                 })
                 continue
 
@@ -84,6 +87,7 @@ def run_sheet(week_of: str | None = None) -> dict:
                     "donor_alias": pledge.donor_alias,
                     # Coordinator-only, and only here.
                     "donor_address": donor.contact_address if donor else None,
+                    "donor_email": donor.contact_email if donor else None,
                     "donor_phone": donor.contact_phone if donor else None,
                     "item": wish.item_description,
                     "dropoff_date": pledge.dropoff_date.isoformat(),
@@ -103,6 +107,7 @@ def run_sheet(week_of: str | None = None) -> dict:
                     "family_alias": wish.family_alias,
                     # Coordinator-only, and only here.
                     "family_address": family.contact_address if family else None,
+                    "family_email": family.contact_email if family else None,
                     "family_phone": family.contact_phone if family else None,
                     "delivery_date": pledge.delivery_date.isoformat(),
                     "pledge_ids": [],

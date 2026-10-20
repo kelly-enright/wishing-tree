@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { listAccounts, type Account } from '../api'
 import Logo from '../components/Logo'
+import { ServiceNotice } from '../components/ServiceArea'
 import { clearSession, getSession, homePath, setSession } from '../session'
 
 type Health = {
@@ -63,6 +64,7 @@ export default function Landing() {
       <header className="hero">
         <div className="hero__logo"><Logo plain size={52} /></div>
         <p className="hero__tagline">Grant a neighbor's wish, any time of year</p>
+        <ServiceNotice />
         <p className="hero__lede">
           A giving tree that stays up all year in New Haven. Families ask for what they
           actually need, neighbours grant a wish, and everything moves through one

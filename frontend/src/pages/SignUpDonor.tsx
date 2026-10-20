@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CATEGORY_LABELS, signUpDonor, type Category, type Preference,
+import { CATEGORY_LABELS, formatPhone, signUpDonor, type Category, type Preference,
   userMessage,
 } from '../api'
+import { ServiceNotice, ZipField } from '../components/ServiceArea'
 import { setSession } from '../session'
 import FormShell from './FormShell'
 
@@ -14,6 +15,8 @@ const PREFERENCES: { value: Preference; label: string }[] = [
 
 export default function SignUpDonor() {
   const [zip, setZip] = useState('')
+  const [covered, setCovered] = useState<boolean | null>(null)
+  const [email, setEmail] = useState('')
   const [address, setAddress] = useState('')
   const [phone, setPhone] = useState('')
   const [budget, setBudget] = useState('75')
@@ -39,7 +42,8 @@ export default function SignUpDonor() {
       const donor = await signUpDonor({
         zip: zip.trim(),
         contact_address: address.trim(),
-        contact_phone: phone.trim(),
+        contact_email: email.trim(),
+        contact_phone: phone.trim() || null,
         budget_usd: Number(budget) || 0,
         preferred_categories: categories,
         preference,
@@ -57,14 +61,10 @@ export default function SignUpDonor() {
       title="I want to give"
       blurb="Tell us where you are and what you like to help with. You get an alias like “Donor D09”."
     >
+      <ServiceNotice />
+
       <form className="form" onSubmit={submit}>
-        <label className="field">
-          <span className="field__label">Zip code</span>
-          <input
-            className="field__input" required value={zip} inputMode="numeric"
-            maxLength={5} placeholder="06511" onChange={(e) => setZip(e.target.value)}
-          />
-        </label>
+        <ZipField value={zip} onChange={setZip} onCovered={setCovered} />
 
         <label className="field">
           <span className="field__label">Address</span>
@@ -76,11 +76,24 @@ export default function SignUpDonor() {
         </label>
 
         <label className="field">
-          <span className="field__label">Phone</span>
+          <span className="field__label">Email</span>
           <input
-            className="field__input" required value={phone} type="tel"
-            placeholder="(203) 555-0201" onChange={(e) => setPhone(e.target.value)}
+            className="field__input" required type="email" value={email}
+            placeholder="you@example.com" onChange={(e) => setEmail(e.target.value)}
           />
+          <span className="field__hint">
+            How the coordinator reaches you about a drop-off. Never shown to families.
+          </span>
+        </label>
+
+        <label className="field">
+          <span className="field__label">Phone <em>(optional)</em></span>
+          <input
+            className="field__input" value={phone} type="tel"
+            placeholder="(203) 555-0201"
+            onChange={(e) => setPhone(formatPhone(e.target.value))}
+          />
+          <span className="field__hint">Only used on drop-off day.</span>
         </label>
 
         <label className="field">
@@ -124,12 +137,13 @@ export default function SignUpDonor() {
         </fieldset>
 
         <p className="form__privacy">
-          Your address and phone are shown only to the coordinator. Families never see them.
+          Your address, email and phone are shown only to the coordinator. Families
+          never see them.
         </p>
 
         {error && <p className="form__error" role="alert">{error}</p>}
 
-        <button className="btn btn--primary" type="submit" disabled={busy}>
+        <button className="btn btn--primary" type="submit" disabled={busy || covered !== true}>
           {busy ? 'Creating…' : 'Create my account'}
         </button>
       </form>

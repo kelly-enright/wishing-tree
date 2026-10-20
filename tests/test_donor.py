@@ -98,9 +98,13 @@ def test_the_wall_carries_no_contact_details(client):
         families = db.list_families(conn)
     for family in families:
         assert family.contact_address not in text
-        assert family.contact_phone not in text
+        assert family.contact_email not in text
+        if family.contact_phone:
+            assert family.contact_phone not in text
     assert "contact_address" not in text
+    assert "contact_email" not in text
     assert "555-" not in text
+    assert "@example.com" not in text
 
 
 def test_filters_narrow_the_wall(client):
@@ -320,9 +324,29 @@ def test_a_donor_can_see_what_they_claimed(client):
 def test_a_donor_zip_means_their_region_not_their_postcode(client):
     """Donations all pass through one hub, so a donor can grant anywhere in
     the region. Matching zip-for-zip returned almost nothing."""
-    region = config.region_for_zip("06512")
+    region = config.region_for_zip("06511")
     with db.connect(config.DB_PATH) as conn:
         across_region = db.list_open_wishes(conn, zip_codes=region.zip_codes)
-        same_postcode = db.list_open_wishes(conn, zip_code="06512")
+        same_postcode = db.list_open_wishes(conn, zip_code="06511")
     assert len(across_region) > len(same_postcode)
-    assert len(same_postcode) < 5
+
+
+def test_the_service_area_is_new_haven_city_only(client):
+    """Six city zips. The neighbouring towns are a later expansion."""
+    body = client.get("/api/service-area").json()
+    assert body["zip_codes"] == ["06510", "06511", "06513", "06515", "06519", "06520"]
+    assert "New Haven" in body["notice"]
+
+    assert client.get("/api/service-area?zip=06511").json()["covered"] is True
+    for outside in ("06512", "06514", "06516", "06517", "06518", "06525", "90210"):
+        answer = client.get(f"/api/service-area?zip={outside}").json()
+        assert answer["covered"] is False, outside
+        assert "coming soon" in answer["message"]
+
+
+def test_every_seeded_person_is_inside_the_service_area(client):
+    region = config.get_region()
+    with db.connect(config.DB_PATH) as conn:
+        people = [*db.list_families(conn), *db.list_donors(conn)]
+    outside = [p.alias for p in people if p.zip not in region.zip_codes]
+    assert outside == []

@@ -99,13 +99,71 @@ def _check_region(zip_code: str) -> None:
         active = ", ".join(r.name for r in config.active_regions())
         raise HTTPException(
             status_code=400,
-            detail=f"Wishing Tree is not in {zip_code} yet. Right now we cover {active}.",
+            detail=config.OUT_OF_AREA_MESSAGE.format(zip=zip_code, region=active),
         )
+
+
+def _check_email(email: str) -> str:
+    """A typo in an email should read as a typo, not as a server error."""
+    cleaned = (email or "").strip()
+    local, _, domain = cleaned.partition("@")
+    if not local or "." not in domain or domain.endswith("."):
+        raise HTTPException(
+            status_code=400,
+            detail="That email address doesn't look right — have another look "
+                   "and try again.",
+        )
+    return cleaned
+
+
+@app.get("/api/retailers")
+def retailers() -> dict:
+    """The stores a product link may point at.
+
+    The interface shows a few of these next to the link field, so a family
+    knows before pasting rather than after. Checking a link is string work:
+    nothing in this app ever opens one.
+    """
+    stores = sorted(config.RETAILER_ALLOWLIST)
+    return {
+        "count": len(stores),
+        "stores": stores,
+        "note": "Links from anywhere else can't be posted, but you can still "
+                "describe what you need and a neighbour will choose it.",
+    }
+
+
+@app.get("/api/service-area")
+def service_area(zip: str | None = None) -> dict:
+    """Is this zip in the area? Asked as soon as the field is filled in, so
+    nobody gets to the end of a form only to be turned away."""
+    region = config.get_region()
+    base = {
+        "notice": config.SERVICE_AREA_NOTICE,
+        "region": region.name,
+        "zip_codes": region.zip_codes,
+    }
+    if not zip:
+        return {**base, "checked": False}
+
+    covered = config.region_for_zip(zip) is not None
+    return {
+        **base,
+        "checked": True,
+        "zip": zip,
+        "covered": covered,
+        "message": (
+            f"You're in the area — we deliver across {region.name}."
+            if covered
+            else config.OUT_OF_AREA_MESSAGE.format(zip=zip, region=region.name)
+        ),
+    }
 
 
 @app.post("/api/families", status_code=201)
 def create_family(form: FamilySignUp) -> dict:
     _check_region(form.zip)
+    email = _check_email(form.contact_email)
     region = config.region_for_zip(form.zip)
     with db.connect() as conn:
         family = Family(
@@ -113,7 +171,8 @@ def create_family(form: FamilySignUp) -> dict:
             zip=form.zip,
             region_slug=region.slug,
             contact_address=form.contact_address,
-            contact_phone=form.contact_phone,
+            contact_email=email,
+            contact_phone=form.contact_phone or None,
         )
         db.insert_family(family, conn)
         conn.commit()
@@ -123,6 +182,7 @@ def create_family(form: FamilySignUp) -> dict:
 @app.post("/api/donors", status_code=201)
 def create_donor(form: DonorSignUp) -> dict:
     _check_region(form.zip)
+    email = _check_email(form.contact_email)
     region = config.region_for_zip(form.zip)
     with db.connect() as conn:
         donor = Donor(
@@ -130,7 +190,8 @@ def create_donor(form: DonorSignUp) -> dict:
             zip=form.zip,
             region_slug=region.slug,
             contact_address=form.contact_address,
-            contact_phone=form.contact_phone,
+            contact_email=email,
+            contact_phone=form.contact_phone or None,
             budget_usd=form.budget_usd,
             preferred_categories=form.preferred_categories,
             preference=form.preference,

@@ -52,13 +52,19 @@ def test_every_family_has_at_least_one_wish(tmp_path):
     assert families == asked
 
 
-def test_phone_numbers_are_all_in_the_fiction_range(tmp_path):
-    """555-01xx is reserved for fiction, so no seeded number can reach a person."""
+def test_contact_details_cannot_reach_a_real_person(tmp_path):
+    """555-01xx is reserved for fiction and example.com reaches nobody."""
     path = _seeded(tmp_path)
     with db.connect(path) as conn:
-        numbers = [f.contact_phone for f in db.list_families(conn)]
-        numbers += [d.contact_phone for d in db.list_donors(conn)]
+        people = [*db.list_families(conn), *db.list_donors(conn)]
+
+    numbers = [p.contact_phone for p in people if p.contact_phone]
+    assert numbers, "expected at least some phone numbers"
     assert all("555-01" in n or "555-02" in n for n in numbers)
+    assert all(p.contact_email.endswith("@example.com") for p in people)
+
+    # And phone really is optional in the seed, so the UI path gets exercised.
+    assert any(p.contact_phone is None for p in people)
 
 
 def test_every_claimed_wish_has_a_pledge(tmp_path):

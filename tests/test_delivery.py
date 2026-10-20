@@ -77,15 +77,15 @@ def test_no_public_api_response_ever_contains_an_address_or_a_phone(client):
 
     for path in public_endpoints:
         body = client.get(path).text
-        assert "contact_address" not in body, path
-        assert "contact_phone" not in body, path
-        assert "family_address" not in body, path
-        assert "family_phone" not in body, path
-        assert "donor_address" not in body, path
-        assert "donor_phone" not in body, path
+        for field in ("contact_address", "contact_email", "contact_phone",
+                      "family_address", "family_email", "family_phone",
+                      "donor_address", "donor_email", "donor_phone"):
+            assert field not in body, f"{path} carries a {field} field"
         for person in people:
             assert person.contact_address not in body, f"{path} leaked an address"
-            assert person.contact_phone not in body, f"{path} leaked a phone number"
+            assert person.contact_email not in body, f"{path} leaked an email"
+            if person.contact_phone:
+                assert person.contact_phone not in body, f"{path} leaked a phone number"
 
 
 def test_the_grant_response_carries_no_contact_details(client):
@@ -97,7 +97,9 @@ def test_the_grant_response_carries_no_contact_details(client):
     }).text
     for person in people:
         assert person.contact_address not in body
-        assert person.contact_phone not in body
+        assert person.contact_email not in body
+        if person.contact_phone:
+            assert person.contact_phone not in body
 
 
 def test_contact_details_do_appear_on_the_coordinator_run_sheet(client):
@@ -112,6 +114,9 @@ def test_contact_details_do_appear_on_the_coordinator_run_sheet(client):
     )
     assert any(
         row.get("donor_phone") or row.get("family_phone") for row in rows
+    )
+    assert any(
+        row.get("donor_email") or row.get("family_email") for row in rows
     )
 
 

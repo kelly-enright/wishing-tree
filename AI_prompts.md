@@ -501,3 +501,58 @@ need gets an error. Keeping 1,600.
 3. The benchmark needed its own database and a raised daily cap, or a
    sixty-call burst would have tripped the app's own overspending guard
    partway through. The app's cap is unchanged.
+
+---
+
+## Problem 9 — Sign-up and Family Experience
+
+### Prompt 1
+
+> Problem 9: "Sign-up and family experience"
+>
+> I clicked through the app and have feedback. This problem improves sign-up and everything a family sees. Keep everything that already works.
+>
+> a.) Service area: show "Now serving New Haven, CT. More neighborhoods coming soon." on the landing page and at the start of both sign-ups. Make zip the first field, and check it right away so someone outside the area finds out before filling in anything else, with a kind message. Tell me which zips are currently configured; the region should be New Haven city only for now.
+> b.) Contact details for families and donors: email required, phone optional (for delivery-day logistics only). Format the phone number automatically as it's typed. Email gets the same protection as address and phone: coordinator-only, never sent to any agent, and added to the privacy tests that check every public endpoint. Don't build any email sending; the coordinator emails people by hand for now. Address entry stays as it is.
+> c.) Wish preview: after intake, show each wish as a card exactly as donors will see it, so the family can check what's shared and confirm no personal details appear. Show the cost, labeled "Estimated" when it came from the price guide, and let the family change it.
+> d.) Add a clear optional field on the preview: "Have a specific item in mind? Paste the link," with a short note listing the accepted stores. A link from another site gets a friendly message, not an error.
+> e.) Rename the buttons: "Approve" becomes "Looks right, post my wish" (or "Post my 3 wishes"), with a "Make a change" option and the line "We'll check it for privacy before anyone sees it."
+> f.) A short three-step "How it works" on the family's first screen and again after posting: 1) Tell us what you need. 2) We check it for privacy and post it on the Wishing Tree. 3) A neighbor nearby grants it, and we deliver it to your door on a Saturday. Be honest that a wish isn't guaranteed to be granted.
+> g.) A "My wishes" page for families with a simple progress tracker per wish, using friendly labels: "Being checked," "On the tree," "Granted!" (with the delivery date and window and the existing confirm button), "On its way," "Delivered," and, for wishes that couldn't be posted, the plain-language reason. If a donor misses a drop-off, the wish quietly returns to "On the tree" with "Still looking for the right neighbor." Never show anything about the donor.
+> h.) Rent/utility wishes: tell the family the coordinator will email them to confirm the bill amount and who to pay. The bill is handled by the coordinator only and never goes through any agent.
+> i.) Write output/price_guide_review.md listing every item in the price guide with its price range, so I can spot-check them against real store prices.
+> j.) Update the tests, take fresh screenshots, and update harness.md.
+>
+> Ask any questions you have before starting.
+
+**The zips you asked about.** Thirteen were configured, and six of them were
+other towns: 06512 East Haven, 06514/06517/06518 Hamden, 06516 West Haven,
+06524 Bethany, 06525 Woodbridge. New Haven city is **06510, 06511, 06513,
+06515, 06519, 06520**, and that is what the region is now. Narrowing it put six
+seeded families and four donors outside the area, so they moved to city
+addresses; a test now asserts no seeded person sits outside it.
+
+**Outcome:** all of a–j, with everything that already worked left alone.
+
+- **Zip first, checked live.** Five digits triggers `GET /api/service-area`, and the rest of the form stays hidden until it clears. Out of area reads as a "not yet", with the six zips listed.
+- **Email required, phone optional**, formatted as typed by a pure function. Email now has exactly the protection address and phone had — off `public_view()`, out of every agent's context, and in the sweep that checks every public endpoint against every seeded person.
+- **The preview shows the real donor card**, the same component the wish wall renders, so a family checks what is shared rather than a description of it. Editing sits behind "Make a change". Costs from the price guide are labelled "Estimated" and editable.
+- **The link field** names six of the twenty accepted stores and answers an unaccepted link with a sentence, not an error.
+- **"Looks right, post my wish" / "Post my 3 wishes"**, with the privacy line underneath.
+- **How it works** on the first screen and after posting, honest that a wish isn't guaranteed.
+- **My wishes** with the six friendly stages. Nothing on the page mentions a donor — not an alias, not a count — and a test asserts it. A missed drop-off returns the wish to "On the tree" with "Still looking for the right neighbour."
+- **198 tests pass.** Five screenshots.
+
+**Two things worth knowing:**
+
+A malformed email was returning a 500, because the sign-up model only checked
+length and the real validation happened when building the record. It now reads
+as a typo: *"That email address doesn't look right."* A test covers four
+malformed shapes.
+
+And the price guide review found a genuine conflict on its first run:
+**"first apartment basics" has a range top of $350 against a $300 item cap**,
+so a family landing on the top of that range would have their wish held rather
+than posted, with no visible reason why. The report now flags any entry above
+its own cap in a section of its own. Worth deciding which way to fix — lower
+the range or raise the cap — both are one line.

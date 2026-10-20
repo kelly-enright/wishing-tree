@@ -13,7 +13,13 @@ from datetime import date
 from fastapi import APIRouter, HTTPException
 
 from backend import config, db
-from backend.models import PledgeStatus, WindowAnswer, WindowResponse
+from backend.models import (
+    Category,
+    PledgeStatus,
+    RequestStatus,
+    WindowAnswer,
+    WindowResponse,
+)
 
 router = APIRouter(prefix="/api/families")
 
@@ -81,4 +87,110 @@ def respond_to_window(body: WindowAnswer) -> dict:
         "window_response": body.response.value,
         "message": CONFIRMED_MESSAGE if confirmed else RESCHEDULE_MESSAGE,
         "coordinator_will_contact": not confirmed,
+    }
+
+
+# --------------------------------------------------------------------------
+# My wishes — where a family follows what happened to each one
+# --------------------------------------------------------------------------
+# Nothing here says anything about a donor. A family sees the state of their
+# own wish and the date it arrives; who granted it is not theirs to know, and
+# a donor who changes their mind should not become a person a family is
+# waiting on by name.
+
+STAGES = {
+    "being_checked": "Being checked",
+    "on_the_tree": "On the tree",
+    "granted": "Granted!",
+    "on_its_way": "On its way",
+    "delivered": "Delivered",
+    "not_posted": "Couldn't be posted",
+}
+
+RENT_NOTE = (
+    "A Wishing Tree coordinator will email you to confirm the amount and who "
+    "to pay. The payment goes straight to your landlord or the utility "
+    "company — never to you, and never through this app."
+)
+
+
+def _stage_for(wish, pledge, review) -> tuple[str, str, bool]:
+    """The stage, the line under it, and whether this wish was dropped once."""
+    status = wish.status.value
+    dropped_once = pledge is not None and pledge.status is PledgeStatus.MISSED
+
+    if status == "delivered":
+        return "delivered", "This one arrived. Thank you for letting us help.", False
+    if status == "dropped_off":
+        return ("on_its_way",
+                "A neighbour has dropped this at the hub. It comes to you on the "
+                "next delivery day.", False)
+    if status == "granted":
+        return "granted", "A neighbour has claimed this one.", False
+    if status == "open":
+        if dropped_once:
+            return ("on_the_tree",
+                    "Still looking for the right neighbour. The last one couldn't "
+                    "make it, so your wish went straight back up.", True)
+        return ("on_the_tree",
+                "Up on the tree where neighbours can see it. We can't promise "
+                "someone will grant it, but most wishes find someone.", False)
+    if status == "pending_review":
+        if review is not None and not review["approved"]:
+            return "not_posted", review["note_to_family"], False
+        return ("being_checked",
+                "We're checking this for anything that shouldn't be public. "
+                "It usually takes a moment.", False)
+    return "being_checked", "Just submitted.", False
+
+
+@router.get("/{alias}/wishes")
+def family_wishes(alias: str) -> dict:
+    """Every wish this family has posted, and where each one has got to."""
+    today = date.today()
+    with db.connect() as conn:
+        family = db.get_family(conn, alias)
+        if family is None:
+            raise HTTPException(status_code=404, detail=f"No family with alias {alias!r}.")
+
+        region = config.get_region(family.region_slug)
+        rows = []
+        for wish in db.list_requests(conn):
+            if wish.family_alias != alias or wish.status is RequestStatus.DRAFT:
+                continue
+
+            pledge = db.get_pledge_for_request(conn, wish.id)
+            review = db.get_safety_review(conn, wish.id)
+            stage, detail, still_looking = _stage_for(wish, pledge, review)
+            is_rent = wish.category is Category.RENT_UTILITIES
+
+            delivery = None
+            if stage in ("granted", "on_its_way") and pledge is not None and not is_rent:
+                delivery = {
+                    "pledge_id": pledge.id,
+                    "date": pledge.delivery_date.isoformat(),
+                    "window": region.delivery_window.label(),
+                    "window_response": pledge.window_response.value,
+                }
+
+            rows.append({
+                "wish": wish.public_card(today),
+                "stage": stage,
+                "label": STAGES[stage],
+                "detail": detail,
+                "still_looking": still_looking,
+                "delivery": delivery,
+                "direct_payment": is_rent,
+                "direct_payment_note": RENT_NOTE if is_rent else None,
+                "removed_before_posting": review["removed"] if review else [],
+            })
+
+    order = ["granted", "on_its_way", "being_checked", "on_the_tree",
+             "not_posted", "delivered"]
+    rows.sort(key=lambda r: order.index(r["stage"]))
+    return {
+        "count": len(rows),
+        "wishes": rows,
+        "stages": STAGES,
+        "open_wish_cap": config.MAX_OPEN_WISHES_PER_FAMILY,
     }

@@ -104,10 +104,11 @@ REGIONS: list[Region] = [
     Region(
         slug="new_haven",
         name="New Haven, CT",
-        zip_codes=[
-            "06510", "06511", "06512", "06513", "06514", "06515", "06516",
-            "06517", "06518", "06519", "06520", "06524", "06525",
-        ],
+        # New Haven city only for now. The neighbouring towns that used to be
+        # in this list — East Haven (06512), Hamden (06514/06517/06518),
+        # West Haven (06516), Bethany (06524) and Woodbridge (06525) — are a
+        # later expansion, not a quiet extension of one delivery run.
+        zip_codes=["06510", "06511", "06513", "06515", "06519", "06520"],
         hub_name="Yale School of Management",
         hub_address="165 Whitney Ave, New Haven, CT 06511",
         dropoff_window=Window(day=Weekday.THURSDAY, start=time(16, 0), end=time(19, 0)),
@@ -117,6 +118,15 @@ REGIONS: list[Region] = [
 ]
 
 DEFAULT_REGION_SLUG = "new_haven"
+
+# What someone outside the area is told. Kind, and honest that it is a
+# "not yet" rather than a "no".
+OUT_OF_AREA_MESSAGE = (
+    "We're not in {zip} yet — Wishing Tree is just getting started in "
+    "{region}. We're sorry; we'd rather say so now than after you've filled "
+    "in a form. More neighborhoods are coming soon."
+)
+SERVICE_AREA_NOTICE = "Now serving New Haven, CT. More neighborhoods coming soon."
 
 
 def get_region(slug: str = DEFAULT_REGION_SLUG) -> Region:

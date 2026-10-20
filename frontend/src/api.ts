@@ -62,14 +62,20 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   })
 }
 
-export function signUpFamily(form: { zip: string; contact_address: string; contact_phone: string }) {
+export function signUpFamily(form: {
+  zip: string
+  contact_address: string
+  contact_email: string
+  contact_phone: string | null
+}) {
   return post<{ role: 'family'; alias: string; zip: string }>('/api/families', form)
 }
 
 export function signUpDonor(form: {
   zip: string
   contact_address: string
-  contact_phone: string
+  contact_email: string
+  contact_phone: string | null
   budget_usd: number
   preferred_categories: Category[]
   preference: Preference
@@ -426,4 +432,70 @@ export function setPledgeStatus(
     headers: { 'Content-Type': 'application/json', 'X-Coordinator-Token': token },
     body: JSON.stringify({ pledge_ids: pledgeIds, status }),
   }, 'We could not update that just now. Please try again.')
+}
+
+// ------------------------------------------------------ service area & stores
+
+export type ServiceArea = {
+  notice: string
+  region: string
+  zip_codes: string[]
+  checked: boolean
+  zip?: string
+  covered?: boolean
+  message?: string
+}
+
+export function getServiceArea(zip?: string): Promise<ServiceArea> {
+  const query = zip ? `?zip=${encodeURIComponent(zip)}` : ''
+  return request(`/api/service-area${query}`, undefined,
+    'We could not check the service area just now.')
+}
+
+export function getRetailers(): Promise<{ count: number; stores: string[]; note: string }> {
+  return request('/api/retailers', undefined, 'We could not load the store list.')
+}
+
+/** Format a US number as it is typed: (203) 555-0104. */
+export function formatPhone(input: string): string {
+  const digits = input.replace(/\D/g, '').slice(0, 11)
+  const n = digits.startsWith('1') ? digits.slice(1) : digits
+  if (n.length <= 3) return n
+  if (n.length <= 6) return `(${n.slice(0, 3)}) ${n.slice(3)}`
+  return `(${n.slice(0, 3)}) ${n.slice(3, 6)}-${n.slice(6, 10)}`
+}
+
+/** Is this link one of the stores we can post? Checked as text, never opened. */
+export function linkIsAccepted(url: string, stores: string[]): boolean {
+  if (!url.trim()) return true
+  let host: string
+  try {
+    const parsed = new URL(url.trim())
+    if (parsed.protocol !== 'https:') return false
+    host = parsed.hostname.toLowerCase().replace(/^www\./, '')
+  } catch {
+    return false
+  }
+  return stores.some((s) => host === s || host.endsWith(`.${s}`))
+}
+
+// --------------------------------------------------------------- my wishes
+
+export type WishProgress = {
+  wish: WishCard
+  stage: 'being_checked' | 'on_the_tree' | 'granted' | 'on_its_way' | 'delivered' | 'not_posted'
+  label: string
+  detail: string
+  still_looking: boolean
+  delivery: { pledge_id: number; date: string; window: string; window_response: WindowResponse } | null
+  direct_payment: boolean
+  direct_payment_note: string | null
+  removed_before_posting: string[]
+}
+
+export function getMyWishes(alias: string): Promise<{
+  count: number; wishes: WishProgress[]; open_wish_cap: number
+}> {
+  return request(`/api/families/${encodeURIComponent(alias)}/wishes`, undefined,
+    'We could not load your wishes just now.')
 }

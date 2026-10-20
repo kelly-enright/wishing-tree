@@ -863,7 +863,107 @@ report can be checked against the raw records.
 calls, so the report can be rewritten from the saved runs without spending
 tokens again.
 
-## 21. Safety measures so far
+## 21. Sign-up and the family experience
+
+### The service area, narrowed
+
+The region was thirteen zips and six of them were other towns — East Haven,
+Hamden, West Haven, Bethany and Woodbridge. It is now **New Haven city only**:
+
+    06510  06511  06513  06515  06519  06520
+
+Six seeded families and four donors lived in the dropped zips, so they moved
+to city addresses. A test asserts no seeded person sits outside the area, which
+is the kind of thing that rots quietly otherwise.
+
+**Zip is the first field on both sign-ups**, checked against
+`GET /api/service-area` as soon as five digits are in. Somebody outside the
+area finds out before typing an address, and reads a "not yet" rather than a
+"no": *"We're not in 06514 yet — Wishing Tree is just getting started in New
+Haven, CT. We're sorry; we'd rather say so now than after you've filled in a
+form."* The rest of the form stays hidden until the zip clears.
+
+### Email and phone
+
+**Email is required, phone is optional.** Email is how the coordinator reaches
+people; phone is for delivery day, and plenty of people would rather not give
+one. The seed includes people with no phone, so that path is exercised rather
+than theoretical.
+
+Phone formats as it is typed — `2035550199` becomes `(203) 555-0199` — by a
+pure function in `api.ts`, so there is nothing to get out of step.
+
+**Email gets exactly the protection address and phone already had.** It is
+coordinator-only, it is not on `public_view()`, it never enters an agent's
+context, and it is now in the sweep that checks every public endpoint against
+every seeded person. A bad email reads as a typo (*"That email address doesn't
+look right"*) rather than a 500, which is what it was until a test caught it.
+
+### The wish preview
+
+After intake, each wish is shown as **the exact card a donor will see** —
+the same `WishCard` component the wish wall renders. A family checks what is
+being shared rather than trusting a description of it. The cost is labelled
+"Estimated" when it came from the price guide, and editable either way.
+
+Editing sits behind **"Make a change"**, because the point of the screen is
+reading. The link field is optional, names six of the twenty accepted stores,
+and a link from anywhere else gets a sentence rather than an error: *"We can't
+post a link from that site — but that's no problem. Leave it out and a
+neighbour will pick something that fits your description."*
+
+The buttons now say **"Looks right, post my wish"** / **"Post my 3 wishes"**,
+with **"Go back to the chat"** beside them and the line *"We'll check it for
+privacy before anyone sees it."*
+
+### How it works
+
+Three steps, on the family's first screen and again after posting. Step three
+says plainly that a wish is not guaranteed: *"We can't promise every wish finds
+someone — but most do, and nothing is lost if one doesn't."* Somebody asking
+for help deserves to know that before they hope.
+
+### My wishes
+
+`GET /api/families/{alias}/wishes` returns a stage per wish, in friendly words:
+
+| Stage | What it says |
+|---|---|
+| Being checked | we're checking this for anything that shouldn't be public |
+| On the tree | up where neighbours can see it |
+| Granted! | a neighbour has claimed this one, with the delivery date, window and the confirm buttons |
+| On its way | dropped at the hub, coming on the next delivery day |
+| Delivered | this one arrived |
+| Couldn't be posted | the safety review's own plain-language reason |
+
+**Nothing on this page mentions a donor.** Not an alias, not a count. A family
+sees the state of their own wish; who granted it is not theirs to know, and a
+donor who drops out should not become a person a family is waiting on by name.
+A test asserts the whole response contains no donor field.
+
+When a drop-off is missed the wish returns to **On the tree** with *"Still
+looking for the right neighbour. The last one couldn't make it, so your wish
+went straight back up."* — see
+`screenshots/p9-my-wishes-back-on-the-tree.jpg`.
+
+Rent and utility wishes carry their own line, in the preview and in the
+tracker: a coordinator will email to confirm the amount and who to pay, the
+payment goes to the landlord or the utility company, and it never passes
+through an agent.
+
+### The price guide, laid out to be checked
+
+`./.venv/bin/python -m backend.price_guide_review` writes
+`output/price_guide_review.md`: all 37 entries by category with their typical
+price and range, and a column to write the real price in.
+
+It found something on the first run. **"first apartment basics" has a range top
+of $350 against a $300 item cap** — so a family landing on the top of that
+range would have their wish held rather than posted, with no obvious reason
+why. The report now flags any guide entry above its own cap in a section of its
+own, because that mismatch is invisible from either file alone.
+
+## 22. Safety measures so far
 
 Agents arrive in later problems; these are the ones already standing.
 
@@ -899,9 +999,9 @@ Agents arrive in later problems; these are the ones already standing.
 | One family cannot answer for another | `respond_to_window` checks the pledge's family | Confirming or cancelling someone else's delivery. |
 | A missed drop-off reopens the wish | `set_pledge_status` | A family quietly going without because a donor did not turn up. |
 
-## 22. Tests
+## 23. Tests
 
-`./.venv/bin/python -m pytest` — **190 passing**, in under two seconds, every agent stubbed.
+`./.venv/bin/python -m pytest` — **198 passing**, in under two seconds, every agent stubbed.
 
 `./.venv/bin/python -m pytest -m live` — **10 more** against the real model, excluded by default because they spend tokens. Every agent is stubbed, so the suite is free to run.
 
@@ -914,7 +1014,7 @@ Agents arrive in later problems; these are the ones already standing.
 - `test_safety.py` — the patterns (and what they must *not* match), the second pass narrowing in every direction it can, both token caps, and the activity feed refusing an unauthenticated request and carrying no contact details
 - `test_intake.py` — the agent's deps carry no contact details, turn and wish caps (the turn cap spending zero calls), approval storing `pending_review` and nothing public, draft-to-request conversion, price-guide matching, and the audit trail recording to both the file and the table with cached input kept separate. The model is stubbed, so the suite is fast and free; the two real runs are the table above.
 
-## 23. Specs
+## 24. Specs
 
 _Filled in as the agents are built._
 
