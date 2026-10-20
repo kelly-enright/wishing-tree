@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import Logo from '../components/Logo'
 import {
   CATEGORY_LABELS, OCCASION_LABELS, getWishes, grantWish, requestMatches,
   type Category, type GrantResponse, type Match, type Occasion,
   type RegionInfo, type Usage, type WallFilters, type WishCard as Wish,
+  userMessage,
 } from '../api'
+import Thinking from '../components/Thinking'
 import TokenPanel from '../components/TokenPanel'
 import WishCard from '../components/WishCard'
 import { clearSession, getSession } from '../session'
@@ -28,7 +31,7 @@ export default function Donor() {
     setError(null)
     getWishes(next)
       .then((wall) => { setWishes(wall.wishes); setRegion(wall.region) })
-      .catch((e) => setError(e.message))
+      .catch((e) => setError(userMessage(e, 'We could not load the wish wall.')))
       .finally(() => setBusy(null))
   }
 
@@ -37,7 +40,7 @@ export default function Donor() {
   if (!session || session.role !== 'donor') {
     return (
       <main className="page">
-        <Link to="/" className="page__back">← Wishing Tree</Link>
+        <header className="page__nav"><Logo size={26} /></header>
         <h1 className="page__title">Sign in first</h1>
         <p className="page__blurb">
           <Link to="/donor/signup">Create a donor account</Link> to browse and grant wishes.
@@ -70,7 +73,7 @@ export default function Donor() {
       setNote(result.note)
       setUsage(result.usage)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not get matches.')
+      setError(userMessage(e, 'We could not fetch your matches just now. Please try again.'))
     } finally {
       setBusy(null)
     }
@@ -82,7 +85,7 @@ export default function Donor() {
     try {
       setGranted(await grantWish(session!.alias, wish.id))
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not grant that wish.')
+      setError(userMessage(e, 'We could not grant that wish just now. Please try again.'))
       loadWall(filters)
       setMatches(null)
     } finally {
@@ -94,7 +97,7 @@ export default function Donor() {
     const { logistics } = granted
     return (
       <main className="page">
-        <Link to="/" className="page__back">← Wishing Tree</Link>
+        <header className="page__nav"><Logo size={26} /></header>
         <h1 className="page__title">Thank you — that wish is yours</h1>
         <p className="page__blurb">{granted.wish.item_description}</p>
 
@@ -131,7 +134,7 @@ export default function Donor() {
 
   return (
     <main className="page page--wide">
-      <Link to="/" className="page__back">← Wishing Tree</Link>
+      <header className="page__nav"><Logo size={26} /></header>
 
       <p className="signed-in">
         Signed in as <strong>{session.alias}</strong> · {session.zip}
@@ -197,7 +200,7 @@ export default function Donor() {
             type="button" className="btn btn--primary"
             onClick={match} disabled={busy === 'match'}
           >
-            {busy === 'match' ? 'Matching…' : 'Match me'}
+            {busy === 'match' ? 'Matching…' : 'Match me to wishes'}
           </button>
 
           {matches && (
@@ -210,6 +213,10 @@ export default function Donor() {
 
       {error && <p className="form__error" role="alert">{error}</p>}
 
+      {busy === 'match' && (
+        <Thinking label="Looking through the wall for wishes that fit you" />
+      )}
+
       {matches && (
         <div className="matchbar">
           <strong>{matches.length} match{matches.length === 1 ? '' : 'es'}</strong> ranked for you
@@ -221,7 +228,14 @@ export default function Donor() {
         <div className="wall__cards">
           {busy === 'wall' && <p className="wall__empty">Loading wishes…</p>}
           {busy !== 'wall' && showing.length === 0 && (
-            <p className="wall__empty">Nothing matches those filters right now.</p>
+            <div className="wall__empty">
+              <p className="wall__empty-title">Nothing here right now</p>
+              <p>
+                {matches
+                  ? 'Nothing on the wall fits those filters today. Try widening them, or browse the whole wall.'
+                  : 'No open wishes match those filters today. Try removing a filter — new wishes go up every week.'}
+              </p>
+            </div>
           )}
           {showing.map((wish) => (
             <WishCard

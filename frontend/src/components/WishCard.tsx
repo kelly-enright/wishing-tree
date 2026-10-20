@@ -64,7 +64,7 @@ export default function WishCard({
 
       {onGrant && (
         <button
-          type="button" className="btn btn--primary card__grant"
+          type="button" className="btn btn--gold card__grant"
           onClick={() => onGrant(wish)} disabled={granting}
         >
           {granting ? 'Granting…' : 'Grant this wish'}

@@ -18,20 +18,48 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   other: 'Other',
 }
 
+/**
+ * An error whose message was written for a person to read.
+ *
+ * Anything else — a dropped connection, a parse failure, a bug — is replaced
+ * with a sentence we wrote. Nobody using this app should ever be shown
+ * "Failed to fetch".
+ */
+export class UserMessage extends Error {}
+
+export function userMessage(error: unknown, fallback: string): string {
+  return error instanceof UserMessage && error.message ? error.message : fallback
+}
+
+const OFFLINE =
+  'We could not reach Wishing Tree just then. Check your connection and try again.'
+
+async function request<T>(path: string, init?: RequestInit, fallback?: string): Promise<T> {
+  let response: Response
+  try {
+    response = await fetch(path, init)
+  } catch {
+    throw new UserMessage(OFFLINE)
+  }
+
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    const detail = (data as { detail?: unknown }).detail
+    throw new UserMessage(
+      typeof detail === 'string'
+        ? detail
+        : fallback ?? 'Something went wrong. Please try again.',
+    )
+  }
+  return data as T
+}
+
 async function post<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(path, {
+  return request<T>(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  const data = await response.json().catch(() => ({}))
-  if (!response.ok) {
-    const detail = (data as { detail?: unknown }).detail
-    throw new Error(
-      typeof detail === 'string' ? detail : 'Something went wrong. Please try again.',
-    )
-  }
-  return data as T
 }
 
 export function signUpFamily(form: { zip: string; contact_address: string; contact_phone: string }) {
@@ -95,18 +123,14 @@ export type Activity = {
   }
 }
 
-export async function getActivity(token: string): Promise<Activity> {
-  const response = await fetch('/api/coordinator/activity', {
-    headers: { 'X-Coordinator-Token': token },
-  })
-  if (!response.ok) throw new Error('Coordinator access has expired.')
-  return response.json()
+export function getActivity(token: string): Promise<Activity> {
+  return request('/api/coordinator/activity',
+    { headers: { 'X-Coordinator-Token': token } },
+    'Coordinator access has expired. Enter the passcode again.')
 }
 
-export async function listAccounts(): Promise<{ families: Account[]; donors: Account[] }> {
-  const response = await fetch('/api/accounts')
-  if (!response.ok) throw new Error('Could not load the demo accounts.')
-  return response.json()
+export function listAccounts(): Promise<{ families: Account[]; donors: Account[] }> {
+  return request('/api/accounts', undefined, 'We could not load the demo accounts.')
 }
 
 // --------------------------------------------------------------------- intake
@@ -285,15 +309,13 @@ export type WallFilters = {
   maxCost: string
 }
 
-export async function getWishes(filters: WallFilters): Promise<WishWall> {
+export function getWishes(filters: WallFilters): Promise<WishWall> {
   const params = new URLSearchParams()
   filters.categories.forEach((c) => params.append('category', c))
   if (filters.occasion) params.set('occasion', filters.occasion)
   if (filters.requestType) params.set('request_type', filters.requestType)
   if (filters.maxCost) params.set('max_cost_usd', filters.maxCost)
-  const response = await fetch(`/api/wishes?${params}`)
-  if (!response.ok) throw new Error('Could not load the wish wall.')
-  return response.json()
+  return request(`/api/wishes?${params}`, undefined, 'We could not load the wish wall.')
 }
 
 export function requestMatches(donorAlias: string, filters: WallFilters) {
@@ -326,10 +348,9 @@ export type Delivery = {
   paid_directly_to_provider: boolean
 }
 
-export async function getDeliveries(familyAlias: string): Promise<{ deliveries: Delivery[] }> {
-  const response = await fetch(`/api/families/${encodeURIComponent(familyAlias)}/deliveries`)
-  if (!response.ok) throw new Error('Could not load your deliveries.')
-  return response.json()
+export function getDeliveries(familyAlias: string): Promise<{ deliveries: Delivery[] }> {
+  return request(`/api/families/${encodeURIComponent(familyAlias)}/deliveries`,
+    undefined, 'We could not load your deliveries just now.')
 }
 
 export function respondToWindow(
@@ -390,23 +411,19 @@ export type RunSheet = {
   }
 }
 
-export async function getRunSheet(token: string, weekOf?: string): Promise<RunSheet> {
+export function getRunSheet(token: string, weekOf?: string): Promise<RunSheet> {
   const query = weekOf ? `?week_of=${weekOf}` : ''
-  const response = await fetch(`/api/coordinator/run-sheet${query}`, {
-    headers: { 'X-Coordinator-Token': token },
-  })
-  if (!response.ok) throw new Error('Coordinator access has expired.')
-  return response.json()
+  return request(`/api/coordinator/run-sheet${query}`,
+    { headers: { 'X-Coordinator-Token': token } },
+    'Coordinator access has expired. Enter the passcode again.')
 }
 
-export async function setPledgeStatus(
+export function setPledgeStatus(
   token: string, pledgeIds: number[], status: string,
 ): Promise<{ reopened_wishes: number[]; note: string }> {
-  const response = await fetch('/api/coordinator/pledge-status', {
+  return request('/api/coordinator/pledge-status', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Coordinator-Token': token },
     body: JSON.stringify({ pledge_ids: pledgeIds, status }),
-  })
-  if (!response.ok) throw new Error('Could not update that.')
-  return response.json()
+  }, 'We could not update that just now. Please try again.')
 }

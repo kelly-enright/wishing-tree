@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
-import { getActivity, type Activity } from '../api'
+import { getActivity, type Activity,
+  userMessage,
+} from '../api'
 
 /**
  * Every agent call, in order, with what it did and what it cost.
@@ -14,7 +16,7 @@ export default function AgentActivity({ token }: { token: string }) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    getActivity(token).then(setData).catch((e) => setError(e.message))
+    getActivity(token).then(setData).catch((e) => setError(userMessage(e, 'We could not load the activity log.')))
   }, [token])
 
   if (error) return <p className="form__error">{error}</p>

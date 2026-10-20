@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { listAccounts, type Account } from '../api'
+import Logo from '../components/Logo'
 import { clearSession, getSession, homePath, setSession } from '../session'
 
 type Health = {
@@ -60,14 +61,14 @@ export default function Landing() {
   return (
     <main className="landing">
       <header className="hero">
-        <p className="hero__eyebrow">New Haven, CT</p>
-        <h1 className="hero__title">
-          Wishing <span className="hero__accent">Tree</span>
-        </h1>
+        <div className="hero__logo"><Logo plain size={52} /></div>
+        <p className="hero__tagline">Grant a neighbor's wish, any time of year</p>
         <p className="hero__lede">
-          A giving tree that stays up all year. Families ask for what they actually need,
-          neighbours grant a wish, and everything moves through one weekly drop-off.
+          A giving tree that stays up all year in New Haven. Families ask for what they
+          actually need, neighbours grant a wish, and everything moves through one
+          weekly drop-off.
         </p>
+        <p className="hero__pick">Pick the one that sounds like you.</p>
       </header>
 
       {session && (
@@ -92,7 +93,7 @@ export default function Landing() {
             <span className="role__eyebrow">{role.eyebrow}</span>
             <span className="role__title">{role.title}</span>
             <span className="role__blurb">{role.blurb}</span>
-            <span className="role__go" aria-hidden="true">Start →</span>
+            <span className="role__go" aria-hidden="true">Start here →</span>
           </Link>
         ))}
       </section>
@@ -118,6 +119,11 @@ export default function Landing() {
         {showAccounts && (
           <div className="accounts">
             {!accounts && <p className="accounts__loading">Loading accounts…</p>}
+            {accounts && accounts.families.length === 0 && accounts.donors.length === 0 && (
+              <p className="accounts__loading">
+                No demo accounts yet — sign up above and you'll appear here.
+              </p>
+            )}
             {accounts && (
               <>
                 <div className="accounts__group">

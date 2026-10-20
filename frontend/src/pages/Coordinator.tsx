@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { unlockCoordinator } from '../api'
+import Logo from '../components/Logo'
+import { unlockCoordinator,
+  userMessage,
+} from '../api'
 import AgentActivity from './AgentActivity'
 import RunSheet from './RunSheet'
 import { coordinatorToken, setCoordinatorToken } from '../session'
@@ -26,7 +28,7 @@ export default function Coordinator() {
       setCoordinatorToken(unlocked.token)
       setToken(unlocked.token)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.')
+      setError(userMessage(err, 'We could not check that just now. Please try again.'))
     } finally {
       setBusy(false)
     }
@@ -35,7 +37,7 @@ export default function Coordinator() {
   if (!token) {
     return (
       <main className="page">
-        <Link to="/" className="page__back">← Wishing Tree</Link>
+        <header className="page__nav"><Logo size={26} /></header>
         <h1 className="page__title">Coordinator</h1>
         <p className="page__blurb">
           These screens show families’ home addresses and phone numbers, so they need
@@ -60,7 +62,7 @@ export default function Coordinator() {
 
   return (
     <main className="page page--wide">
-      <Link to="/" className="page__back">← Wishing Tree</Link>
+      <header className="page__nav"><Logo size={26} /></header>
       <p className="signed-in">
         Coordinator view unlocked
         <button

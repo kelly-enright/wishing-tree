@@ -649,7 +649,98 @@ driven to a house for an item that was never there. Missed and cancelled
 pledges now leave the delivery round while staying in the drop-off list, where
 the coordinator can see what actually happened. Two tests hold it.
 
-## 18. Safety measures so far
+## 18. Look and feel
+
+### The palette
+
+| Role | Colour | Where |
+|---|---|---|
+| Evergreen | `#2F5D50` | headers, buttons, structure |
+| Warm cream | `#FBF6EE` | the page itself |
+| Soft gold | `#E0A84B` | the one action that matters most on a screen |
+| Terracotta | `#C8664A` | used sparingly, only when something needs attention |
+| Ink | `#2B2B2B` | text — near-black rather than pure black, which reads softer on cream |
+
+Defined once in `:root` in `frontend/src/styles.css`, with four derived tones
+(`--evergreen-deep`, `--evergreen-soft`, `--evergreen-pale`, `--gold-deep`,
+`--gold-pale`, `--terracotta-pale`). Nothing in the stylesheet uses a raw hex
+value outside that block.
+
+**Gold is reserved.** Buttons are evergreen by default; gold is only on *Grant
+this wish*, the one irreversible, generous act in the app. Dark text on gold
+rather than white, because white on `#E0A84B` does not carry enough contrast to
+read comfortably.
+
+This supersedes the generic blue-and-green rule in the course `AGENTS.md` for
+this project, on your instruction.
+
+### The mark
+
+`frontend/src/components/Logo.tsx` — inline SVG, drawn by hand: a trunk, two
+evergreen leaves, and one gold crown leaf, beside the words "Wishing Tree". No
+image files, nothing copied from anywhere, and it inherits the palette through
+CSS variables so it recolours with the theme. It appears at 52px on the landing
+page and 26px as the header on every other screen, where it doubles as the way
+home.
+
+Tagline on the landing page: **"Grant a neighbor's wish, any time of year"**.
+
+### The "thinking" indicator
+
+`components/Thinking.tsx`, shown wherever an agent is working: the intake chat,
+the approval screen while the safety reviews run, and the donor's match.
+
+Three pulsing dots and a line saying what is happening in plain words —
+"Looking through the wall for wishes that fit you" — rather than a generic
+spinner. **After ten seconds it adds**: *"this one is taking a little longer
+than usual. Nothing has gone wrong, and your answers are safe."*
+
+This exists because the measurements say it has to. Model calls on this
+endpoint are bimodal: most return in under 15 seconds and the slowest measured
+during development was **87 seconds**. A spinner that never changes reads as a
+frozen app, and someone who has just typed out what their family needs should
+not be left wondering whether it broke. Captured live in
+`screenshots/p7-thinking-slow-message.jpg` during a real three-wish review.
+`prefers-reduced-motion` stops the animation.
+
+### No raw error ever reaches a person
+
+`api.ts` now has one door. `UserMessage` is an error class whose message was
+written for someone to read; everything else — a dropped connection, a parse
+failure, a bug — is replaced by `userMessage(error, fallback)` with a sentence
+we wrote. A failed `fetch` becomes *"We could not reach Wishing Tree just then.
+Check your connection and try again."* rather than "Failed to fetch". Every
+`catch` in every component goes through it.
+
+### Counting out loud
+
+`backend/text.py` holds `plural()`, `counted()` and `verb()`, and every count
+the app says goes through them. "1 wish went back on the wall", not
+"1 wish(es)". Small, but this app writes to families having a hard week, and
+`(es)` is the sound of software that was not finished.
+
+### Phones
+
+Everything below 720px is treated as a phone, since many families will have
+nothing else. Grids collapse to one column, every tap target is at least 44px,
+the composer and its Send button stack full-width, filters become a two-up
+grid, and the run sheet stops being a two-column table and becomes a list of
+readable cards — see `screenshots/p7-run-sheet-mobile.jpg`.
+
+### The token panel
+
+Still on every agent screen, now a quiet white card with hairline borders
+rather than a dark block. Visible to anyone who looks, invisible to anyone who
+does not.
+
+### Empty states
+
+Every list says something useful when it is empty: *"No open wishes match those
+filters today. Try removing a filter — new wishes go up every week."*, *"Nothing
+expected this week."*, *"No demo accounts yet — sign up above and you'll appear
+here."*
+
+## 19. Safety measures so far
 
 Agents arrive in later problems; these are the ones already standing.
 
@@ -685,7 +776,7 @@ Agents arrive in later problems; these are the ones already standing.
 | One family cannot answer for another | `respond_to_window` checks the pledge's family | Confirming or cancelling someone else's delivery. |
 | A missed drop-off reopens the wish | `set_pledge_status` | A family quietly going without because a donor did not turn up. |
 
-## 19. Tests
+## 20. Tests
 
 `./.venv/bin/python -m pytest tests -q` — **190 passing**, in under two seconds. Every agent is stubbed, so the suite is free to run.
 
@@ -698,7 +789,7 @@ Agents arrive in later problems; these are the ones already standing.
 - `test_safety.py` — the patterns (and what they must *not* match), the second pass narrowing in every direction it can, both token caps, and the activity feed refusing an unauthenticated request and carrying no contact details
 - `test_intake.py` — the agent's deps carry no contact details, turn and wish caps (the turn cap spending zero calls), approval storing `pending_review` and nothing public, draft-to-request conversion, price-guide matching, and the audit trail recording to both the file and the table with cached input kept separate. The model is stubbed, so the suite is fast and free; the two real runs are the table above.
 
-## 20. Specs
+## 21. Specs
 
 _Filled in as the agents are built._
 

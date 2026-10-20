@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
-import { getDeliveries, respondToWindow, type Delivery } from '../api'
+import { getDeliveries, respondToWindow, type Delivery,
+  userMessage,
+} from '../api'
 
 /**
  * What is on its way to this family, and the window to confirm.
@@ -28,8 +30,8 @@ export default function Deliveries({ familyAlias }: { familyAlias: string }) {
         list!.map((d) => (d.pledge_id === pledgeId
           ? { ...d, window_response: result.window_response } : d)),
       )
-    } catch {
-      setMessages((m) => ({ ...m, [pledgeId]: 'Something went wrong — please try again.' }))
+    } catch (error) {
+      setMessages((m) => ({ ...m, [pledgeId]: userMessage(error, 'We could not save that just now. Please try again.') }))
     } finally {
       setBusy(null)
     }

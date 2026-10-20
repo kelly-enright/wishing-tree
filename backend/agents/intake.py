@@ -20,7 +20,7 @@ from pathlib import Path
 from pydantic_ai import Agent, CachePoint, RunContext
 from pydantic_ai.messages import ModelMessage, ToolCallPart
 
-from backend import config, db
+from backend import config, db, text
 from backend.agents import audit, budget
 from backend.agents.model import build_model
 from backend.models import AgentCallLog, Category, IntakeReply, Occasion
@@ -240,7 +240,8 @@ def summarize(message: str, reply: IntakeReply) -> tuple[str, str]:
     """
     return (
         f"family message, {len(message)} characters",
-        f"{len(reply.draft_wishes)} wish(es) drafted, done={str(reply.done).lower()}",
+        f"{text.counted(len(reply.draft_wishes), 'wish', 'wishes')} drafted, "
+        f"done={str(reply.done).lower()}",
     )
 
 

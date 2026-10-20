@@ -19,7 +19,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from pydantic_ai.messages import ModelMessage
 
-from backend import config, db
+from backend import config, db, text
 from backend.agents import budget, safety
 from backend.agents.budget import BudgetExceeded
 from backend.agents.intake import IntakeDeps, _price_guide, run_turn
@@ -296,8 +296,15 @@ async def approve_intake(body: ApproveIntake) -> dict:
     if len(body.wishes) > remaining:
         raise HTTPException(
             status_code=409,
-            detail=f"You can post {remaining} more wish(es) right now. "
-                   f"Please remove some before approving.",
+            detail=(
+                f"You can post {text.counted(remaining, 'more wish', 'more wishes')} "
+                f"right now. Please remove "
+                f"{text.plural(len(body.wishes) - remaining, 'one', 'some')} "
+                f"before approving."
+                if remaining
+                else "You have as many wishes on the wall as we can show at once. "
+                     "Once one of them is granted, come back and add the next."
+            ),
         )
 
     saved = []

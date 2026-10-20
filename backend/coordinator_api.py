@@ -15,7 +15,7 @@ from datetime import date, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from backend import config, db
+from backend import config, db, text
 from backend.coordinator_auth import require_coordinator
 from backend.models import Category, PledgeStatus
 
@@ -181,7 +181,8 @@ def update_status(body: StatusClick) -> dict:
         "updated": updated,
         "reopened_wishes": reopened,
         "note": (
-            f"{len(reopened)} wish(es) went back on the wall for another donor."
+            f"{text.counted(len(reopened), 'wish', 'wishes')} went back on the "
+            f"wall for another donor."
             if reopened else ""
         ),
     }

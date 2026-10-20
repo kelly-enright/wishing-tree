@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { getRunSheet, setPledgeStatus, type RunSheet as Sheet } from '../api'
+import { getRunSheet, setPledgeStatus, type RunSheet as Sheet,
+  userMessage,
+} from '../api'
 
 /**
  * One week of logistics. The only screen in Wishing Tree that shows a family's
@@ -13,7 +15,7 @@ export default function RunSheet({ token }: { token: string }) {
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(() => {
-    getRunSheet(token, weekOf).then(setSheet).catch((e) => setError(e.message))
+    getRunSheet(token, weekOf).then(setSheet).catch((e) => setError(userMessage(e, 'We could not load the run sheet.')))
   }, [token, weekOf])
 
   useEffect(() => { load() }, [load])
@@ -26,7 +28,7 @@ export default function RunSheet({ token }: { token: string }) {
       if (result.note) setNote(result.note)
       load()
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not update that.')
+      setError(userMessage(e, 'We could not update that just now. Please try again.'))
     } finally {
       setBusy(false)
     }

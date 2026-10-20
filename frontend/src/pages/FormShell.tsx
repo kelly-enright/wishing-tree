@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import Logo from '../components/Logo'
 
 /** Shared chrome for the sign-up and passcode screens. */
 export default function FormShell({
@@ -13,7 +13,7 @@ export default function FormShell({
 }) {
   return (
     <main className="page">
-      <Link to="/" className="page__back">← Wishing Tree</Link>
+      <header className="page__nav"><Logo size={26} /></header>
       <h1 className="page__title">{title}</h1>
       <p className="page__blurb">{blurb}</p>
       {children}

@@ -29,7 +29,7 @@ from functools import lru_cache
 from pydantic_ai import Agent, CachePoint, RunContext
 from pydantic_ai.messages import ModelMessage, ToolCallPart
 
-from backend import config, safety_checks
+from backend import config, safety_checks, text
 from backend.agents import audit, budget
 from backend.agents.model import build_model
 from backend.models import (
@@ -187,7 +187,10 @@ def enforce(review: SafetyReview, request: Request) -> tuple[SafetyReview, list[
     if left_behind:
         cleaned.item_description = scrubbed
         removed.extend(f"{label} (removed by the code check)" for label in left_behind)
-        enforced.append(f"removed {len(left_behind)} contact detail(s) the agent left in")
+        enforced.append(
+            f"removed {text.counted(len(left_behind), 'contact detail')} "
+            f"the agent left in"
+        )
     if cleaned.size_preferences:
         pref_scrubbed, pref_left = safety_checks.redact(cleaned.size_preferences)
         if pref_left:
@@ -339,7 +342,7 @@ async def review_wish(
             "published" if final.approved else "held",
             f"removed: {', '.join(final.removed)}" if final.removed else "",
             f"flags: {', '.join(f.kind.value for f in final.flags)}" if final.flags else "",
-            f"code pass: {len(enforced)} change(s)" if enforced else "",
+            f"code pass: {text.counted(len(enforced), 'change')}" if enforced else "",
         ) if part
     )
     audit.record(call)

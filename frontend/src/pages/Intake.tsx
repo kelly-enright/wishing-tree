@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import Logo from '../components/Logo'
 import {
   approveIntake, sendIntakeMessage, startIntake,
   type DraftWish, type Usage, type WishOutcome,
+  userMessage,
 } from '../api'
 import Deliveries from '../components/Deliveries'
+import Thinking from '../components/Thinking'
 import TokenPanel from '../components/TokenPanel'
 import { clearSession, getSession } from '../session'
 import WishReview from './WishReview'
@@ -37,7 +40,7 @@ export default function Intake() {
         setTurnsLeft(start.turns_remaining ?? null)
         if (start.usage) setUsage(start.usage)
       })
-      .catch((err) => setError(err instanceof Error ? err.message : 'Could not start.'))
+      .catch((err) => setError(userMessage(err, 'We could not start a new chat just now. Please try again.')))
     // one intake per visit
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -49,7 +52,7 @@ export default function Intake() {
   if (!session || session.role !== 'family') {
     return (
       <main className="page">
-        <Link to="/" className="page__back">← Wishing Tree</Link>
+        <header className="page__nav"><Logo size={26} /></header>
         <h1 className="page__title">Sign in first</h1>
         <p className="page__blurb">
           <Link to="/family/signup">Create a family account</Link> to start an intake.
@@ -81,7 +84,7 @@ export default function Intake() {
         setPhase('review')
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.')
+      setError(userMessage(err, 'That message did not get through. Please try again.'))
     } finally {
       setBusy(false)
     }
@@ -103,7 +106,7 @@ export default function Intake() {
       })
       setPhase('done')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not submit.')
+      setError(userMessage(err, 'We could not submit your wishes just now. Please try again.'))
     } finally {
       setBusy(false)
     }
@@ -111,7 +114,7 @@ export default function Intake() {
 
   return (
     <main className="page page--wide">
-      <Link to="/" className="page__back">← Wishing Tree</Link>
+      <header className="page__nav"><Logo size={26} /></header>
 
       <p className="signed-in">
         Signed in as <strong>{session.alias}</strong> · {session.zip}
@@ -134,7 +137,11 @@ export default function Intake() {
                 {bubbles.map((bubble, i) => (
                   <p key={i} className={`bubble bubble--${bubble.who}`}>{bubble.text}</p>
                 ))}
-                {busy && <p className="bubble bubble--agent bubble--thinking">Thinking…</p>}
+                {busy && (
+                  <div className="bubble bubble--agent bubble--thinking">
+                    <Thinking label="Reading what you wrote" />
+                  </div>
+                )}
               </div>
 
               {error && <p className="form__error" role="alert">{error}</p>}
@@ -143,7 +150,7 @@ export default function Intake() {
                 <form className="composer" onSubmit={send}>
                   <input
                     className="field__input" value={input} disabled={busy}
-                    placeholder="Type here…" maxLength={2000}
+                    placeholder="Tell us what would help…" maxLength={2000}
                     onChange={(e) => setInput(e.target.value)}
                   />
                   <button className="btn btn--primary" type="submit" disabled={busy || !input.trim()}>
@@ -173,6 +180,9 @@ export default function Intake() {
           {phase === 'review' && (
             <>
               <h1 className="page__title">Check your wishes</h1>
+              {busy && (
+                <Thinking label="Checking these over before anyone sees them" />
+              )}
               <button type="button" className="page__back" onClick={() => setPhase('chat')}>
                 ← Back to the chat
               </button>

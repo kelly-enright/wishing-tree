@@ -25,7 +25,7 @@ from functools import lru_cache
 from pydantic_ai import Agent, CachePoint, RunContext
 from pydantic_ai.messages import ModelMessage, ToolCallPart
 
-from backend import config, db, scheduling
+from backend import config, db, scheduling, text
 from backend.agents import audit, budget
 from backend.agents.model import build_model
 from backend.models import (
@@ -200,7 +200,7 @@ def enforce(result: MatchmakerResult, deps: MatchDeps) -> tuple[MatchmakerResult
 
     if len(kept) > config.MAX_MATCHES_RETURNED:
         enforced.append(
-            f"trimmed to {config.MAX_MATCHES_RETURNED} matches"
+            f"trimmed to {text.counted(config.MAX_MATCHES_RETURNED, 'match', 'matches')}"
         )
         kept = kept[: config.MAX_MATCHES_RETURNED]
 
@@ -255,13 +255,13 @@ async def find_matches(
     final, enforced = enforce(result.output, deps)
     call.input_summary = (
         f"donor {donor.alias}, ${donor.budget_usd:,.0f} budget, "
-        f"{len(deps.candidate_ids)} candidate(s)"
+        f"{text.counted(len(deps.candidate_ids), 'candidate')}"
         + (", truncated" if deps.truncated else "")
     )
     call.output_summary = "; ".join(
         part for part in (
-            f"{len(final.matches)} match(es) returned",
-            f"code pass: {len(enforced)} change(s)" if enforced else "",
+            f"{text.counted(len(final.matches), 'match', 'matches')} returned",
+            f"code pass: {text.counted(len(enforced), 'change')}" if enforced else "",
         ) if part
     )
     audit.record(call)

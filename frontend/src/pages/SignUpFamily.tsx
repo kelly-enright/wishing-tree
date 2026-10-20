@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { signUpFamily } from '../api'
+import { signUpFamily,
+  userMessage,
+} from '../api'
 import { setSession } from '../session'
 import FormShell from './FormShell'
 
@@ -25,7 +27,7 @@ export default function SignUpFamily() {
       setSession({ role: 'family', alias: family.alias, zip: family.zip })
       navigate('/family')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.')
+      setError(userMessage(err, 'We could not create your account just now. Please try again.'))
       setBusy(false)
     }
   }

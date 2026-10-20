@@ -398,3 +398,47 @@ back on the public wall immediately. Six screenshots.
 delivery — the coordinator would have driven to a house for an item that was
 never dropped off. Missed and cancelled pledges now leave the delivery round
 while staying in the drop-off list, where what happened is visible.
+
+---
+
+## Problem 7 — Look and Feel
+
+### Prompt 1
+
+> Problem 7: "Look and feel"
+>
+> The app works end to end. Now make it warm, clean and easy for someone who has never seen it, since "Look + feel" is 10 points.
+>
+> a.) Use this palette: evergreen #2F5D50 for headers and buttons, warm cream #FBF6EE for backgrounds, soft gold #E0A84B for highlights like the "Grant a wish" button, terracotta #C8664A as a sparing accent, and #2B2B2B for text. Make a simple SVG logo: a small leaf-and-tree icon beside the words "Wishing Tree." Show the tagline "Grant a neighbor's wish, any time of year" on the landing page. No copyrighted images.
+> b.) Every screen should make the next step obvious, with clear buttons and short helper text.
+> c.) Mobile-friendly layout, since many families will use a phone.
+> d.) Friendly empty states and error messages (no raw errors shown to users). Use proper singular and plural wording everywhere (for example "1 wish went back on the wall," not "1 wish(es)").
+> e.) Keep the token-usage panel visible but unobtrusive.
+> f.) Show a friendly "thinking" indicator whenever an agent is working, with a reassuring message if it takes longer than 10 seconds, so a slow model call never looks like the app froze.
+> g.) Do not add new features. Rebuild and commit the frontend, take fresh screenshots of every screen, and update harness.md.
+>
+> Ask any questions you have before starting.
+
+**Outcome:** Restyled throughout, no new features.
+
+- **The palette** is defined once in `:root` and nothing outside that block uses a raw hex. Gold is reserved for *Grant this wish* — the one irreversible, generous act in the app — with dark text on it, because white on `#E0A84B` does not have the contrast to read comfortably.
+- **The logo** is hand-drawn inline SVG: a trunk, two evergreen leaves and one gold crown leaf beside the wordmark. No image files, nothing copied. It inherits the palette through CSS variables, and doubles as the way home on every screen.
+- **The tagline** is on the landing page, with "Pick the one that sounds like you." above the three role cards and "Start here →" on each.
+- **Mobile:** everything under 720px collapses to one column, tap targets are at least 44px, and the run sheet stops being a two-column table and becomes a list of readable cards.
+- **No raw error can reach a person.** `api.ts` has one door now: `UserMessage` carries text written for someone to read, and anything else — a dropped connection, a parse failure, a bug — is swapped for a sentence we wrote. "Failed to fetch" became "We could not reach Wishing Tree just then. Check your connection and try again."
+- **`backend/text.py`** holds `plural()`, `counted()` and `verb()`, and every count the app says goes through them. "1 wish went back on the wall", "5 matches returned", "12 candidates".
+- **The token panel** is now a quiet white card instead of a dark block — visible to anyone who looks, invisible to anyone who doesn't.
+- **190 tests still pass.** Twelve fresh screenshots, including both mobile views.
+
+**The thinking indicator** was the most interesting part. It shows what is
+actually happening in plain words — "Looking through the wall for wishes that
+fit you" — and after ten seconds adds *"this one is taking a little longer than
+usual. Nothing has gone wrong, and your answers are safe."*
+
+That exists because the measurements demanded it: calls on this endpoint are
+bimodal, most under 15 seconds but the slowest measured at **87 seconds**. I
+caught the ten-second message live during a real three-wish safety review —
+`screenshots/p7-thinking-slow-message.jpg`.
+
+One note: this palette supersedes the generic blue-and-green rule in the course
+`AGENTS.md` for this project, on your instruction.

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CATEGORY_LABELS, signUpDonor, type Category, type Preference } from '../api'
+import { CATEGORY_LABELS, signUpDonor, type Category, type Preference,
+  userMessage,
+} from '../api'
 import { setSession } from '../session'
 import FormShell from './FormShell'
 
@@ -45,7 +47,7 @@ export default function SignUpDonor() {
       setSession({ role: 'donor', alias: donor.alias, zip: donor.zip })
       navigate('/donor')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.')
+      setError(userMessage(err, 'We could not create your account just now. Please try again.'))
       setBusy(false)
     }
   }
