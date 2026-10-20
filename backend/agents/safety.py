@@ -282,7 +282,13 @@ async def review_wish(
     request: Request, session_id: str
 ) -> tuple[SafetyReview, list[str], AgentCallLog]:
     """One wish in; a corrected review, what code enforced, and the log out."""
-    budget.guard(session_id)          # server-side; no browser can skip this
+    # Daily cap only, deliberately. A safety review is the app's own work, not
+    # part of the family's conversation, and charging it to their intake
+    # session meant a family who talked for longer was less likely to have
+    # their wishes published at all. The per-session cap still governs the
+    # chat; this call is covered by the daily cap, and there is at most one
+    # review per wish, so it cannot run away.
+    budget.guard(None)
 
     agent = safety_agent()
     deps = SafetyDeps(request_id=request.id, session_id=session_id)

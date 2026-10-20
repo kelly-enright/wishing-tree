@@ -1,9 +1,9 @@
 import { Route, Routes } from 'react-router-dom'
 import Coordinator from './pages/Coordinator'
+import Donor from './pages/Donor'
 import Intake from './pages/Intake'
 import Landing from './pages/Landing'
 import Placeholder from './pages/Placeholder'
-import RoleHome from './pages/RoleHome'
 import SignUpDonor from './pages/SignUpDonor'
 import SignUpFamily from './pages/SignUpFamily'
 
@@ -18,7 +18,7 @@ export default function App() {
       <Route path="/family/signup" element={<SignUpFamily />} />
       <Route path="/family" element={<Intake />} />
       <Route path="/donor/signup" element={<SignUpDonor />} />
-      <Route path="/donor" element={<RoleHome role="donor" />} />
+      <Route path="/donor" element={<Donor />} />
       <Route path="/coordinator" element={<Coordinator />} />
       <Route
         path="*"

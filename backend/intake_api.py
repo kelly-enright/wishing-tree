@@ -356,6 +356,8 @@ async def _review_and_publish(request: Request, session_id: str) -> dict:
     try:
         review, enforced, _call = await safety.review_wish(request, session_id)
     except BudgetExceeded as limit:
+        # Written for this moment, not reused from the chat: by now the family
+        # has approved, and what is waiting is the review, not more talking.
         return {
             "request_id": request.id,
             "published": False,
@@ -363,7 +365,11 @@ async def _review_and_publish(request: Request, session_id: str) -> dict:
             "removed": [],
             "flags": [],
             "enforced": [],
-            "note_to_family": limit.friendly,
+            "note_to_family": (
+                "Wishing Tree has reached its daily limit for AI usage, so the "
+                "safety check on this one has to wait. Your wish is saved and "
+                "nothing is lost — it will go up once the limit resets."
+            ),
             "budget_scope": limit.scope,
         }
     except Exception:                               # noqa: BLE001

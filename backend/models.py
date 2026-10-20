@@ -283,6 +283,43 @@ class Request(BaseModel):
             return self.estimated_cost_usd
         return self.budget_min_usd or 0.0
 
+    def days_waiting(self, today: date | None = None) -> int:
+        """How long this wish has been up. Fairness input: a wish that has
+        waited counts for something, independently of how it is written."""
+        return ((today or date.today()) - self.created_at.date()).days
+
+    def public_card(self, today: date | None = None) -> dict:
+        """Everything a donor may see, and nothing else.
+
+        Built by listing fields rather than by removing them, so a new column
+        on `Request` cannot leak onto the wish wall by default.
+        """
+        return {
+            "id": self.id,
+            "family_alias": self.family_alias,
+            "category": self.category.value,
+            "occasion": self.occasion.value,
+            "request_type": self.request_type.value,
+            "item_description": self.item_description,
+            "zip": self.zip,
+            "deadline": self.deadline.isoformat() if self.deadline else None,
+            "deadline_label": self.deadline_label(),
+            "days_until_deadline": self.days_until_deadline(today),
+            "days_waiting": self.days_waiting(today),
+            "estimated_cost_usd": self.estimated_cost_usd,
+            "budget_min_usd": self.budget_min_usd,
+            "budget_max_usd": self.budget_max_usd,
+            "cost_ceiling_usd": self.cost_ceiling_usd(),
+            "cost_is_estimate": self.cost_is_estimate,
+            "product_link": self.product_link,
+            "brand": self.brand,
+            "size": self.size,
+            "color": self.color,
+            "open_to_substitute": self.open_to_substitute,
+            "size_preferences": self.size_preferences,
+            "status": self.status.value,
+        }
+
     def days_until_deadline(self, today: date | None = None) -> int | None:
         """None when the family gave no date. A missing deadline is not urgent
         and is not overdue; it is simply unknown."""
@@ -531,3 +568,39 @@ class WishAmounts(BaseModel):
     estimated_cost_usd: float | None = None
     budget_min_usd: float | None = None
     budget_max_usd: float | None = None
+
+
+# --------------------------------------------------------------------------
+# Matchmaking and granting
+# --------------------------------------------------------------------------
+
+class WishMatch(BaseModel):
+    """One ranked wish, as the Matchmaker returns it."""
+
+    request_id: int
+    reason: str = Field(max_length=200, description="one line, for the donor")
+    dropoff_date: date
+    delivery_date: date
+    arrives_in_time: bool = True
+
+
+class MatchmakerResult(BaseModel):
+    """The Matchmaker's structured answer for one donor."""
+
+    matches: list[WishMatch] = Field(default_factory=list)
+    note: str = Field(default="", max_length=300)
+
+
+class GrantRequest(BaseModel):
+    donor_alias: str
+    request_id: int
+
+
+class DonorFilters(BaseModel):
+    """What a donor asks the wish wall or the Matchmaker for."""
+
+    zip: str | None = None
+    max_cost_usd: float | None = Field(default=None, ge=0)
+    categories: list[Category] = Field(default_factory=list)
+    request_type: RequestType | None = None
+    occasion: Occasion | None = None

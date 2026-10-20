@@ -205,7 +205,13 @@ MAX_OPEN_WISHES_PER_FAMILY = 5     # stops one family filling the wall
 MAX_INTAKE_TURNS = 20              # family messages in one intake before it must wrap up
 MAX_WISHES_PER_INTAKE = 5          # wishes the intake agent may draft in one session
 INTAKE_SESSION_PREFIX = "intake"   # session ids look like intake-20261020-a3f9c1
-MAX_MATCHES_RETURNED = 10          # ranked wishes the matchmaker returns to a donor
+MAX_MATCHES_RETURNED = 5           # ranked wishes the matchmaker returns to a donor
+
+# How many open wishes the matchmaker's search tool may hand the model.
+# Set to None to pass every open wish instead, so match quality and cost can be
+# measured both ways. 15 keeps a donor's match run to roughly one page of
+# candidates; None grows the prompt with the size of the wall.
+MATCHMAKER_CANDIDATE_LIMIT: int | None = 15
 MAX_MESSAGE_CHARS = 2_000          # longest family message accepted into intake
 MAX_DESCRIPTION_CHARS = 400        # longest wish description shown publicly
 

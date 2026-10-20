@@ -180,3 +180,24 @@ Every family, donor, address, phone number and wish in this project is
 names are made up, and product links point at allowlisted retailers with
 made-up product paths. No part of the app ever fetches a product link. No real
 person's details appear anywhere.
+
+---
+
+## The donor side
+
+Sign in as a donor (or use **Continue as…**) and open *I want to give*.
+
+**The wish wall** shows every open wish as a card: the family's alias, what is
+needed, the cost, the deadline, the area and how long it has been waiting.
+Filter by category, occasion, type and price. No contact details exist on these
+cards — they are built from the fields a donor may see.
+
+**Match me** asks the Matchmaker agent to rank the wall for you. It weighs
+whether you can actually grant a wish, how close the deadline is, and how long
+the wish has waited — never how the wish is written. Each match comes back with
+one line explaining why, and the drop-off date that still arrives in time.
+
+**Granting** locks the wish to you so nobody else can claim it, and shows where
+and when to drop off: the hub, the Thursday window, and the Saturday the family
+receives it. Rent and utility wishes skip the hub and read "paid directly to
+provider (simulated)" — money never moves between people.

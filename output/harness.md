@@ -437,7 +437,136 @@ are built from structure rather than from text.
 The endpoint is closed on the server, not just hidden in the interface: a
 correct passcode issues a token, and `/api/coordinator/activity` requires it.
 
-## 13. Safety measures so far
+## 13. The wish wall and the weekly schedule
+
+### The wall
+
+`GET /api/wishes` returns open wishes as `public_card()` shapes, filterable by
+category, occasion, cost ceiling and specific/flexible. A card is built by
+**naming the fields a donor may see**, not by removing the ones they may not,
+so a new column on `Request` cannot leak onto the wall by default. A test
+checks every seeded family's address and phone against the response body.
+
+Cards carry two numbers that exist for fairness rather than decoration:
+`days_until_deadline` (null when there is no deadline) and `days_waiting`.
+
+### The schedule
+
+`backend/scheduling.py`, pure arithmetic over the region config, no model
+involved:
+
+- `next_dropoff()` — the next drop-off a donor could make. Today's own window
+  is never offered: a donor reading this at 9am Thursday might make it and one
+  reading it at 9pm will not, so the app promises next week.
+- `delivery_for(dropoff)` — the first delivery day on or after a drop-off.
+- `dropoff_before(deadline)` — the **latest** drop-off whose delivery still
+  lands on or before the deadline. Latest, not soonest, so a donor gets as much
+  time as the deadline allows. With no deadline it returns the next drop-off
+  and says `time_sensitive: false`. When nothing can arrive in time it says so
+  and offers the soonest anyway — a late donation is usually still wanted, and
+  that is the family's call, not the app's.
+
+## 14. The Matchmaker agent
+
+**Prompt:** `prompts/matchmaker_agent.md`, version `e8d53e7239d4`.
+Returns a `MatchmakerResult`: up to five ranked wishes, each with a one-line
+reason and the drop-off dates, plus a note about the set.
+
+### How fairness is built, not just asked for
+
+The prompt says to rank on urgency and waiting time and to ignore how a wish is
+written. Three things make that more than an instruction:
+
+1. **The numbers are handed over.** `search_open_wishes` returns
+   `days_until_deadline` and `days_waiting` as integers, so the model never has
+   to infer urgency from prose — which is exactly where emotive writing would
+   get its advantage.
+2. **The prose is already flattened.** Every description on the wall has been
+   rewritten into one neutral format by the Privacy & Safety agent, so there is
+   little tone left to be swayed by.
+3. **A wish with no deadline is not urgent.** `days_until_deadline` is `null`,
+   and the prompt says plainly that this means no date was given — not that the
+   date is far off, and not that it is near. This is why the deadline default
+   had to go: a fabricated date would have become fabricated urgency here.
+
+Observed in the recorded run: the five matches came back ordered 6, 8, 9, 12
+and 14 days to deadline, every one inside the donor's $90 budget and in their
+chosen categories. Reasons read "Clothing at $55 fits your budget; deadline in
+6 days" — fit and timing, no adjectives.
+
+### Its two tools
+
+| Tool | Returns | Note |
+|---|---|---|
+| `search_open_wishes(zip, max_cost, categories, request_type)` | up to `MATCHMAKER_CANDIDATE_LIMIT` cards, with a `truncated` flag | `zip` means the donor's **region**, not their postcode. |
+| `next_dropoff_before(deadline)` | the latest drop-off that still arrives | The agent is told to pass these dates through unchanged. A date it invented would be a promise the app cannot keep. |
+
+`MATCHMAKER_CANDIDATE_LIMIT` is a config setting: **15** by default, or `None`
+to pass every open wish, so match quality and cost can be measured both ways.
+
+### What the code throws away afterwards
+
+`matchmaker.enforce()` drops any match whose id was not in the search results,
+any wish that stopped being open while the model was thinking, and anything
+past the five-match cap. An invented or stale id cannot reach a donor.
+
+## 15. Granting, and the lock
+
+`POST /api/grant` claims a wish for one donor. The lock is a conditional
+UPDATE, settled by SQLite rather than by Python:
+
+```sql
+UPDATE requests SET status = 'granted' WHERE id = ? AND status = 'open'
+```
+
+Two donors pressing Grant at the same moment cannot both succeed: one changes a
+row, the other changes none and is told the wish is gone. A test runs both and
+asserts exactly one pledge exists.
+
+Rent and utility wishes **skip the hub entirely** and show "Paid directly to
+provider (simulated)". Everything else returns the hub name, address, the
+drop-off date and window, and the delivery date and window.
+
+## 16. The full path, measured
+
+One recorded run, family intake through to a granted wish.
+
+| Step | Agent | Latency | Cost |
+|---|---|---|---|
+| Family describes the need | intake | 3.7 s | $0.000774 |
+| Family answers one follow-up | intake | 0.7 s | $0.000356 |
+| Safety review, wish #41 | safety | 0.6 s | $0.000217 |
+| Safety review, wish #42 | safety | 5.9 s | $0.000233 |
+| Donor asks to be matched | matchmaker | 13.6 s | $0.001079 |
+| **Whole path** | | | **$0.00266** |
+
+Two wishes written, reviewed and published, then ranked for a donor and one of
+them granted, for **about a quarter of a cent**. 72% of input tokens across the
+run were served from cache.
+
+The donor granted the sneakers wish the family had posted minutes earlier. Its
+deadline was 9 November; the schedule picked the **5 November** drop-off,
+delivered **7 November** — the latest window that still arrives in time.
+
+### Two bugs this run found
+
+Both were real, and both are the kind that only show up end to end.
+
+**The safety review was being charged to the family's chat budget.** A family
+who talked for longer could exhaust the per-session token cap before their own
+wishes could be reviewed, so the longer you explained yourself, the less likely
+your wishes were to be published. That is precisely backwards. A review is the
+app's work, not part of the conversation: `review_wish` now guards on the daily
+cap only, while still recording the session id so the cost stays attributable.
+There is at most one review per wish, so it cannot run away.
+
+**The Matchmaker filtered to the donor's exact postcode** and returned zero
+candidates. Donations all pass through one hub, so a donor in 06512 can
+obviously grant a wish in 06511. `zip` now resolves to the region that covers
+it: 29 candidates instead of 2. Both matchmaker calls are in the activity log,
+before and after, with different prompt versions.
+
+## 17. Safety measures so far
 
 Agents arrive in later problems; these are the ones already standing.
 
@@ -465,19 +594,24 @@ Agents arrive in later problems; these are the ones already standing.
 | Token caps before every call | `budget.guard()` in both agents | Runaway spend. Server-side only; no client input is part of the decision. |
 | Activity page carries shape, not content | `intake.summarize()` + `scrub()` | A family's words reaching the coordinator's log. |
 | Coordinator data needs a server token | `require_coordinator` | Reading the activity feed by guessing a URL. |
+| The wall is built from named fields | `Request.public_card()` | A new column leaking to donors by default. Tested against every seeded family's address and phone. |
+| Claiming is settled in SQL | `UPDATE … WHERE status = 'open'` | Two donors both being told they granted the same wish. |
+| Matches are checked against the search | `matchmaker.enforce()` | An invented or already-claimed wish id reaching a donor. |
+| Dates come from the schedule, not the model | `scheduling.py` | A delivery promise the app cannot keep. |
 
-## 14. Tests
+## 18. Tests
 
-`./.venv/bin/python -m pytest tests -q` — **135 passing**, in under a second. Every agent is stubbed, so the suite is free to run.
+`./.venv/bin/python -m pytest tests -q` — **165 passing**, in under two seconds. Every agent is stubbed, so the suite is free to run.
 
 - `test_config.py` — the .env lookup in all four cases, region config, allowlist accept/reject, placeholder prices
 - `test_models.py` — every validator, and that `public_view()` drops contact details
 - `test_seed.py` — counts, category and occasion coverage, specific/flexible balance, all links allowlisted, fiction-range phone numbers, re-seeding does not duplicate
 - `test_api.py` — sign-up creates records and assigns aliases, responses never echo contact details, the accounts list leaks no address or phone, out-of-region and malformed zips are refused, the passcode accepts only the right value and never ships to the browser
+- `test_donor.py` — the schedule in every case including a deadline nothing can reach, the wall's filters and what it refuses to carry, the candidate limit both ways, what `enforce()` throws away, the two-donor race, and rent skipping the hub
 - `test_safety.py` — the patterns (and what they must *not* match), the second pass narrowing in every direction it can, both token caps, and the activity feed refusing an unauthenticated request and carrying no contact details
 - `test_intake.py` — the agent's deps carry no contact details, turn and wish caps (the turn cap spending zero calls), approval storing `pending_review` and nothing public, draft-to-request conversion, price-guide matching, and the audit trail recording to both the file and the table with cached input kept separate. The model is stubbed, so the suite is fast and free; the two real runs are the table above.
 
-## 15. Specs
+## 19. Specs
 
 _Filled in as the agents are built._
 
@@ -487,8 +621,8 @@ _Filled in as the agents are built._
 |---|---|---|---|
 | Intake | built | `prompts/intake_agent.md` | `get_categories_and_occasions`, `check_open_wish_count`, `estimate_cost` |
 | Privacy & Safety | built | `prompts/safety_agent.md` | `check_link_allowed`, `detect_contact_details`, `check_wish_limits` |
-| Matchmaker | not built | `prompts/matchmaker_agent.md` | — |
+| Matchmaker | built | `prompts/matchmaker_agent.md` | `search_open_wishes`, `next_dropoff_before` |
 
 ### Tools
 
-See the Intake agent's table in section 8. Tools for the other two agents arrive with them.
+Each agent's tools are described in its own section: Intake in 8, Privacy & Safety in 10, Matchmaker in 14.

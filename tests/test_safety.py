@@ -441,3 +441,31 @@ def test_the_cache_hit_rate_is_over_all_input_tokens(tmp_path):
     }, trail)
     report = tokenomics.recost(trail)
     assert report["totals"]["cache_hit_rate"] == pytest.approx(0.75)
+
+
+def test_a_safety_review_is_not_charged_to_the_family_s_chat_budget(spent, monkeypatch):
+    """A long chat must not stop a family's wishes being reviewed at all.
+
+    The per-session cap governs the conversation. The review is the app's own
+    work; billing it to the family's session meant that talking for longer made
+    publication less likely, which is exactly backwards.
+    """
+    import inspect
+
+    spent(config.MAX_TOKENS_PER_INTAKE_SESSION + 1, session_id="intake-long-chat")
+
+    # The chat is stopped, as it should be.
+    with pytest.raises(budget.BudgetExceeded):
+        budget.guard("intake-long-chat")
+
+    # The review is not: it guards on the daily cap only.
+    source = inspect.getsource(safety.review_wish)
+    assert "budget.guard(None)" in source
+    budget.guard(None)
+
+
+def test_the_daily_cap_still_stops_a_safety_review(spent):
+    spent(config.DAILY_TOKEN_BUDGET + 1, session_id="anything")
+    with pytest.raises(budget.BudgetExceeded) as err:
+        budget.guard(None)
+    assert err.value.scope == "daily"

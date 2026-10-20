@@ -297,3 +297,54 @@ for it. The more useful finding: re-running run A's exact messages cost
 $0.000355 more, of which the caching change is $0.000147 and **415 extra output
 tokens are $0.000208**. Output at $0.50/M moves this app's bill more than input
 caching does.
+
+---
+
+## Problem 5 — Wish Wall, Matchmaker, and Granting a Wish
+
+### Prompt 1
+
+> Problem 5: "Wish wall, Matchmaker, and granting a wish"
+>
+> Now the donor side. This problem should complete the full path: a family posts a wish, and a donor grants it.
+>
+> a.) Donor sign-up form: zip, contact details (coordinator only), budget, preferred categories, and preference (specific, flexible or either).
+> b.) A wish wall showing all open wishes as cards, with filters for category, occasion, cost and specific/flexible. Cards show the family alias, item, cost, deadline and zip, never contact details.
+> c.) Matchmaker agent (system prompt in prompts/matchmaker_agent.md) with these PydanticAI tools: search_open_wishes(zip, max_cost, categories, request_type), which queries the database and returns at most 15 candidates; and next_dropoff_before(deadline), which uses the region's schedule to find the latest drop-off that still arrives in time. It returns the top 5 as structured output, each with a one-line reason and the drop-off date. Use the same explicit prompt caching as the other agents.
+> d.) Fairness rules in the prompt: weigh deadline urgency and how long a wish has been waiting; do not reward how emotionally a story is written. Wishes with no deadline are not time-sensitive.
+> e.) Make the candidate limit in search_open_wishes a setting in config.py (15, or all open wishes) so I can measure cost and match quality both ways later.
+> f.) Grant a wish: the donor picks the next weekly drop-off that arrives before the deadline (or the next one available). The wish locks (status granted) so no one else can claim it, and the donor sees the hub address and drop-off window. Rent/utility wishes skip the hub and show "paid directly to provider (simulated)."
+> g.) Log all agent and tool calls, test a full run from family intake to granted wish, save screenshots of every step (including the Agent activity page), and update harness.md.
+>
+> Ask any questions you have before starting.
+
+**Outcome:** The full path works — a family describes a need and a donor grants
+the wish that comes out of it.
+
+- **Donor sign-up** was already built in Problem 2 and matches the spec; nothing needed changing.
+- **The wish wall** (`GET /api/wishes`) with all four filters. Cards are built by naming the fields a donor may see rather than by removing ones they may not, so a new column cannot leak by default.
+- **`backend/scheduling.py`** holds the weekly rhythm as plain arithmetic over the region config. `dropoff_before()` picks the **latest** drop-off that still arrives — not the soonest — so a donor gets as much time as the deadline allows.
+- **The Matchmaker** with both tools and the same explicit `CachePoint` caching. Fairness is built rather than only asked for: the search tool hands over `days_until_deadline` and `days_waiting` as integers, so urgency never has to be inferred from prose, and the descriptions have already been flattened into one neutral format by the Safety agent.
+- **`MATCHMAKER_CANDIDATE_LIMIT`** in config: 15, or `None` for every open wish.
+- **`matchmaker.enforce()`** drops any match the search did not return, anything claimed while the model was thinking, and anything past five.
+- **Granting** locks with a conditional `UPDATE … WHERE status = 'open'`, so two donors cannot both succeed. Rent and utilities skip the hub.
+- **165 tests pass.** Eight screenshots covering every step.
+
+**The recorded run:** two wishes written, reviewed and published, then ranked
+for a donor and one granted — **$0.00266 total**, 72% of input served from
+cache. The donor granted the sneakers wish the family had posted minutes
+earlier; its deadline was 9 November and the schedule picked the 5 November
+drop-off, delivered 7 November.
+
+**Two bugs the end-to-end run found**, both now fixed and both written up in
+`harness.md`:
+
+1. **The safety review was charged to the family's chat budget.** A family who
+   talked for longer could exhaust the per-session cap before their own wishes
+   could be reviewed — so explaining yourself at length made publication less
+   likely. Reviews now guard on the daily cap only, while still recording the
+   session id so the cost stays attributable.
+2. **The Matchmaker filtered to the donor's exact postcode** and returned zero
+   candidates. Donations all pass through one hub, so `zip` now means the
+   donor's region: 29 candidates instead of 2. Both calls are in the activity
+   log, before and after.

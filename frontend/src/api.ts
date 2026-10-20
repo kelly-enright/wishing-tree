@@ -204,3 +204,110 @@ export function sendIntakeMessage(sessionId: string, message: string) {
 export function approveIntake(sessionId: string, wishes: DraftWish[]) {
   return post<IntakeApproval>('/api/intake/approve', { session_id: sessionId, wishes })
 }
+
+// ---------------------------------------------------------------- donor side
+
+export type WishCard = {
+  id: number
+  family_alias: string
+  category: Category
+  occasion: Occasion
+  request_type: 'specific' | 'flexible'
+  item_description: string
+  zip: string
+  deadline: string | null
+  deadline_label: string
+  days_until_deadline: number | null
+  days_waiting: number
+  estimated_cost_usd: number | null
+  budget_min_usd: number | null
+  budget_max_usd: number | null
+  cost_ceiling_usd: number
+  cost_is_estimate: boolean
+  product_link: string | null
+  brand: string | null
+  size: string | null
+  color: string | null
+  open_to_substitute: boolean
+  size_preferences: string | null
+  status: string
+}
+
+export type RegionInfo = {
+  name: string
+  hub_name: string
+  hub_address: string
+  dropoff_window: string
+  delivery_window: string
+}
+
+export type WishWall = { count: number; wishes: WishCard[]; region: RegionInfo }
+
+export type Match = {
+  request_id: number
+  reason: string
+  dropoff_date: string
+  delivery_date: string
+  arrives_in_time: boolean
+  wish: WishCard
+}
+
+export type MatchResponse = {
+  session_id: string
+  matches: Match[]
+  note: string
+  enforced: string[]
+  candidate_limit: number | null
+  usage: Usage
+}
+
+export type Logistics =
+  | { kind: 'direct_payment'; headline: string; detail: string; delivery_date: string }
+  | {
+      kind: 'hub_dropoff'; headline: string; hub_name: string; hub_address: string
+      dropoff_date: string; dropoff_window: string
+      delivery_date: string; delivery_window: string
+    }
+
+export type GrantResponse = {
+  granted: boolean
+  wish: WishCard
+  paid_directly_to_provider: boolean
+  logistics: Logistics
+  arrives_in_time: boolean
+  schedule_note: string
+}
+
+export type WallFilters = {
+  categories: Category[]
+  occasion: Occasion | ''
+  requestType: 'specific' | 'flexible' | ''
+  maxCost: string
+}
+
+export async function getWishes(filters: WallFilters): Promise<WishWall> {
+  const params = new URLSearchParams()
+  filters.categories.forEach((c) => params.append('category', c))
+  if (filters.occasion) params.set('occasion', filters.occasion)
+  if (filters.requestType) params.set('request_type', filters.requestType)
+  if (filters.maxCost) params.set('max_cost_usd', filters.maxCost)
+  const response = await fetch(`/api/wishes?${params}`)
+  if (!response.ok) throw new Error('Could not load the wish wall.')
+  return response.json()
+}
+
+export function requestMatches(donorAlias: string, filters: WallFilters) {
+  return post<MatchResponse>('/api/match', {
+    donor_alias: donorAlias,
+    max_cost_usd: filters.maxCost ? Number(filters.maxCost) : null,
+    request_type: filters.requestType || null,
+    categories: filters.categories.length ? filters.categories : null,
+  })
+}
+
+export function grantWish(donorAlias: string, requestId: number) {
+  return post<GrantResponse>('/api/grant', {
+    donor_alias: donorAlias,
+    request_id: requestId,
+  })
+}

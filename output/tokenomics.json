@@ -8,31 +8,39 @@
   "billing_convention": "uncached input = input - cached - cache_write; each bucket priced once",
   "model": "gpt-6-luna",
   "totals": {
-    "calls": 19,
-    "input_tokens": 29236,
-    "cached_input_tokens": 68245,
-    "cache_write_tokens": 12723,
-    "output_tokens": 8548,
-    "total_tokens": 118752,
-    "cache_hit_rate": 0.6193,
-    "cost_usd": 0.00947042
+    "calls": 29,
+    "input_tokens": 32260,
+    "cached_input_tokens": 116343,
+    "cache_write_tokens": 28576,
+    "output_tokens": 12669,
+    "total_tokens": 189848,
+    "cache_hit_rate": 0.6566,
+    "cost_usd": 0.01429593
   },
   "by_agent": {
     "intake": {
-      "calls": 15,
-      "input": 27413,
-      "cached": 53435,
-      "cache_write": 11862,
-      "output": 6629,
-      "cost_usd": 0.0080729
+      "calls": 19,
+      "input": 28673,
+      "cached": 77719,
+      "cache_write": 18380,
+      "output": 8779,
+      "cost_usd": 0.01033149
     },
     "safety": {
-      "calls": 4,
-      "input": 1823,
-      "cached": 14810,
-      "cache_write": 861,
-      "output": 1919,
-      "cost_usd": 0.00139752
+      "calls": 7,
+      "input": 2579,
+      "cached": 25904,
+      "cache_write": 1930,
+      "output": 2614,
+      "cost_usd": 0.00206519
+    },
+    "matchmaker": {
+      "calls": 3,
+      "input": 1008,
+      "cached": 12720,
+      "cache_write": 8266,
+      "output": 1276,
+      "cost_usd": 0.00189925
     }
   },
   "by_session": {
@@ -190,6 +198,63 @@
       "cost_usd": 0.00125959,
       "agents": [
         "intake"
+      ]
+    },
+    "match-smoke": {
+      "calls": 1,
+      "input": 378,
+      "cached": 3825,
+      "cache_write": 2987,
+      "output": 507,
+      "cost_usd": 0.00070292,
+      "agents": [
+        "matchmaker"
+      ]
+    },
+    "intake-20261020-d493d5": {
+      "calls": 3,
+      "input": 882,
+      "cached": 15842,
+      "cache_write": 3603,
+      "output": 1299,
+      "cost_usd": 0.0013465,
+      "agents": [
+        "intake",
+        "safety"
+      ]
+    },
+    "intake-20261020-6c05e9": {
+      "calls": 4,
+      "input": 1134,
+      "cached": 19536,
+      "cache_write": 3984,
+      "output": 1546,
+      "cost_usd": 0.00157976,
+      "agents": [
+        "intake",
+        "safety"
+      ]
+    },
+    "match-20261020-2367ba": {
+      "calls": 1,
+      "input": 252,
+      "cached": 2970,
+      "cache_write": 143,
+      "output": 90,
+      "cost_usd": 0.00011778,
+      "agents": [
+        "matchmaker"
+      ]
+    },
+    "match-20261020-dcbb42": {
+      "calls": 1,
+      "input": 378,
+      "cached": 5925,
+      "cache_write": 5136,
+      "output": 679,
+      "cost_usd": 0.00107855,
+      "agents": [
+        "matchmaker"
       ]
     }
   },
@@ -477,6 +542,156 @@
       "total_tokens": 4280,
       "latency_ms": 4043,
       "cost_usd": 0.00028877,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T18:19:40.970139Z",
+      "session_id": "match-smoke",
+      "agent": "matchmaker",
+      "operation": "find_matches",
+      "request_id": null,
+      "input_tokens": 378,
+      "cached_input_tokens": 3825,
+      "cache_write_tokens": 2987,
+      "output_tokens": 507,
+      "total_tokens": 7697,
+      "latency_ms": 10669,
+      "cost_usd": 0.00070292,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T18:23:37.521958Z",
+      "session_id": "intake-20261020-d493d5",
+      "agent": "intake",
+      "operation": "draft_wishes",
+      "request_id": null,
+      "input_tokens": 378,
+      "cached_input_tokens": 5628,
+      "cache_write_tokens": 2821,
+      "output_tokens": 654,
+      "total_tokens": 9481,
+      "latency_ms": 87446,
+      "cost_usd": 0.00077371,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T18:25:14.165845Z",
+      "session_id": "intake-20261020-d493d5",
+      "agent": "intake",
+      "operation": "draft_wishes",
+      "request_id": null,
+      "input_tokens": 252,
+      "cached_input_tokens": 6514,
+      "cache_write_tokens": 438,
+      "output_tokens": 421,
+      "total_tokens": 7625,
+      "latency_ms": 9722,
+      "cost_usd": 0.00035559,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T18:25:31.919278Z",
+      "session_id": "intake-20261020-d493d5",
+      "agent": "safety",
+      "operation": "review_wish",
+      "request_id": 41,
+      "input_tokens": 252,
+      "cached_input_tokens": 3700,
+      "cache_write_tokens": 344,
+      "output_tokens": 224,
+      "total_tokens": 4520,
+      "latency_ms": 9369,
+      "cost_usd": 0.0002172,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T18:30:37.188932Z",
+      "session_id": "intake-20261020-6c05e9",
+      "agent": "intake",
+      "operation": "draft_wishes",
+      "request_id": null,
+      "input_tokens": 378,
+      "cached_input_tokens": 5628,
+      "cache_write_tokens": 2821,
+      "output_tokens": 654,
+      "total_tokens": 9481,
+      "latency_ms": 3714,
+      "cost_usd": 0.00077371,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T18:30:40.912597Z",
+      "session_id": "intake-20261020-6c05e9",
+      "agent": "intake",
+      "operation": "draft_wishes",
+      "request_id": null,
+      "input_tokens": 252,
+      "cached_input_tokens": 6514,
+      "cache_write_tokens": 438,
+      "output_tokens": 421,
+      "total_tokens": 7625,
+      "latency_ms": 657,
+      "cost_usd": 0.00035559,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T18:30:41.586853Z",
+      "session_id": "intake-20261020-6c05e9",
+      "agent": "safety",
+      "operation": "review_wish",
+      "request_id": 41,
+      "input_tokens": 252,
+      "cached_input_tokens": 3700,
+      "cache_write_tokens": 344,
+      "output_tokens": 224,
+      "total_tokens": 4520,
+      "latency_ms": 597,
+      "cost_usd": 0.0002172,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T18:30:42.188878Z",
+      "session_id": "intake-20261020-6c05e9",
+      "agent": "safety",
+      "operation": "review_wish",
+      "request_id": 42,
+      "input_tokens": 252,
+      "cached_input_tokens": 3694,
+      "cache_write_tokens": 381,
+      "output_tokens": 247,
+      "total_tokens": 4574,
+      "latency_ms": 5926,
+      "cost_usd": 0.00023326,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T18:31:03.667567Z",
+      "session_id": "match-20261020-2367ba",
+      "agent": "matchmaker",
+      "operation": "find_matches",
+      "request_id": null,
+      "input_tokens": 252,
+      "cached_input_tokens": 2970,
+      "cache_write_tokens": 143,
+      "output_tokens": 90,
+      "total_tokens": 3455,
+      "latency_ms": 10864,
+      "cost_usd": 0.00011778,
+      "ok": true
+    },
+    {
+      "timestamp": "2026-10-20T18:32:12.172150Z",
+      "session_id": "match-20261020-dcbb42",
+      "agent": "matchmaker",
+      "operation": "find_matches",
+      "request_id": null,
+      "input_tokens": 378,
+      "cached_input_tokens": 5925,
+      "cache_write_tokens": 5136,
+      "output_tokens": 679,
+      "total_tokens": 12118,
+      "latency_ms": 13632,
+      "cost_usd": 0.00107855,
       "ok": true
     }
   ]

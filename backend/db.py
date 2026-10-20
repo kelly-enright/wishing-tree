@@ -503,3 +503,104 @@ def update_request_content(conn: sqlite3.Connection, request: Request) -> None:
          request.color, request.size_preferences, request.request_type.value,
          request.status.value, request.id),
     )
+
+
+# --------------------------------------------------------------------------
+# The wish wall, and claiming a wish
+# --------------------------------------------------------------------------
+
+def list_open_wishes(
+    conn: sqlite3.Connection,
+    zip_code: str | None = None,
+    zip_codes: list[str] | None = None,
+    max_cost_usd: float | None = None,
+    categories: list[str] | None = None,
+    request_type: str | None = None,
+    occasion: str | None = None,
+    limit: int | None = None,
+) -> list[Request]:
+    """Open wishes, soonest deadline first, then longest waiting.
+
+    Wishes with no deadline sort after those with one. A wish without a date is
+    not urgent and must not be treated as if it were.
+    """
+    clauses = ["status = ?"]
+    params: list = [RequestStatus.OPEN.value]
+
+    if zip_code:
+        clauses.append("zip = ?")
+        params.append(zip_code)
+    if zip_codes:
+        clauses.append(f"zip IN ({','.join('?' for _ in zip_codes)})")
+        params.extend(zip_codes)
+    if categories:
+        clauses.append(f"category IN ({','.join('?' for _ in categories)})")
+        params.extend(categories)
+    if request_type:
+        clauses.append("request_type = ?")
+        params.append(request_type)
+    if occasion:
+        clauses.append("occasion = ?")
+        params.append(occasion)
+    if max_cost_usd is not None:
+        # The most this wish could cost: the top of a range, else the estimate.
+        clauses.append(
+            "COALESCE(budget_max_usd, estimated_cost_usd, budget_min_usd, 0) <= ?"
+        )
+        params.append(max_cost_usd)
+
+    sql = (
+        f"SELECT * FROM requests WHERE {' AND '.join(clauses)} "
+        "ORDER BY deadline IS NULL, deadline, created_at"
+    )
+    if limit is not None:
+        sql += " LIMIT ?"
+        params.append(limit)
+
+    return [_request(r) for r in conn.execute(sql, params)]
+
+
+def claim_wish(
+    conn: sqlite3.Connection,
+    request_id: int,
+    donor_alias: str,
+    dropoff: date,
+    delivery: date,
+) -> Pledge | None:
+    """Lock a wish to one donor. Returns None if someone got there first.
+
+    The UPDATE carries `AND status = 'open'`, so two donors pressing Grant at
+    the same moment cannot both succeed: SQLite applies one, and the other
+    changes no rows and is told the wish is gone.
+    """
+    cur = conn.execute(
+        "UPDATE requests SET status = ? WHERE id = ? AND status = ?",
+        (RequestStatus.GRANTED.value, request_id, RequestStatus.OPEN.value),
+    )
+    if cur.rowcount == 0:
+        return None
+
+    pledge = Pledge(
+        request_id=request_id,
+        donor_alias=donor_alias,
+        dropoff_date=dropoff,
+        delivery_date=delivery,
+        status=PledgeStatus.PLEDGED,
+    )
+    pledge.id = insert_pledge(pledge, conn)
+    return pledge
+
+
+def get_request(conn: sqlite3.Connection, request_id: int) -> Request | None:
+    row = conn.execute("SELECT * FROM requests WHERE id = ?", (request_id,)).fetchone()
+    return _request(row) if row else None
+
+
+def get_pledge_for_request(
+    conn: sqlite3.Connection, request_id: int
+) -> Pledge | None:
+    row = conn.execute(
+        "SELECT * FROM pledges WHERE request_id = ? ORDER BY id DESC LIMIT 1",
+        (request_id,),
+    ).fetchone()
+    return _pledge(row) if row else None
