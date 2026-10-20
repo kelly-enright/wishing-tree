@@ -74,7 +74,8 @@ export default function Landing() {
         <div className="hero__monty">
           <Monty size={64} />
           <p className="hero__pick">
-            Monty here. Pick the one that sounds like you.
+            Monty here. Pick the one that sounds like you.{' '}
+            <Link className="hero__about" to="/about">Why we exist</Link>
           </p>
         </div>
       </header>
@@ -179,6 +180,9 @@ export default function Landing() {
           <p className="footer__note">
             No cash ever changes hands between neighbors. Rent and utilities are paid
             directly to the landlord or provider.
+          </p>
+          <p className="footer__links">
+            <Link to="/about">About Wishing Tree</Link>
           </p>
         </footer>
       )}

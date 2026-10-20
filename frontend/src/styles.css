@@ -1784,3 +1784,49 @@ textarea.field__input { resize: vertical; font: inherit; }
 
 .intake__title { display: flex; align-items: center; gap: 12px; }
 .intake__title .page__title { margin-bottom: 0; }
+
+/* ---------------------------------------------------------------- about */
+
+.about { max-width: 660px; }
+
+.about .page__title {
+  margin-bottom: 20px;
+  font-size: clamp(1.9rem, 4.4vw, 2.5rem);
+}
+
+.about__para {
+  margin: 0 0 18px;
+  font-size: 1.04rem;
+  line-height: 1.75;
+  color: var(--ink);
+}
+
+.about__para--lead {
+  padding: 18px 20px;
+  border-radius: var(--radius);
+  background: var(--evergreen-pale);
+  border-left: 4px solid var(--evergreen);
+  color: var(--evergreen-deep);
+  font-weight: 600;
+}
+
+.about__section {
+  margin-top: 32px;
+  padding-top: 26px;
+  border-top: 1px solid var(--line);
+}
+
+.about__heading {
+  margin: 0 0 14px;
+  font-size: 1.3rem;
+  color: var(--evergreen-deep);
+  letter-spacing: -0.015em;
+}
+
+.about__whohead { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.about__whohead .about__heading { margin: 0; }
+
+.hero__about { color: var(--evergreen); font-weight: 700; }
+
+.footer__links { margin: 10px 0 0; }
+.footer__links a { color: var(--evergreen); font-weight: 700; }

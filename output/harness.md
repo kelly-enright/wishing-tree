@@ -1115,6 +1115,19 @@ He has two moods, and the difference is only his eyes and tongue:
 
 The tree logo is untouched.
 
+### About
+
+`/about`, linked from the landing page — once beside Monty under the tagline,
+once in the footer. It is the only page in this project whose words are not
+mine to touch: **the text is Kelly's, verbatim.** Three sections, in her
+order — why Wishing Tree exists, how privacy is protected, and who she is.
+
+Nothing on that page is summarized, extended or embellished by the app. No
+claim about Kelly or about Wishing Tree appears there that is not in the text
+she wrote, and the only things added around it are the heading levels, the
+layout and Monty beside "Who I am". A check script compares every paragraph in
+`About.tsx` against her text word for word; all six match exactly.
+
 ### Admin
 
 The staff role is now **Admin** everywhere a staff member sees it — the landing

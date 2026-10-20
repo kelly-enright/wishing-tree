@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom'
+import About from './pages/About'
 import Coordinator from './pages/Coordinator'
 import Donor from './pages/Donor'
 import Intake from './pages/Intake'
@@ -15,6 +16,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
+      <Route path="/about" element={<About />} />
       <Route path="/family/signup" element={<SignUpFamily />} />
       <Route path="/family" element={<Intake />} />
       <Route path="/donor/signup" element={<SignUpDonor />} />

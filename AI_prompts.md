@@ -650,3 +650,28 @@ and the gold "already granted" leaves were a near-identical amber. On a phone
 they were hard to tell apart — meaning a donor could read an open food wish as
 already taken and skip it. Gold is now the only amber on the tree: food is
 olive, and gold leaves carry a gold ring as well.
+
+### Prompt 2
+
+> One addition to Problem 11: add an "About" page, linked from the landing page and the footer, using exactly the text below. Don't add or invent anything about me or the organization. Match the app's style, and Monty can appear here too. Take a screenshot and update harness.md.
+>
+> [the full About text — why Wishing Tree exists, how we protect privacy, and who I am]
+
+**Why a follow-up was needed:** Not a gap in an earlier prompt — an addition
+Kelly decided on after seeing Problem 11, with text she had written herself.
+
+**Outcome:** `/about`, in the app's style, linked twice from the landing page:
+beside Monty under the tagline ("Why we exist") and in the footer ("About
+Wishing Tree").
+
+**The text is verbatim.** I added the heading levels, the layout, and Monty
+beside "Who I am" — and nothing else. No sentence on that page is summarized,
+extended or embellished, and no claim about Kelly or Wishing Tree appears that
+she did not write. I checked it rather than trusting myself: a script compares
+every paragraph in `About.tsx` against her text word for word, and all six
+match exactly.
+
+The one piece of judgment was structural: her first line, "Why Wishing Tree
+exists", became the page's `<h1>`, and the other two became `<h2>`s. That adds
+no words — a nav link saying "About" was the alternative, which would have
+meant inventing a title.
