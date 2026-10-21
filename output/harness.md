@@ -2552,3 +2552,92 @@ key read out of `../.env`: no hits, and `.env` has never been committed.
 | Tests | 522 fast, 10 live, all passing |
 | Live model calls this round | 10 safety + ~65 measurement, about $0.09 |
 | Cold start | 11 seconds |
+
+## 41. Putting it online
+
+One Render Web Service, free tier, at **wishing-tree-demo.onrender.com**.
+FastAPI already served the built frontend, so the deployment is a start
+command and six environment variables rather than a second stack.
+
+### Everything that differs is a value, not a branch
+
+The rule the whole round is built on: **a local run must be exactly the local
+run it has always been.** So there is no "if deployed" anywhere in the code.
+Each difference is an environment variable, off unless the host sets it:
+
+| Variable | What it turns on |
+|---|---|
+| `WISHINGTREE_DEMO_BANNER` | the "use made-up details" line on every page |
+| `WISHINGTREE_RESEED` | rebuild the database on every start |
+| `WISHINGTREE_HTTPS` | session cookies marked secure |
+| `WISHINGTREE_PASSCODE` | a different admin passcode from the local one |
+
+A test asserts all four default to off and that `/api/site` answers
+`{"demo": false, "banner": null}` on a local run.
+
+**The banner is fetched, not built in.** `/api/site` returns it and
+`DemoBanner` draws nothing until the answer arrives. That matters because
+`frontend/dist` is committed: a flag baked into the build would mean two
+builds of the same commit and a way to ship the wrong one. It renders above
+the routes, so it is on every page including the 404 — checked on five.
+
+**The two token caps are deliberately not readable from the environment.** A
+public URL is the one place a runaway loop costs real money, and a cap a host
+can loosen is not a cap. There is a test that fails if either line ever grows
+a `getenv`.
+
+### Reseeding on start is the honest behavior
+
+Render's free disk does not survive a restart, and the service restarts after
+idling. The data was going to reset either way, so it resets predictably:
+every start rebuilds the same 15 neighbors, 8 wish granters and 61 wishes. A
+tester always finds the same tree. The README says so in those words rather
+than leaving someone to discover it.
+
+### The end-to-end test on the live host
+
+| Step | Result |
+|---|---|
+| Neighbor signs in | ✓ |
+| Intake drafts a wish (real model call) | ✓ "Warm winter coat for an 8-year-old, for walking to the bus stop" |
+| Approve → Safety review → on the tree | ✓ published, `removed: []` |
+| Wish granter grants it | ✓ Thu 22 Oct drop-off, Sat 24 Oct delivery |
+| Neighbor's tracker | ✓ advanced to "A neighbor picked your wish" |
+| Admin with the local passcode | ✓ **refused**, which is the point |
+
+Two things worth noticing in that run. The intake kept **"for walking to the
+bus stop"** — the purpose rule from §38 — and the safety review reported
+**nothing** removed rather than inventing a category for a reworded sentence.
+Both fixes are live, not just local.
+
+### What differs from local, measured
+
+| | Local | Live |
+|---|---|---|
+| `/api/health` | 0.02 s | 0.37 s |
+| `/api/site` | 0.002 s | 0.17 s |
+| Page load | 0.002 s | 0.22 s |
+| **Login** | **0.17 s** | **2.0 s** |
+| First hit after idling | n/a | ~50 s (Render's own figure) |
+
+Everything except login is network latency and unremarkable. **Login is
+bcrypt**, and 12 rounds on half a CPU is about ten times slower than on a
+laptop. Two seconds is tolerable and it is the correct trade — the work factor
+is doing exactly what it is for — but it is the one place a tester will feel
+the free tier while the service is awake. Lowering it on the deployed site
+only is one variable (`WISHINGTREE_BCRYPT_ROUNDS=10`, roughly four times
+faster) and is a decision about a security setting, so it is Kelly's to make
+rather than mine.
+
+The admin step of the walkthrough — marking a wish dropped off and delivered —
+is the one thing not tested from here, because the live passcode is set in
+Render's dashboard and deliberately not known to me or to the repository.
+Everything it depends on is verified: the pledge exists, the run sheet reads
+the same database, and the passcode mechanism is proven by the local one being
+refused.
+
+| | |
+|---|---|
+| Tests | 529 fast, 10 live |
+| Deploy | 1m59s, from commit `55ee134` |
+| Cost | free tier, $0 |

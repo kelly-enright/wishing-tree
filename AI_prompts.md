@@ -1541,3 +1541,74 @@ worth pausing for.
 | Wish granter journey | $0.00053 | $0.00046 |
 | 10,000 users / month | $11.23 | $10.56 |
 | Intakes failing at a 300 cap | 3 of 10 | 2 of 10 |
+
+## Problem 25 — Putting It Online
+
+### Prompt 1
+
+> Problem 22: "Put it online"
+>
+> I want a live link so people can test Wishing Tree without running it locally. Follow the approach from our Lecture 8 (Render), adapted to this app. Keep the local setup working exactly as it does now, since that's still the main way graders will run it.
+>
+> a.) Deploy to Render as a single Web Service: FastAPI serves the built frontend. The GitHub repo is private, so walk me through the steps I need to do myself (creating a Render account, connecting my GitHub account and giving Render access to the wishing-tree repo) one at a time.
+>
+> b.) Set PORTKEY_API_KEY as an environment variable in Render, never in the repo.
+>
+> c.) Use SQLite and reseed the demo data automatically on startup, since the free tier's files can reset. Tell me clearly what that means for testers.
+>
+> d.) Add a visible banner on every page of the live site only (not locally): "This is a demo of Wishing Tree. Please use made-up details, not real personal information."
+>
+> e.) Keep the per-session and daily token caps active on the live site.
+>
+> f.) Add the live link at the top of the README, noting that the free host may take about a minute to wake up, and that the local setup is the reliable way to run it.
+>
+> g.) Test the live site end to end (a neighbor makes a wish, a wish granter grants it, admin marks it delivered) and tell me if anything differs from local.
+>
+> Ask any questions you have before starting.
+
+**Questions asked before starting:** what to do about the admin passcode on a
+public URL — it is published in the README, so anyone with the link could
+open the run sheet (a separate live passcode, chosen) — and what to call the
+service, since the name becomes the URL (`wishing-tree-demo`, chosen).
+
+**Outcome:** live at **https://wishing-tree-demo.onrender.com**, deployed in
+1m59s from commit `55ee134`. 529 fast tests passing.
+
+- **"Keep the local setup working exactly as it does now" set the shape of
+  everything.** There is no `if deployed` anywhere in the code. Each
+  difference is an environment variable that defaults to off, and a test
+  asserts all four defaults plus `/api/site` answering `{"demo": false}`
+  locally.
+- **The banner is fetched rather than built in.** `frontend/dist` is
+  committed, so a flag baked into the build would mean two builds of the same
+  commit and a way to ship the wrong one. It renders above the routes, which
+  puts it on every page including the 404.
+- **One decision made rather than asked:** the two token caps are not readable
+  from the environment. A public URL is the one place a runaway loop costs
+  real money, and a cap a host can loosen is not a cap. A test fails if either
+  line ever grows a `getenv`.
+- **(g) passed except for the admin step**, which needs the live passcode —
+  set in Render's dashboard and deliberately not known to me or to the repo.
+  Everything it depends on is verified, and the mechanism is proven by the
+  local passcode being refused on the live site.
+- **The live run re-confirmed two earlier fixes in production:** the intake
+  kept "for walking to the bus stop" (the purpose rule), and the safety review
+  reported nothing removed rather than inventing a category for a reworded
+  sentence.
+
+### What differs from local
+
+| | Local | Live |
+|---|---|---|
+| `/api/health` | 0.02 s | 0.37 s |
+| Page load | 0.002 s | 0.22 s |
+| **Login** | **0.17 s** | **2.0 s** |
+| First hit after idling | n/a | ~50 s |
+| Demo data | persists | rebuilt on every restart |
+| Admin passcode | `wishingtree-demo` | set in Render |
+
+Everything but login is network latency. **Login is bcrypt at 12 rounds on
+half a CPU** — ten times slower than a laptop, and the work factor doing
+exactly what it is for. Lowering it on the deployed site only is one variable
+(`WISHINGTREE_BCRYPT_ROUNDS=10`) and is a decision about a security setting,
+so it is Kelly's rather than mine.
