@@ -30,6 +30,7 @@ def test_family_signup_creates_a_record_and_returns_an_alias(client):
         "contact_address": "4 Nightingale Ct, New Haven, CT 06511",
         "contact_email": "new.family@example.com",
         "contact_phone": "(203) 555-0191",
+        "password": "a-good-long-password",
     })
     assert response.status_code == 201
     body = response.json()
@@ -45,6 +46,7 @@ def test_signup_response_never_echoes_the_contact_details(client):
         "contact_address": "4 Nightingale Ct, New Haven, CT 06511",
         "contact_email": "new.family@example.com",
         "contact_phone": "(203) 555-0191",
+        "password": "a-good-long-password",
     })
     text = response.text
     assert "Nightingale" not in text
@@ -58,6 +60,7 @@ def test_the_contact_details_are_stored_for_the_coordinator(client):
         "contact_address": "4 Nightingale Ct, New Haven, CT 06511",
         "contact_email": "new.family@example.com",
         "contact_phone": "(203) 555-0191",
+        "password": "a-good-long-password",
     })
     with db.connect(config.DB_PATH) as conn:
         family = db.get_family(conn, "Neighbor A59")
@@ -73,6 +76,7 @@ def test_two_signups_get_different_aliases(client):
         "contact_address": "4 Nightingale Ct, New Haven, CT 06511",
         "contact_email": "new.family@example.com",
         "contact_phone": "(203) 555-0191",
+        "password": "a-good-long-password",
     }
     first = client.post("/api/families", json=form).json()
     second = client.post("/api/families", json=form).json()
@@ -85,6 +89,7 @@ def test_a_zip_outside_the_region_is_refused_with_a_useful_message(client):
         "contact_address": "1 Palm Dr, Beverly Hills, CA 90210",
         "contact_email": "someone@example.com",
         "contact_phone": "(310) 555-0100",
+        "password": "a-good-long-password",
     })
     assert response.status_code == 400
     detail = response.json()["detail"]
@@ -98,6 +103,7 @@ def test_phone_is_optional_but_email_is_not(client):
         "zip": "06511",
         "contact_address": "4 Nightingale Ct, New Haven, CT 06511",
         "contact_email": "no.phone@example.com",
+    "password": "a-good-long-password",
     })
     assert no_phone.status_code == 201
 
@@ -120,6 +126,7 @@ def test_a_malformed_email_reads_as_a_typo_not_a_server_error(client, bad):
         "zip": "06511",
         "contact_address": "4 Nightingale Ct, New Haven, CT 06511",
         "contact_email": bad,
+        "password": "a-good-long-password",
     })
     assert response.status_code == 400
     assert "doesn't look right" in response.json()["detail"]
@@ -143,6 +150,7 @@ def test_donor_signup_stores_preferences(client):
         "contact_address": "12 Rookery Ln, New Haven, CT 06511",
         "contact_email": "new.donor@example.com",
         "contact_phone": "(203) 555-0292",
+        "password": "a-good-long-password",
         "budget_usd": 150,
         "preferred_categories": ["clothing", "food"],
         "preference": "flexible",

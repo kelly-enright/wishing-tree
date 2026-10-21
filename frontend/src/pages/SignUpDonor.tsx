@@ -4,7 +4,9 @@ import { CATEGORY_LABELS, formatPhone, signUpDonor, type Category, type Preferen
   userMessage,
 } from '../api'
 import { ServiceNotice, ZipField } from '../components/ServiceArea'
-import { setSession } from '../session'
+import { setMe } from '../session'
+import { getMe } from '../api'
+import PasswordField from '../components/PasswordField'
 import FormShell from './FormShell'
 import usePageTitle from '../usePageTitle'
 
@@ -21,6 +23,7 @@ export default function SignUpDonor() {
   const [email, setEmail] = useState('')
   const [address, setAddress] = useState('')
   const [phone, setPhone] = useState('')
+  const [password, setPassword] = useState('')
   const [budget, setBudget] = useState('75')
   const [categories, setCategories] = useState<Category[]>([])
   const [preference, setPreference] = useState<Preference>('either')
@@ -41,16 +44,17 @@ export default function SignUpDonor() {
     setBusy(true)
     setError(null)
     try {
-      const donor = await signUpDonor({
+      await signUpDonor({
         zip: zip.trim(),
         contact_address: address.trim(),
         contact_email: email.trim(),
         contact_phone: phone.trim() || null,
+        password,
         budget_usd: Number(budget) || 0,
         preferred_categories: categories,
         preference,
       })
-      setSession({ role: 'donor', alias: donor.alias, zip: donor.zip })
+      setMe(await getMe())
       navigate('/donor')
     } catch (err) {
       setError(userMessage(err, 'We could not create your account just now. Please try again.'))
@@ -98,6 +102,12 @@ export default function SignUpDonor() {
           />
           <span className="field__hint">Only used on drop-off day.</span>
         </label>
+
+        <PasswordField
+          value={password} onChange={setPassword} isNew
+          disabled={covered !== true}
+          hint="At least 8 characters. A short phrase you'll remember is ideal."
+        />
 
         <label className="field">
           <span className="field__label">Budget per wish (USD)</span>

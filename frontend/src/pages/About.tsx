@@ -1,6 +1,12 @@
-import Logo from '../components/Logo'
+import { ArrowLeft } from 'lucide-react'
 import KellyAndMonty from '../components/KellyAndMonty'
+import TopBar, { roleLinks } from '../components/TopBar'
+import Footer from '../components/Footer'
 import usePageTitle from '../usePageTitle'
+import { useSession } from '../session'
+import { signOut, switchSide } from '../auth'
+import { homePath } from '../session'
+import { Link } from 'react-router-dom'
 
 /**
  * About.
@@ -11,9 +17,20 @@ import usePageTitle from '../usePageTitle'
  */
 export default function About() {
   usePageTitle('About')
+  const { session, me } = useSession()
   return (
     <main className="page about">
-      <header className="page__nav"><Logo size={26} /></header>
+      <TopBar
+        links={session ? roleLinks(session.role) : undefined}
+        alias={session?.alias} me={me}
+        onSwitch={signOut} onSwitchSide={switchSide}
+      />
+
+      {/* Somewhere to go from here, whether you arrived signed in or not. */}
+      <Link className="backlink" to={session ? homePath(session.role) : '/'}>
+        <ArrowLeft size={15} aria-hidden="true" />
+        {session ? 'Back to Wishing Tree' : 'Back to the start'}
+      </Link>
 
       <h1 className="page__title">Why Wishing Tree exists</h1>
 
@@ -72,6 +89,8 @@ export default function About() {
           </p>
         </div>
       </section>
+
+      <Footer />
     </main>
   )
 }

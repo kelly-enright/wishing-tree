@@ -15,11 +15,11 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from pydantic_ai.messages import ModelMessage
 
-from backend import config, db, text
+from backend import accounts, config, db, text
 from backend.agents import budget, safety
 from backend.agents.budget import BudgetExceeded
 from backend.agents.intake import IntakeDeps, _price_guide, run_turn
@@ -170,7 +170,11 @@ def _to_request(draft: DraftWish, family_alias: str, zip_code: str) -> Request:
 # --------------------------------------------------------------------------
 
 @router.post("/start", status_code=201)
-def start_intake(body: StartIntake) -> dict:
+def start_intake(
+    body: StartIntake,
+    session: accounts.Session = Depends(accounts.require("family")),
+) -> dict:
+    accounts.owns(session, body.family_alias)
     family = _family_or_404(body.family_alias)
 
     with db.connect() as conn:
@@ -203,8 +207,12 @@ def start_intake(body: StartIntake) -> dict:
 
 
 @router.post("/message")
-async def intake_message(body: IntakeMessage) -> dict:
+async def intake_message(
+    body: IntakeMessage,
+    account: accounts.Session = Depends(accounts.require("family")),
+) -> dict:
     session = _session_or_404(body.session_id)
+    accounts.owns(account, session.family_alias)
     if session.status is not IntakeStatus.ACTIVE:
         raise HTTPException(status_code=409, detail="This intake is already finished.")
 
@@ -285,8 +293,12 @@ async def intake_message(body: IntakeMessage) -> dict:
 
 
 @router.post("/approve")
-async def approve_intake(body: ApproveIntake) -> dict:
+async def approve_intake(
+    body: ApproveIntake,
+    account: accounts.Session = Depends(accounts.require("family")),
+) -> dict:
     session = _session_or_404(body.session_id)
+    accounts.owns(account, session.family_alias)
     family = _family_or_404(session.family_alias)
 
     with db.connect() as conn:
@@ -345,7 +357,11 @@ async def approve_intake(body: ApproveIntake) -> dict:
 
 
 @router.get("/usage/{session_id}")
-def intake_usage(session_id: str) -> dict:
+def intake_usage(
+    session_id: str,
+    account: accounts.Session = Depends(accounts.require("family")),
+) -> dict:
+    accounts.owns(account, _session_or_404(session_id).family_alias)
     return _usage(session_id)
 
 

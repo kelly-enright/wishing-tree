@@ -6,6 +6,8 @@ No agents in any of this. It is database logic, and it is tested as such.
 from datetime import date, timedelta
 
 import pytest
+
+from helpers import grant_as, sign_in
 from fastapi.testclient import TestClient
 
 from backend import config, coordinator_auth, db, main, seed
@@ -28,7 +30,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "AUDIT_PATH", tmp_path / "audit_trail.json")
     seed.seed(config.DB_PATH)
     coordinator_auth.clear()
-    return TestClient(main.app)
+    return sign_in(TestClient(main.app), 'Granter D01')
 
 
 def _token(client) -> dict:
@@ -38,11 +40,11 @@ def _token(client) -> dict:
 
 
 def _grant_first_open(client, donor="Granter D01", category: str | None = None) -> dict:
+    """Grant a wish as `donor`, leaving the client signed in as them."""
+    sign_in(client, donor)
     url = "/api/wishes" + (f"?category={category}" if category else "")
     wish = client.get(url).json()["wishes"][0]
-    body = client.post("/api/grant", json={
-        "donor_alias": donor, "request_id": wish["id"],
-    }).json()
+    body = grant_as(client, donor, wish["id"]).json()
     return body
 
 
@@ -92,9 +94,7 @@ def test_the_grant_response_carries_no_contact_details(client):
     with db.connect(config.DB_PATH) as conn:
         people = [*db.list_families(conn), *db.list_donors(conn)]
     wish = client.get("/api/wishes").json()["wishes"][0]
-    body = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).text
+    body = grant_as(client, "Granter D01", wish["id"]).text
     for person in people:
         assert person.contact_address not in body
         assert person.contact_email not in body
@@ -128,6 +128,7 @@ def test_a_family_sees_what_is_coming_with_its_window(client):
     granted = _grant_first_open(client)
     alias = granted["wish"]["family_alias"]
 
+    sign_in(client, alias)
     body = client.get(f"/api/families/{alias}/deliveries").json()
     mine = [d for d in body["deliveries"] if d["wish"]["id"] == granted["wish"]["id"]]
     assert len(mine) == 1
@@ -140,6 +141,7 @@ def test_confirming_the_window(client):
     alias = granted["wish"]["family_alias"]
     pledge_id = granted["pledge"]["id"]
 
+    sign_in(client, alias)
     body = client.post("/api/families/deliveries/respond", json={
         "family_alias": alias, "pledge_id": pledge_id, "response": "confirmed",
     }).json()
@@ -159,6 +161,7 @@ def test_saying_it_does_not_work_hands_it_to_a_coordinator(client):
     alias = granted["wish"]["family_alias"]
     pledge_id = granted["pledge"]["id"]
 
+    sign_in(client, alias)
     body = client.post("/api/families/deliveries/respond", json={
         "family_alias": alias, "pledge_id": pledge_id, "response": "needs_reschedule",
     }).json()
@@ -176,8 +179,10 @@ def test_saying_it_does_not_work_hands_it_to_a_coordinator(client):
 
 def test_one_family_cannot_answer_for_another(client):
     granted = _grant_first_open(client)
-    other = "Neighbor A19" if granted["wish"]["family_alias"] != "Neighbor A19" else "Neighbor A04"
+    mine = granted["wish"]["family_alias"]
+    other = "Neighbor A19" if mine != "Neighbor A19" else "Neighbor A04"
 
+    sign_in(client, mine)
     response = client.post("/api/families/deliveries/respond", json={
         "family_alias": other, "pledge_id": granted["pledge"]["id"], "response": "confirmed",
     })
@@ -186,6 +191,7 @@ def test_one_family_cannot_answer_for_another(client):
 
 def test_pending_is_not_an_answer(client):
     granted = _grant_first_open(client)
+    sign_in(client, granted["wish"]["family_alias"])
     response = client.post("/api/families/deliveries/respond", json={
         "family_alias": granted["wish"]["family_alias"],
         "pledge_id": granted["pledge"]["id"], "response": "pending",
@@ -256,10 +262,8 @@ def test_several_wishes_for_one_family_are_one_delivery_row(client):
         extra.id = db.insert_request(extra, conn)
         conn.commit()
 
-    first = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wishes[0]["id"]}).json()
-    second = client.post("/api/grant", json={
-        "donor_alias": "Granter D04", "request_id": extra.id}).json()
+    first = grant_as(client, "Granter D01", wishes[0]["id"]).json()
+    second = grant_as(client, "Granter D04", extra.id).json()
 
     sheet = client.get("/api/coordinator/run-sheet", headers=_token(client)).json()
     rows = [d for d in sheet["deliveries"] if d["family_alias"] == alias]
@@ -279,6 +283,7 @@ def test_the_sheet_counts_what_is_waiting_on_a_family(client):
     before = client.get("/api/coordinator/run-sheet", headers=headers).json()
     assert before["counts"]["awaiting_confirmation"] >= 1
 
+    sign_in(client, granted["wish"]["family_alias"])
     client.post("/api/families/deliveries/respond", json={
         "family_alias": granted["wish"]["family_alias"],
         "pledge_id": granted["pledge"]["id"], "response": "needs_reschedule",
@@ -336,9 +341,7 @@ def test_a_reopened_wish_can_be_granted_by_someone_else(client):
     client.post("/api/coordinator/pledge-status", headers=_token(client), json={
         "pledge_ids": [granted["pledge"]["id"]], "status": "missed",
     })
-    again = client.post("/api/grant", json={
-        "donor_alias": "Granter D02", "request_id": granted["wish"]["id"],
-    })
+    again = grant_as(client, "Granter D02", granted["wish"]["id"])
     assert again.status_code == 200
     assert again.json()["granted"] is True
 
@@ -347,9 +350,7 @@ def test_one_click_can_move_a_whole_delivery(client):
     wishes = client.get("/api/wishes").json()["wishes"][:2]
     ids = []
     for wish, donor in zip(wishes, ["Granter D01", "Granter D04"]):
-        body = client.post("/api/grant", json={
-            "donor_alias": donor, "request_id": wish["id"],
-        }).json()
+        body = grant_as(client, donor, wish["id"]).json()
         ids.append(body["pledge"]["id"])
 
     client.post("/api/coordinator/pledge-status", headers=_token(client), json={
@@ -385,16 +386,17 @@ def test_a_full_week_several_grants_one_missed_and_deliveries_done(client):
 
     granted = []
     for wish, donor in zip(wishes, donors):
-        granted.append(client.post("/api/grant", json={
-            "donor_alias": donor, "request_id": wish["id"],
-        }).json())
+        granted.append(grant_as(client, donor, wish["id"]).json())
 
-    # Every family confirms except one, who cannot make it.
+    # Every family confirms except one, who cannot make it. Each answers for
+    # itself now, so each one signs in.
     for item in granted[:-1]:
+        sign_in(client, item["wish"]["family_alias"])
         client.post("/api/families/deliveries/respond", json={
             "family_alias": item["wish"]["family_alias"],
             "pledge_id": item["pledge"]["id"], "response": "confirmed",
         })
+    sign_in(client, granted[-1]["wish"]["family_alias"])
     client.post("/api/families/deliveries/respond", json={
         "family_alias": granted[-1]["wish"]["family_alias"],
         "pledge_id": granted[-1]["pledge"]["id"], "response": "needs_reschedule",
@@ -447,5 +449,6 @@ def test_a_missed_wish_is_not_on_the_family_s_coming_to_you_list(client):
     client.post("/api/coordinator/pledge-status", headers=_token(client),
                 json={"pledge_ids": [granted["pledge"]["id"]], "status": "missed"})
 
+    sign_in(client, alias)
     deliveries = client.get(f"/api/families/{alias}/deliveries").json()["deliveries"]
     assert granted["pledge"]["id"] not in [d["pledge_id"] for d in deliveries]

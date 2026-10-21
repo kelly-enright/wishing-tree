@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import {
   CATEGORY_LABELS, OCCASION_LABELS, getWishes, requestMatches,
   type Category, type GrantResponse, type Match, type Occasion,
@@ -15,7 +14,9 @@ import WishTree from '../components/WishTree'
 import Monty, { MontySays } from '../components/Monty'
 import GrantConfirm from './GrantConfirm'
 import MyGranted from './MyGranted'
-import { clearSession, getSession } from '../session'
+import { useSession } from '../session'
+import NeedsSignIn, { PageLoading } from '../components/NeedsSignIn'
+import { signOut, switchSide } from '../auth'
 import { MapLink } from '../components/ItemLink'
 import { longDay, when } from '../dates'
 import TopBar from '../components/TopBar'
@@ -35,7 +36,7 @@ function mapsUrl(address: string): string {
 
 export default function Donor() {
   usePageTitle('The Wish Tree')
-  const session = getSession()
+  const { session, me, loading } = useSession()
   const toast = useToast()
   const [filters, setFilters] = useState<WallFilters>(EMPTY)
   const [wishes, setWishes] = useState<Wish[]>([])
@@ -71,16 +72,9 @@ export default function Donor() {
 
   useEffect(() => { loadWall(EMPTY) }, [])
 
+  if (loading) return <PageLoading />
   if (!session || session.role !== 'donor') {
-    return (
-      <main className="page">
-        <TopBar />
-        <h1 className="page__title">Sign in first</h1>
-        <p className="page__blurb">
-          <Link to="/donor/signup">Create an account</Link> to browse and grant wishes.
-        </p>
-      </main>
-    )
+    return <NeedsSignIn want="donor" />
   }
 
   function update(patch: Partial<WallFilters>) {
@@ -206,8 +200,8 @@ export default function Donor() {
   return (
     <main className="page page--wide">
       <TopBar
-        links={nav} alias={session.alias}
-        onSwitch={() => { clearSession(); window.location.assign('/') }}
+        links={nav} alias={session.alias} me={me}
+        onSwitch={signOut} onSwitchSide={switchSide}
       />
 
       {tab === 'mine' && <MyGranted alias={session.alias} />}

@@ -52,6 +52,46 @@ CREATE TABLE IF NOT EXISTS donors (
     created_at           TEXT    NOT NULL
 );
 
+-- Accounts.
+--
+-- Keyed on email rather than on a family or donor row, because one person may
+-- be both: a neighbor who asks in March and gives in December is the whole
+-- point of a tree that stays up all year. The roles an account has are found
+-- by matching this email against families.contact_email and
+-- donors.contact_email, so there is no second place for them to disagree.
+--
+-- `password_hash` is a bcrypt hash and nothing else is ever stored. There is
+-- no column anywhere in this schema that could hold a readable password.
+CREATE TABLE IF NOT EXISTS accounts (
+    email         TEXT    PRIMARY KEY,
+    password_hash TEXT    NOT NULL,
+    created_at    TEXT    NOT NULL
+);
+
+-- Sessions live here rather than in memory so a server restart does not sign
+-- everyone out mid-demo. Only the hash of the cookie's token is stored: a
+-- stolen copy of this table cannot be replayed as a login.
+CREATE TABLE IF NOT EXISTS sessions (
+    token_hash TEXT    PRIMARY KEY,
+    email      TEXT    NOT NULL REFERENCES accounts(email),
+    role       TEXT,                       -- null until a side is chosen
+    alias      TEXT,
+    created_at TEXT    NOT NULL,
+    expires_at TEXT    NOT NULL
+);
+
+-- One-time codes for a password reset. No email is sent anywhere: a
+-- coordinator reads the code out, and the person sets their own password with
+-- it. Hashed for the same reason as a session token, single use, and short
+-- lived, because a code that opens an account is a password with a timer.
+CREATE TABLE IF NOT EXISTS password_resets (
+    code_hash  TEXT    PRIMARY KEY,
+    email      TEXT    NOT NULL,
+    created_at TEXT    NOT NULL,
+    expires_at TEXT    NOT NULL,
+    used_at    TEXT
+);
+
 CREATE TABLE IF NOT EXISTS requests (
     id                 INTEGER PRIMARY KEY AUTOINCREMENT,
     family_alias       TEXT    NOT NULL REFERENCES families(alias),
@@ -528,15 +568,25 @@ def list_open_wishes(
     request_type: str | None = None,
     occasion: str | None = None,
     limit: int | None = None,
+    exclude_family_aliases: list[str] | None = None,
 ) -> list[Request]:
     """Open wishes, soonest deadline first, then longest waiting.
 
     Wishes with no deadline sort after those with one. A wish without a date is
     not urgent and must not be treated as if it were.
+
+    `exclude_family_aliases` keeps a person's own wishes off their tree. One
+    email may hold both a neighbor and a wish granter account, and granting
+    your own wish would route a delivery from you to you — not fraud so much
+    as nonsense, and it would quietly inflate the number on the landing page.
     """
     clauses = ["status = ?"]
     params: list = [RequestStatus.OPEN.value]
 
+    if exclude_family_aliases:
+        clauses.append(
+            f"family_alias NOT IN ({','.join('?' for _ in exclude_family_aliases)})")
+        params.extend(exclude_family_aliases)
     if zip_code:
         clauses.append("zip = ?")
         params.append(zip_code)

@@ -8,6 +8,8 @@ coordinator's activity feed.
 """
 
 import pytest
+
+from helpers import sign_in
 from fastapi.testclient import TestClient
 
 from backend import config, coordinator_auth, db, main, safety_checks, seed
@@ -316,7 +318,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "AUDIT_PATH", tmp_path / "audit_trail.json")
     seed.seed(config.DB_PATH)
     coordinator_auth.clear()
-    return TestClient(main.app)
+    return sign_in(TestClient(main.app), 'Neighbor A04')
 
 
 def _token(client) -> str:

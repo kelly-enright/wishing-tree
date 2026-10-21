@@ -24,7 +24,7 @@ import argparse
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
-from backend import config, db
+from backend import accounts, config, db
 from backend.models import (
     Category,
     Donor,
@@ -474,6 +474,15 @@ def seed(db_path: Path | None = None, today: date | None = None) -> dict[str, in
         for row in DONORS:
             db.insert_donor(Donor(region_slug=region.slug, **row), conn)
             donor_aliases.append(row["alias"])
+
+        # One account per seeded email, all sharing the demo password. They
+        # are real accounts with real bcrypt hashes — "Continue as…" logs in
+        # the ordinary way rather than going around the login it demonstrates.
+        emails = {e.lower() for _a, _z, _addr, e, _p in FAMILIES}
+        emails |= {row["contact_email"].lower() for row in DONORS}
+        for email in sorted(emails):
+            if not accounts.account_exists(conn, email):
+                accounts.create_account(conn, email, config.DEMO_PASSWORD)
 
         # A pledge exists for every wish a donor has already claimed, so the
         # coordinator's run sheet has something real to show.

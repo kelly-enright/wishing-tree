@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import {
   approveIntake, sendIntakeMessage, startIntake,
   type DraftWish, type Usage, type WishOutcome,
@@ -21,7 +20,9 @@ function scrollTo(id: string) {
 import Monty from '../components/Monty'
 import Thinking from '../components/Thinking'
 import TokenPanel from '../components/TokenPanel'
-import { clearSession, getSession } from '../session'
+import { useSession } from '../session'
+import NeedsSignIn, { PageLoading } from '../components/NeedsSignIn'
+import { signOut, switchSide } from '../auth'
 import MyWishes from './MyWishes'
 import WishReview from './WishReview'
 import usePageTitle from '../usePageTitle'
@@ -30,7 +31,7 @@ type Bubble = { who: 'family' | 'agent'; text: string }
 
 export default function Intake() {
   usePageTitle('Make a wish')
-  const session = getSession()
+  const { session, me, loading } = useSession()
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [bubbles, setBubbles] = useState<Bubble[]>([])
   const [drafts, setDrafts] = useState<DraftWish[]>([])
@@ -64,16 +65,9 @@ export default function Intake() {
     transcript.current?.scrollTo({ top: transcript.current.scrollHeight, behavior: 'smooth' })
   }, [bubbles, busy])
 
+  if (loading) return <PageLoading />
   if (!session || session.role !== 'family') {
-    return (
-      <main className="page">
-        <TopBar />
-        <h1 className="page__title">Sign in first</h1>
-        <p className="page__blurb">
-          <Link to="/family/signup">Make a wish</Link> to get started.
-        </p>
-      </main>
-    )
+    return <NeedsSignIn want="family" />
   }
 
   async function send(event: React.FormEvent) {
@@ -140,8 +134,8 @@ export default function Intake() {
           { label: 'About', short: 'About',
             icon: <Info size={17} aria-hidden="true" />, to: '/about' },
         ]}
-        alias={session.alias}
-        onSwitch={() => { clearSession(); window.location.assign('/') }}
+        alias={session.alias} me={me}
+        onSwitch={signOut} onSwitchSide={switchSide}
       />
 
       <MyWishes alias={session.alias} />

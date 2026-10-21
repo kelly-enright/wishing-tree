@@ -18,16 +18,17 @@ from pathlib import Path
 import secrets
 from datetime import datetime, timedelta, timezone
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Response
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from backend import config, db, safety_checks, seed
+from backend import accounts, config, db, safety_checks, seed
 from backend.agents import budget as budget_module
 from backend.coordinator_api import router as coordinator_router
 from backend.coordinator_auth import issue_token, require_coordinator
 from backend.donor_api import router as donor_router
 from backend.family_api import router as family_router
+from backend.auth_api import router as auth_router
 from backend.intake_api import router as intake_router
 from backend.models import (
     AccountSummary,
@@ -50,6 +51,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Wishing Tree", version="0.1.0", lifespan=lifespan)
+app.include_router(auth_router)
 app.include_router(intake_router)
 app.include_router(donor_router)
 app.include_router(family_router)
@@ -180,8 +182,38 @@ def service_area(zip: str | None = None) -> dict:
     }
 
 
+def _set_session_cookie(response: Response, token: str) -> None:
+    response.set_cookie(
+        accounts.COOKIE_NAME, token, httponly=True, samesite="lax",
+        secure=config.COOKIE_SECURE,
+        max_age=int(accounts.SESSION_TTL.total_seconds()), path="/",
+    )
+
+
+def _account_and_session(conn, email: str, password: str,
+                         role: str, alias: str) -> str:
+    """Make or reuse the account behind a sign-up, and sign the person in.
+
+    Reuse matters: one email may be both a neighbor and a wish granter, and
+    the second sign-up must not overwrite the password set by the first. If
+    the account already exists the password typed here is checked against it
+    rather than replacing it — otherwise anyone who knew an email could reset
+    a stranger's password by signing up as the other role.
+    """
+    if accounts.account_exists(conn, email):
+        if not accounts.check_login(conn, email, password):
+            raise HTTPException(
+                status_code=409,
+                detail=("That email already has a Wishing Tree account. "
+                        "Use the same password to add this side to it, or log in."),
+            )
+    else:
+        accounts.create_account(conn, email, password)
+    return accounts.start_session(conn, email, role=role, alias=alias)
+
+
 @app.post("/api/families", status_code=201)
-def create_family(form: FamilySignUp) -> dict:
+def create_family(form: FamilySignUp, response: Response) -> dict:
     _check_region(form.zip)
     email = _check_email(form.contact_email)
     region = config.region_for_zip(form.zip)
@@ -195,12 +227,14 @@ def create_family(form: FamilySignUp) -> dict:
             contact_phone=form.contact_phone or None,
         )
         db.insert_family(family, conn)
+        token = _account_and_session(conn, email, form.password, "family", family.alias)
         conn.commit()
+    _set_session_cookie(response, token)
     return {"role": "family", **family.public_view()}
 
 
 @app.post("/api/donors", status_code=201)
-def create_donor(form: DonorSignUp) -> dict:
+def create_donor(form: DonorSignUp, response: Response) -> dict:
     _check_region(form.zip)
     email = _check_email(form.contact_email)
     region = config.region_for_zip(form.zip)
@@ -217,7 +251,9 @@ def create_donor(form: DonorSignUp) -> dict:
             preference=form.preference,
         )
         db.insert_donor(donor, conn)
+        token = _account_and_session(conn, email, form.password, "donor", donor.alias)
         conn.commit()
+    _set_session_cookie(response, token)
     return {"role": "donor", **donor.public_view()}
 
 

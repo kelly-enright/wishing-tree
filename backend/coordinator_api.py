@@ -15,7 +15,7 @@ from datetime import date, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from backend import config, db, text
+from backend import accounts, config, db, text
 from backend.coordinator_auth import require_coordinator
 from backend.models import Category, PledgeStatus
 
@@ -191,4 +191,45 @@ def update_status(body: StatusClick) -> dict:
             f"tree for another neighbor."
             if reopened else ""
         ),
+    }
+
+
+class ResetRequest(BaseModel):
+    alias: str
+
+
+@router.post("/reset-password")
+def reset_password(body: ResetRequest) -> dict:
+    """Issue a one-time code so somebody can set a new password.
+
+    No email is sent, because Wishing Tree sends none: a coordinator reads
+    the code out, or hands it over on delivery day. Staff never see or choose
+    the password itself — the code only buys the chance to set one, it expires
+    within the hour, and it works once.
+    """
+    alias = body.alias.strip()
+    with db.connect() as conn:
+        table = "families" if alias.startswith("Neighbor") else "donors"
+        row = conn.execute(
+            f"SELECT contact_email FROM {table} WHERE alias = ?", (alias,)
+        ).fetchone()
+        if row is None:
+            raise HTTPException(
+                status_code=404, detail=f"We couldn't find a neighbor with the alias {alias!r}.")
+        email = row["contact_email"].lower()
+        if not accounts.account_exists(conn, email):
+            raise HTTPException(
+                status_code=409,
+                detail=f"{alias} has no login yet, so there is no password to reset.",
+            )
+        code = accounts.issue_reset_code(conn, email)
+        conn.commit()
+
+    return {
+        "alias": alias,
+        "code": code,
+        "expires_in_minutes": int(accounts.RESET_TTL.total_seconds() // 60),
+        "how": ("Read this code out to them. They go to Log in, choose "
+                "“Forgot your password?”, and set a new one with it. "
+                "It works once and expires within the hour."),
     }

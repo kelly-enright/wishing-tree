@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getStats, listAccounts, type Account, type Stats } from '../api'
+import {
+  demoLogIn, getStats, listAccounts,
+  type Account, type Stats, userMessage,
+} from '../api'
 import Logo from '../components/Logo'
 import Monty from '../components/Monty'
+import TopBar from '../components/TopBar'
+import Footer from '../components/Footer'
 import { ServiceNotice } from '../components/ServiceArea'
-import { clearSession, getSession, homePath, setSession } from '../session'
-
-type Health = {
-  region: { name: string; hub_name: string; dropoff_window: string; delivery_window: string }
-}
+import { homePath, setMe, useSession } from '../session'
+import { signOut, switchSide } from '../auth'
 
 // Two doors, because almost everyone arriving is here for one of them.
 // Admin is a handful of staff and lives in the footer, where it is still one
@@ -29,39 +31,50 @@ const ROLES = [
 ]
 
 export default function Landing() {
-  const [health, setHealth] = useState<Health | null>(null)
   const [stats, setStats] = useState<Stats | null>(null)
   const [accounts, setAccounts] = useState<{ families: Account[]; donors: Account[] } | null>(null)
   const [showAccounts, setShowAccounts] = useState(false)
-  const [session, setLocalSession] = useState(getSession())
+  const { session, me } = useSession()
+  const [demoError, setDemoError] = useState<string | null>(null)
   const navigate = useNavigate()
 
   useEffect(() => { getStats().then(setStats).catch(() => setStats(null)) }, [])
 
-  useEffect(() => {
-    fetch('/api/health')
-      .then((r) => (r.ok ? r.json() : null))
-      .then(setHealth)
-      .catch(() => setHealth(null))
-  }, [])
 
   useEffect(() => {
     if (!showAccounts || accounts) return
     listAccounts().then(setAccounts).catch(() => setAccounts({ families: [], donors: [] }))
   }, [showAccounts, accounts])
 
-  function continueAs(account: Account) {
-    setSession({ role: account.role, alias: account.alias, zip: account.zip })
-    navigate(homePath(account.role))
-  }
-
-  function signOut() {
-    clearSession()
-    setLocalSession(null)
+  /**
+   * The demo shortcut, which now logs in for real.
+   *
+   * Every seeded account has a published password, so this goes through the
+   * same login as anyone else rather than round the back of it. That keeps
+   * the shortcut honest: what it demonstrates is the app, not a bypass.
+   */
+  async function continueAs(account: Account) {
+    setDemoError(null)
+    try {
+      const signedIn = await demoLogIn(account.alias)
+      setMe(signedIn)
+      if (signedIn.must_choose) {
+        await switchSide(account.role)
+      } else {
+        navigate(homePath(account.role))
+      }
+    } catch (err) {
+      setDemoError(userMessage(err, 'That demo account could not be opened.'))
+    }
   }
 
   return (
     <main className="landing">
+      <TopBar
+        alias={session?.alias} me={me}
+        onSwitch={signOut} onSwitchSide={switchSide}
+      />
+
       <header className="hero">
         <div className="hero__logo"><Logo plain size={52} /></div>
         <p className="hero__tagline">Grant a neighbor's wish, any time of year</p>
@@ -137,6 +150,8 @@ export default function Landing() {
           </button>
         </div>
 
+        {demoError && <p className="form__error" role="alert">{demoError}</p>}
+
         {showAccounts && (
           <div className="accounts">
             {!accounts && <p className="accounts__loading">Loading accounts…</p>}
@@ -183,22 +198,7 @@ export default function Landing() {
         )}
       </section>
 
-      {health && (
-        <footer className="footer">
-          <p>
-            <strong>{health.region.name}</strong> · Drop-off at {health.region.hub_name},{' '}
-            {health.region.dropoff_window} · Delivery {health.region.delivery_window}
-          </p>
-          <p className="footer__note">
-            No cash ever changes hands between neighbors. Rent and utilities are paid
-            straight to the landlord or provider.
-          </p>
-          <p className="footer__links">
-            <Link to="/about">About Wishing Tree</Link>
-            <Link to="/coordinator">Admin</Link>
-          </p>
-        </footer>
-      )}
+      <Footer />
     </main>
   )
 }

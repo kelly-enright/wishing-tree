@@ -1178,7 +1178,7 @@ Agents arrive in later problems; these are the ones already standing.
 
 ## 25. Tests
 
-`./.venv/bin/python -m pytest` — **296 passing**, in under two seconds, every agent stubbed.
+`./.venv/bin/python -m pytest` — **352 passing**, in under two seconds, every agent stubbed.
 
 `./.venv/bin/python -m pytest -m live` — **10 more** against the real model, excluded by default because they spend tokens. Every agent is stubbed, so the suite is free to run.
 
@@ -1513,3 +1513,109 @@ the neighbor, which is exactly the distinction section 28 drew.
 | New components | TopBar, Toast, Collapsible, Skeleton |
 | Agent prompts changed | none |
 | Features changed | none |
+
+## 30. Accounts and navigation
+
+Before this, signing in was a line in `localStorage`. Anyone could type an
+alias into it and the API believed them: `/api/families/Neighbor A07/wishes`
+returned A07's wishes to whoever asked. That was fine while the app was a
+demo of a flow and indefensible once it holds anybody's real wishes.
+
+### What is stored
+
+A **bcrypt hash**, and nothing else. There is no column in the schema that
+could hold a readable password, and a test dumps every table to prove no
+password string survives anywhere in the database. Hashes are salted, so two
+accounts with the same password share nothing on disk.
+
+Two more things are hashed rather than stored: the **session token** and the
+**reset code**. Both are credentials, and someone who reads those tables
+cannot replay what they find. The session cookie is `HttpOnly` (so an
+injected script cannot read it), `SameSite=lax` (so another site's form
+cannot send it), and `Secure` whenever `WISHINGTREE_HTTPS` is set — off for
+local http, where a secure cookie would simply never arrive.
+
+bcrypt's work factor is the point of bcrypt, so `config.BCRYPT_ROUNDS` stays
+at 12. The test suite lowers it to 4, and `tests/conftest.py` explains why
+that is safe: nothing in the suite is a real credential. Without it, seeding
+23 accounts at cost 12 added about five seconds to every one of 350 tests.
+
+### One email, two sides
+
+Kelly signed up as both a neighbor and a wish granter with one address while
+testing, which settled the design question: an account is keyed on **email**,
+and its roles are whichever of `families` and `donors` that address matches.
+Logging in with an address that has both shows *Which side are you here for?*,
+and the account menu then offers *Switch to…*.
+
+A second sign-up on an existing email must supply that account's password.
+Otherwise knowing somebody's address would be enough to take over their
+account by signing up as the other role.
+
+### Nobody grants their own wish
+
+Kelly's addition, and the reason the two-sided account needed one. A person's
+own wishes are excluded from their tree and from the Matchmaker's candidates
+(`db.list_open_wishes(exclude_family_aliases=…)`), and `POST /api/grant`
+refuses outright — the tree hiding it is the kind part, the endpoint check is
+what holds if the API is called directly. The wish is hidden from its author,
+not withdrawn: everyone else still sees it.
+
+### An alias in a URL is a route now, not a key
+
+Every per-account endpoint takes `Depends(accounts.require(role))` and calls
+`accounts.owns(session, alias)`. A consequence worth naming: asking for an
+alias that does not exist and asking for one that belongs to somebody else
+now give **the same 403 with the same wording**, so the endpoints cannot be
+used to find out who has an account. Three tests that expected 404 were
+rewritten to assert that sameness instead.
+
+### Resetting a password
+
+No email is sent, because Wishing Tree sends none. A coordinator clicks
+**Reset password** beside a person on the run sheet and gets a one-time code
+to read out; the person sets their own password with it. Staff never see or
+choose a password. The code is hashed, single-use, expires within the hour,
+and spending it ends every session on that account — a reset is also what you
+do when you think somebody else is in there.
+
+### "Continue as…" still works, and cannot become a back door
+
+The demo shortcut logs in **properly** now, through a session like anyone
+else, rather than going around the login it demonstrates. `POST /api/auth/demo`
+resolves the alias on the server, so the demo list stays alias-only and no
+email reaches the browser. The guard: it works only while that account still
+has the published demo password. The moment somebody sets their own, the
+shortcut refuses — so it can never be used to walk into a real account.
+
+### Navigation
+
+No page is a dead end. Every page draws the bar, including the landing page,
+About, the sign-up forms (through `FormShell`), and the 404. Signed out it
+offers How it works, About, Log in and Create account; signed in it shows the
+role's links and the account menu. A test walks every file in `pages/` and
+fails if one has no bar, or still uses the old bare header.
+
+**How it works** needed a page — the brief put it in the nav, but it was a box
+inside two signed-in screens. `/how-it-works` shows both sides, built from
+those same two components, so there is one explanation of each side rather
+than two that can drift.
+
+The footer is one component used everywhere, rather than a copy per page.
+About gained a Back link that knows where you came from.
+
+### A bug found on the way
+
+`days_waiting()` compared a UTC `created_at` against a local `date.today()`,
+so after about 8pm in New Haven every freshly seeded wish reported **-1 days
+waiting** — a number handed to the Matchmaker as a fairness input. Both sides
+are read in UTC now and the result is floored at zero. Nothing to do with
+accounts; the suite only caught it because this work was done in the evening.
+
+| | |
+|---|---|
+| Tests | 352 passing, 10 deselected |
+| New test files | `test_accounts.py` (41) |
+| New dependency | `bcrypt>=4.1.0` |
+| Agent prompts changed | none |
+| Demo password | `neighbor-demo`, for seeded accounts only |

@@ -3,6 +3,8 @@
 from datetime import date, timedelta
 
 import pytest
+
+from helpers import grant_as, sign_in
 from fastapi.testclient import TestClient
 
 from backend import badges, config, coordinator_auth, db, main, seed
@@ -24,7 +26,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "AUDIT_PATH", tmp_path / "audit_trail.json")
     seed.seed(config.DB_PATH)
     coordinator_auth.clear()
-    return TestClient(main.app)
+    return sign_in(TestClient(main.app), 'Granter D01')
 
 
 def _token(client) -> dict:
@@ -124,6 +126,7 @@ def test_a_flexible_wish_says_what_matters(client):
 
 def test_a_rent_wish_confirms_the_amount_and_who_pays(client):
     rent = _first_open(client, "rent_utilities")
+    sign_in(client, "Granter D06")
     body = client.get(
         f"/api/grant/options?request_id={rent['id']}&donor_alias=Granter D06"
     ).json()
@@ -170,7 +173,8 @@ def test_a_dropoff_day_we_do_not_run_is_refused(client):
 
 def test_options_refuse_a_wish_someone_else_took(client):
     wish = _first_open(client)
-    client.post("/api/grant", json={"donor_alias": "Granter D02", "request_id": wish["id"]})
+    grant_as(client, "Granter D02", wish["id"])
+    sign_in(client, "Granter D01")
     response = client.get(
         f"/api/grant/options?request_id={wish['id']}&donor_alias=Granter D01"
     )
@@ -183,7 +187,7 @@ def test_options_refuse_a_wish_someone_else_took(client):
 
 def test_granted_list_has_friendly_statuses_and_no_family_details(client):
     wish = _first_open(client)
-    client.post("/api/grant", json={"donor_alias": "Granter D01", "request_id": wish["id"]})
+    grant_as(client, "Granter D01", wish["id"])
 
     body = client.get("/api/donors/Granter D01/granted").json()
     assert body["granted"]
@@ -204,7 +208,7 @@ def test_granted_list_has_friendly_statuses_and_no_family_details(client):
 
 def test_a_rent_pledge_reads_differently(client):
     rent = _first_open(client, "rent_utilities")
-    client.post("/api/grant", json={"donor_alias": "Granter D06", "request_id": rent["id"]})
+    grant_as(client, "Granter D06", rent["id"])
     body = client.get("/api/donors/Granter D06/granted").json()
     row = [r for r in body["granted"] if r["wish"]["id"] == rent["id"]][0]
     assert row["label"] == "We'll email you how to pay"
@@ -212,7 +216,7 @@ def test_a_rent_pledge_reads_differently(client):
 
 def test_a_dropoff_this_week_shows_in_the_banner(client):
     wish = _first_open(client)
-    client.post("/api/grant", json={"donor_alias": "Granter D01", "request_id": wish["id"]})
+    grant_as(client, "Granter D01", wish["id"])
     body = client.get("/api/donors/Granter D01/granted").json()
     assert body["this_week"], "expected the coming drop-off in the banner"
 
@@ -223,9 +227,7 @@ def test_a_dropoff_this_week_shows_in_the_banner(client):
 
 def test_releasing_puts_the_wish_straight_back(client):
     wish = _first_open(client)
-    granted = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()
+    granted = grant_as(client, "Granter D01", wish["id"]).json()
     pledge_id = granted["pledge"]["id"]
 
     body = client.post(f"/api/pledges/{pledge_id}/release?donor_alias=Granter D01").json()
@@ -237,9 +239,7 @@ def test_releasing_puts_the_wish_straight_back(client):
 def test_a_release_is_not_a_missed_dropoff(client):
     """Someone who tells you in advance has done the right thing."""
     wish = _first_open(client)
-    granted = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()
+    granted = grant_as(client, "Granter D01", wish["id"]).json()
     client.post(f"/api/pledges/{granted['pledge']['id']}/release?donor_alias=Granter D01")
 
     with db.connect(config.DB_PATH) as conn:
@@ -254,9 +254,7 @@ def test_a_release_is_not_a_missed_dropoff(client):
 
 def test_a_released_wish_leaves_the_delivery_round(client):
     wish = _first_open(client)
-    granted = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()
+    granted = grant_as(client, "Granter D01", wish["id"]).json()
     client.post(f"/api/pledges/{granted['pledge']['id']}/release?donor_alias=Granter D01")
 
     sheet = client.get("/api/coordinator/run-sheet", headers=_token(client)).json()
@@ -267,11 +265,10 @@ def test_a_released_wish_leaves_the_delivery_round(client):
 def test_the_family_is_not_told_why_a_wish_came_back(client):
     """Only 'Still looking for the right neighbor.'"""
     wish = _first_open(client)
-    granted = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()
+    granted = grant_as(client, "Granter D01", wish["id"]).json()
     client.post(f"/api/pledges/{granted['pledge']['id']}/release?donor_alias=Granter D01")
 
+    sign_in(client, wish["family_alias"])
     rows = client.get(f"/api/families/{wish['family_alias']}/wishes").json()["wishes"]
     row = [r for r in rows if r["wish"]["id"] == wish["id"]][0]
     assert row["detail"] == "Still looking for the right neighbor."
@@ -281,9 +278,7 @@ def test_the_family_is_not_told_why_a_wish_came_back(client):
 
 def test_only_the_donor_who_granted_it_can_release_it(client):
     wish = _first_open(client)
-    granted = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()
+    granted = grant_as(client, "Granter D01", wish["id"]).json()
     response = client.post(
         f"/api/pledges/{granted['pledge']['id']}/release?donor_alias=Granter D02"
     )
@@ -292,9 +287,7 @@ def test_only_the_donor_who_granted_it_can_release_it(client):
 
 def test_releasing_twice_is_refused(client):
     wish = _first_open(client)
-    granted = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()
+    granted = grant_as(client, "Granter D01", wish["id"]).json()
     url = f"/api/pledges/{granted['pledge']['id']}/release?donor_alias=Granter D01"
     assert client.post(url).status_code == 200
     assert client.post(url).status_code == 409
@@ -306,9 +299,7 @@ def test_releasing_twice_is_refused(client):
 
 def test_the_calendar_file_is_a_real_ics(client):
     wish = _first_open(client)
-    granted = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()
+    granted = grant_as(client, "Granter D01", wish["id"]).json()
     pledge_id = granted["pledge"]["id"]
 
     response = client.get(f"/api/pledges/{pledge_id}/calendar.ics?donor_alias=Granter D01")
@@ -330,9 +321,7 @@ def test_the_calendar_file_is_a_real_ics(client):
 
 def test_the_calendar_file_carries_no_family_details(client):
     wish = _first_open(client)
-    granted = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()
+    granted = grant_as(client, "Granter D01", wish["id"]).json()
     body = client.get(
         f"/api/pledges/{granted['pledge']['id']}/calendar.ics?donor_alias=Granter D01"
     ).text
@@ -346,9 +335,7 @@ def test_the_calendar_file_carries_no_family_details(client):
 
 def test_someone_elses_calendar_is_refused(client):
     wish = _first_open(client)
-    granted = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()
+    granted = grant_as(client, "Granter D01", wish["id"]).json()
     response = client.get(
         f"/api/pledges/{granted['pledge']['id']}/calendar.ics?donor_alias=Granter D02"
     )
@@ -385,9 +372,7 @@ def test_a_claimed_wish_is_not_gold_until_it_arrives(client):
     """Gold means granted, and granted means the neighbor has it. A wish
     someone has claimed is a promise made, not a promise kept."""
     wish = client.get("/api/wishes").json()["wishes"][0]
-    granted = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()
+    granted = grant_as(client, "Granter D01", wish["id"]).json()
 
     after = client.get("/api/wishes").json()
     assert wish["id"] not in {w["id"] for w in after["wishes"]}      # off the tree
@@ -412,9 +397,7 @@ def test_old_grants_fall_off_the_tree(client):
     returns nothing.
     """
     wish = client.get("/api/wishes").json()["wishes"][0]
-    granted = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()
+    granted = grant_as(client, "Granter D01", wish["id"]).json()
     pledge_id = granted["pledge"]["id"]
     _deliver(client, pledge_id, "delivered")
 
@@ -431,9 +414,7 @@ def test_old_grants_fall_off_the_tree(client):
 
 def test_a_released_wish_is_not_a_gold_leaf(client):
     wish = client.get("/api/wishes").json()["wishes"][0]
-    granted = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()
+    granted = grant_as(client, "Granter D01", wish["id"]).json()
     client.post(f"/api/pledges/{granted['pledge']['id']}/release?donor_alias=Granter D01")
 
     after = client.get("/api/wishes").json()
@@ -451,9 +432,7 @@ def _granted_rows(client, alias="Granter D01"):
 
 def test_a_wish_walks_the_three_stages(client):
     wish = _first_open(client)
-    pledge = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()["pledge"]["id"]
+    pledge = grant_as(client, "Granter D01", wish["id"]).json()["pledge"]["id"]
 
     def row():
         body = _granted_rows(client)
@@ -475,9 +454,7 @@ def test_rent_never_says_drop_off(client):
     """Nobody carries a rent payment to the hub, so nothing says they did."""
     rent = next(w for w in client.get("/api/wishes").json()["wishes"]
                 if w["category"] == "rent_utilities")
-    pledge = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": rent["id"],
-    }).json()["pledge"]["id"]
+    pledge = grant_as(client, "Granter D01", rent["id"]).json()["pledge"]["id"]
 
     def row():
         return next(r for r in _granted_rows(client)["granted"]
@@ -496,9 +473,7 @@ def test_rent_never_says_drop_off(client):
 
 def test_coming_up_holds_what_has_not_arrived_yet(client):
     wish = _first_open(client)
-    pledge = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()["pledge"]["id"]
+    pledge = grant_as(client, "Granter D01", wish["id"]).json()["pledge"]["id"]
 
     body = _granted_rows(client)
     assert pledge in {r["pledge_id"] for r in body["coming_up"]}
@@ -512,9 +487,7 @@ def test_coming_up_holds_what_has_not_arrived_yet(client):
 
 def test_a_released_wish_leaves_the_granters_page(client):
     wish = _first_open(client)
-    pledge = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()["pledge"]["id"]
+    pledge = grant_as(client, "Granter D01", wish["id"]).json()["pledge"]["id"]
     client.post(f"/api/pledges/{pledge}/release?donor_alias=Granter D01")
 
     body = _granted_rows(client)
@@ -527,9 +500,7 @@ def test_a_missed_dropoff_leaves_the_granters_page_too(client):
     """It is back on the tree for someone else. Showing it here would only
     be a reminder of something they did not do."""
     wish = _first_open(client)
-    pledge = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()["pledge"]["id"]
+    pledge = grant_as(client, "Granter D01", wish["id"]).json()["pledge"]["id"]
     _deliver(client, pledge, "missed")
 
     body = _granted_rows(client)
@@ -539,9 +510,7 @@ def test_a_missed_dropoff_leaves_the_granters_page_too(client):
 
 def test_the_hub_address_is_linked_to_a_map(client):
     wish = _first_open(client)
-    client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    })
+    grant_as(client, "Granter D01", wish["id"])
     body = _granted_rows(client)
     assert body["hub"]["maps_url"].startswith("https://www.google.com/maps/")
     assert "New+Haven" in body["hub"]["maps_url"]

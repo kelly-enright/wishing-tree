@@ -37,7 +37,10 @@ const OFFLINE =
 async function request<T>(path: string, init?: RequestInit, fallback?: string): Promise<T> {
   let response: Response
   try {
-    response = await fetch(path, init)
+    // `same-origin` sends the session cookie, which every per-account
+    // endpoint now requires. The app and the API share an origin, so this
+    // never reaches anywhere else.
+    response = await fetch(path, { credentials: 'same-origin', ...init })
   } catch {
     throw new UserMessage(OFFLINE)
   }
@@ -67,6 +70,7 @@ export function signUpFamily(form: {
   contact_address: string
   contact_email: string
   contact_phone: string | null
+  password: string
 }) {
   return post<{ role: 'family'; alias: string; zip: string }>('/api/families', form)
 }
@@ -76,6 +80,7 @@ export function signUpDonor(form: {
   contact_address: string
   contact_email: string
   contact_phone: string | null
+  password: string
   budget_usd: number
   preferred_categories: Category[]
   preference: Preference
@@ -596,4 +601,72 @@ export type Stats = {
 /** Counted from the database every time. Nothing here is rounded up. */
 export function getStats(): Promise<Stats> {
   return request('/api/stats', undefined, 'We could not load the numbers just now.')
+}
+
+// --------------------------------------------------------------------------
+// Accounts
+// --------------------------------------------------------------------------
+
+export type RoleOption = { role: 'family' | 'donor'; alias: string; zip: string }
+
+export type Me = {
+  signed_in: boolean
+  email?: string
+  role?: 'family' | 'donor' | null
+  alias?: string | null
+  zip?: string | null
+  roles?: RoleOption[]
+  must_choose?: boolean
+}
+
+export function getMe() {
+  return request<Me>('/api/auth/me', undefined, 'We could not check your session.')
+}
+
+export function logIn(email: string, password: string) {
+  return post<Me>('/api/auth/login', { email, password })
+}
+
+export function chooseSide(role: 'family' | 'donor') {
+  return post<Me>('/api/auth/side', { role })
+}
+
+/** The demo shortcut. Works only while that seeded account still has the
+ *  published demo password — see the server for why. */
+export function demoLogIn(alias: string) {
+  return post<Me>('/api/auth/demo', { alias })
+}
+
+export function logOut() {
+  return post<{ signed_in: boolean }>('/api/auth/logout', {})
+}
+
+export function resetPassword(email: string, code: string, password: string) {
+  return post<{ ok: boolean; message: string }>('/api/auth/reset', { email, code, password })
+}
+
+export function issueResetCode(token: string, alias: string) {
+  return request<{ alias: string; code: string; expires_in_minutes: number; how: string }>(
+    '/api/coordinator/reset-password',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Coordinator-Token': token },
+      body: JSON.stringify({ alias }),
+    },
+    'We could not issue a reset code.',
+  )
+}
+
+export type Health = {
+  region: {
+    name: string
+    hub_name: string
+    hub_address: string
+    dropoff_window: string
+    delivery_window: string
+  }
+}
+
+export function getHealth() {
+  return request<Health>('/api/health', undefined, 'We could not reach the server.')
 }

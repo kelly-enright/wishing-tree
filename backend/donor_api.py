@@ -15,9 +15,9 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime, timedelta, timezone
 
-from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
-from backend import badges, config, db, scheduling
+from backend import accounts, badges, config, db, scheduling
 from backend.agents import budget
 from backend.agents.budget import BudgetExceeded
 from backend.agents.matchmaker import find_matches
@@ -31,6 +31,12 @@ from backend.models import (
 )
 
 router = APIRouter(prefix="/api")
+
+
+def _wish_family(conn, request_id: int) -> str | None:
+    row = conn.execute(
+        "SELECT family_alias FROM requests WHERE id = ?", (request_id,)).fetchone()
+    return row["family_alias"] if row else None
 
 
 def _donor_or_404(alias: str):
@@ -57,13 +63,20 @@ def wish_wall(
     request_type: RequestType | None = None,
     max_cost_usd: float | None = None,
     zip: str | None = None,
+    session: accounts.Session | None = Depends(accounts.current),
 ) -> dict:
-    """Every open wish, filtered. Cards only — no contact details exist here."""
+    """Every open wish, filtered. Cards only — no contact details exist here.
+
+    A person's own wishes are not on it. One email may hold both sides, and
+    nobody grants their own wish.
+    """
     today = date.today()
     with db.connect() as conn:
+        mine = accounts.own_family_aliases(conn, session.email if session else None)
         wishes = db.list_open_wishes(
             conn,
             zip_code=zip,
+            exclude_family_aliases=mine,
             max_cost_usd=max_cost_usd,
             categories=[c.value for c in category] if category else None,
             request_type=request_type.value if request_type else None,
@@ -169,15 +182,29 @@ def _usage(session_id: str) -> dict:
 # --------------------------------------------------------------------------
 
 @router.post("/grant")
-def grant_wish(body: GrantRequest) -> dict:
+def grant_wish(
+    body: GrantRequest,
+    session: accounts.Session = Depends(accounts.require("donor")),
+) -> dict:
     """Claim a wish for one donor and hand back the logistics.
 
     Rent and utility wishes never pass through the hub: the money goes to the
     landlord or the provider, which is simulated in this MVP. Everything else
     is dropped at the hub in the weekly window.
     """
+    accounts.owns(session, body.donor_alias)
     donor = _donor_or_404(body.donor_alias)
     region = config.get_region()
+
+    # Nobody grants their own wish. Hiding it from the tree is the kind part;
+    # this is the part that holds when someone reaches the endpoint directly.
+    with db.connect() as conn:
+        if _wish_family(conn, body.request_id) in accounts.own_family_aliases(
+                conn, session.email):
+            raise HTTPException(
+                status_code=409,
+                detail="That's your own wish. It's waiting for another neighbor.",
+            )
     today = date.today()
 
     with db.connect() as conn:
@@ -266,7 +293,11 @@ def grant_wish(body: GrantRequest) -> dict:
 
 
 @router.get("/donors/{alias}/pledges")
-def donor_pledges(alias: str) -> dict:
+def donor_pledges(
+    alias: str,
+    session: accounts.Session = Depends(accounts.require("donor")),
+) -> dict:
+    accounts.owns(session, alias)
     """What this donor has claimed, with each wish's public card."""
     donor = _donor_or_404(alias)
     today = date.today()
@@ -337,7 +368,11 @@ def _dropoff_choices(wish, today: date, region) -> list[dict]:
 
 
 @router.get("/grant/options")
-def grant_options(request_id: int, donor_alias: str) -> dict:
+def grant_options(
+    request_id: int, donor_alias: str,
+    session: accounts.Session = Depends(accounts.require("donor")),
+) -> dict:
+    accounts.owns(session, donor_alias)
     """Everything the confirmation screen needs before anything locks."""
     donor = _donor_or_404(donor_alias)
     region = config.get_region()
@@ -415,7 +450,11 @@ SECTIONS = {
 
 
 @router.get("/donors/{alias}/granted")
-def donor_granted(alias: str) -> dict:
+def donor_granted(
+    alias: str,
+    session: accounts.Session = Depends(accounts.require("donor")),
+) -> dict:
+    accounts.owns(session, alias)
     """A donor's own wishes, with friendly statuses and this week's drop-off.
 
     Carries the wish card and nothing else about the family — no name, no
@@ -487,7 +526,11 @@ def donor_granted(alias: str) -> dict:
 
 
 @router.post("/pledges/{pledge_id}/release")
-def release_pledge(pledge_id: int, donor_alias: str) -> dict:
+def release_pledge(
+    pledge_id: int, donor_alias: str,
+    session: accounts.Session = Depends(accounts.require("donor")),
+) -> dict:
+    accounts.owns(session, donor_alias)
     """A donor who cannot make it says so, and the wish goes straight back.
 
     Recorded as `released`, not `missed`. Someone who tells you in advance has
@@ -536,7 +579,11 @@ def _ics_escape(text: str) -> str:
 
 
 @router.get("/pledges/{pledge_id}/calendar.ics")
-def pledge_calendar(pledge_id: int, donor_alias: str) -> Response:
+def pledge_calendar(
+    pledge_id: int, donor_alias: str,
+    session: accounts.Session = Depends(accounts.require("donor")),
+) -> Response:
+    accounts.owns(session, donor_alias)
     """An .ics for the drop-off window, built here.
 
     No calendar service is involved: this is a few lines of text with the

@@ -9,6 +9,8 @@ the code throws away, and what happens when two donors want the same wish.
 from datetime import date, timedelta
 
 import pytest
+
+from helpers import grant_as, sign_in
 from fastapi.testclient import TestClient
 
 from backend import config, db, donor_api, main, scheduling, seed
@@ -32,7 +34,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "test.db")
     monkeypatch.setattr(config, "AUDIT_PATH", tmp_path / "audit_trail.json")
     seed.seed(config.DB_PATH)
-    return TestClient(main.app)
+    return sign_in(TestClient(main.app), 'Granter D01')
 
 
 # --------------------------------------------------------------------------
@@ -228,9 +230,7 @@ def _first_open(client, category: str | None = None) -> dict:
 
 def test_granting_locks_the_wish_and_creates_a_pledge(client):
     wish = _first_open(client)
-    body = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()
+    body = grant_as(client, "Granter D01", wish["id"]).json()
 
     assert body["granted"] is True
     assert body["wish"]["status"] == "granted"
@@ -246,8 +246,8 @@ def test_granting_locks_the_wish_and_creates_a_pledge(client):
 
 def test_a_second_donor_cannot_claim_the_same_wish(client):
     wish = _first_open(client)
-    first = client.post("/api/grant", json={"donor_alias": "Granter D01", "request_id": wish["id"]})
-    second = client.post("/api/grant", json={"donor_alias": "Granter D02", "request_id": wish["id"]})
+    first = grant_as(client, "Granter D01", wish["id"])
+    second = grant_as(client, "Granter D02", wish["id"])
 
     assert first.status_code == 200
     assert second.status_code == 409
@@ -260,16 +260,14 @@ def test_a_second_donor_cannot_claim_the_same_wish(client):
 
 def test_a_granted_wish_leaves_the_wall(client):
     wish = _first_open(client)
-    client.post("/api/grant", json={"donor_alias": "Granter D01", "request_id": wish["id"]})
+    grant_as(client, "Granter D01", wish["id"])
     remaining = {w["id"] for w in client.get("/api/wishes").json()["wishes"]}
     assert wish["id"] not in remaining
 
 
 def test_an_item_wish_goes_through_the_hub(client):
     wish = _first_open(client, "clothing")
-    body = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()
+    body = grant_as(client, "Granter D01", wish["id"]).json()
 
     assert body["paid_directly_to_provider"] is False
     logistics = body["logistics"]
@@ -281,9 +279,7 @@ def test_an_item_wish_goes_through_the_hub(client):
 
 def test_a_rent_wish_skips_the_hub_and_is_paid_to_the_provider(client):
     wish = _first_open(client, "rent_utilities")
-    body = client.post("/api/grant", json={
-        "donor_alias": "Granter D06", "request_id": wish["id"],
-    }).json()
+    body = grant_as(client, "Granter D06", wish["id"]).json()
 
     assert body["paid_directly_to_provider"] is True
     logistics = body["logistics"]
@@ -297,26 +293,32 @@ def test_the_drop_off_offered_is_the_one_the_schedule_chose(client):
     expected = scheduling.dropoff_before(
         date.fromisoformat(wish["deadline"]) if wish["deadline"] else None
     )
-    body = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()
+    body = grant_as(client, "Granter D01", wish["id"]).json()
     assert body["logistics"]["dropoff_date"] == expected["dropoff_date"]
 
 
 def test_granting_a_missing_wish_is_404(client):
-    response = client.post("/api/grant", json={"donor_alias": "Granter D01", "request_id": 99999})
+    response = grant_as(client, "Granter D01", 99999)
     assert response.status_code == 404
 
 
-def test_an_unknown_donor_cannot_grant(client):
+def test_granting_as_somebody_else_is_refused(client):
+    """Before accounts, the donor alias in the body was taken on trust. Now
+    an unknown granter and a real one you are not signed in as are the same
+    refusal, so the endpoint reveals nothing about who exists."""
     wish = _first_open(client)
-    response = client.post("/api/grant", json={"donor_alias": "Nobody", "request_id": wish["id"]})
-    assert response.status_code == 404
+    sign_in(client, "Granter D01")
+    stranger = client.post("/api/grant", json={
+        "donor_alias": "Nobody", "request_id": wish["id"]})
+    real_other = client.post("/api/grant", json={
+        "donor_alias": "Granter D02", "request_id": wish["id"]})
+    assert stranger.status_code == real_other.status_code == 403
+    assert stranger.json()["detail"] == real_other.json()["detail"]
 
 
 def test_a_donor_can_see_what_they_claimed(client):
     wish = _first_open(client)
-    client.post("/api/grant", json={"donor_alias": "Granter D01", "request_id": wish["id"]})
+    grant_as(client, "Granter D01", wish["id"])
     body = client.get("/api/donors/Granter D01/pledges").json()
     assert any(row["wish"]["id"] == wish["id"] for row in body["pledges"])
 

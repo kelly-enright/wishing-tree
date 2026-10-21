@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronDown } from 'lucide-react'
+import {
+  ChevronDown, HeartHandshake, HelpCircle, Info, ListChecks, LogIn,
+  Repeat, Sparkles, TreePine, UserPlus,
+} from 'lucide-react'
 import Logo from './Logo'
+import type { Me } from '../api'
 
 /**
  * The slim bar at the top of every signed-in screen.
@@ -28,14 +32,59 @@ export type NavLink = {
   active?: boolean
 }
 
+/** What a visitor who is not signed in can get to from anywhere. */
+const SIGNED_OUT: NavLink[] = [
+  { label: 'How it works', short: 'How', to: '/how-it-works',
+    icon: <HelpCircle size={17} aria-hidden="true" /> },
+  { label: 'About', short: 'About', to: '/about',
+    icon: <Info size={17} aria-hidden="true" /> },
+  { label: 'Log in', short: 'Log in', to: '/login',
+    icon: <LogIn size={17} aria-hidden="true" /> },
+  { label: 'Create account', short: 'Sign up', to: '/family/signup',
+    icon: <UserPlus size={17} aria-hidden="true" /> },
+]
+
+/**
+ * A role's links as plain routes, for pages that are not that role's own
+ * screen — About, say, reached from either side. The role's own page passes
+ * its own set, where the first two switch tabs instead of navigating.
+ */
+export function roleLinks(role: 'family' | 'donor'): NavLink[] {
+  const about: NavLink = {
+    label: 'About', short: 'About', to: '/about',
+    icon: <Info size={17} aria-hidden="true" />,
+  }
+  if (role === 'family') {
+    return [
+      { label: 'My wishes', short: 'Wishes', to: '/family',
+        icon: <ListChecks size={17} aria-hidden="true" /> },
+      { label: 'Make a wish', short: 'Ask', to: '/family',
+        icon: <Sparkles size={17} aria-hidden="true" /> },
+      about,
+    ]
+  }
+  return [
+    { label: 'Wish Tree', short: 'Tree', to: '/donor',
+      icon: <TreePine size={17} aria-hidden="true" /> },
+    { label: "Wishes I'm granting", short: 'Granting', to: '/donor',
+      icon: <HeartHandshake size={17} aria-hidden="true" /> },
+    about,
+  ]
+}
+
 export default function TopBar({
-  links = [], alias, onSwitch, trailing,
+  links, alias, me, onSwitch, onSwitchSide, trailing,
 }: {
   links?: NavLink[]
   alias?: string
+  me?: Me | null
   onSwitch?: () => void
+  onSwitchSide?: (role: 'family' | 'donor') => void
   trailing?: React.ReactNode
 }) {
+  // No page is a dead end: with nobody signed in the bar still offers the
+  // four ways on, rather than being a logo on its own.
+  const shown = links ?? (alias ? [] : SIGNED_OUT)
   return (
     <>
       <header className="topbar">
@@ -45,19 +94,23 @@ export default function TopBar({
           </Link>
 
           <nav className="topbar__links" aria-label="Sections">
-            {links.map((link) => <BarLink key={link.label} link={link} />)}
+            {shown.map((link) => <BarLink key={link.label} link={link} />)}
           </nav>
 
           <div className="topbar__right">
             {trailing}
-            {alias && <AccountMenu alias={alias} onSwitch={onSwitch} />}
+            {alias && (
+              <AccountMenu
+                alias={alias} me={me} onSwitch={onSwitch} onSwitchSide={onSwitchSide}
+              />
+            )}
           </div>
         </div>
       </header>
 
-      {links.length > 0 && (
+      {shown.length > 0 && (
         <nav className="tabbar" aria-label="Sections">
-          {links.map((link) => (
+          {shown.map((link) => (
             <BarLink key={link.label} link={link} bottom />
           ))}
         </nav>
@@ -92,10 +145,18 @@ function BarLink({ link, bottom = false }: { link: NavLink; bottom?: boolean }) 
  * so the badge carries the code — A04, D01 — which is the whole point of an
  * alias.
  */
-function AccountMenu({ alias, onSwitch }: { alias: string; onSwitch?: () => void }) {
+function AccountMenu({
+  alias, me, onSwitch, onSwitchSide,
+}: {
+  alias: string
+  me?: Me | null
+  onSwitch?: () => void
+  onSwitchSide?: (role: 'family' | 'donor') => void
+}) {
   const [open, setOpen] = useState(false)
   const box = useRef<HTMLDivElement>(null)
   const code = alias.split(' ').pop() ?? alias
+  const other = me?.roles?.find((r) => r.alias !== alias) ?? null
 
   useEffect(() => {
     if (!open) return
@@ -129,9 +190,23 @@ function AccountMenu({ alias, onSwitch }: { alias: string; onSwitch?: () => void
         <div className="account__menu" role="menu">
           <p className="account__who">
             Signed in as<br /><strong>{alias}</strong>
+            {me?.email && <><br /><span className="account__email">{me.email}</span></>}
           </p>
+
+          {/* One email may hold both sides. If this one does, moving between
+              them is a menu item rather than a second login. */}
+          {other && onSwitchSide && (
+            <button
+              type="button" className="account__item" role="menuitem"
+              onClick={() => onSwitchSide(other.role)}
+            >
+              <Repeat size={14} aria-hidden="true" />
+              Switch to {other.alias}
+            </button>
+          )}
+
           <button type="button" className="account__item" role="menuitem" onClick={onSwitch}>
-            Switch account
+            Sign out
           </button>
         </div>
       )}

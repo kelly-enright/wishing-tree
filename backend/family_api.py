@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from datetime import date
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-from backend import config, db
+from backend import accounts, config, db
 from backend.models import (
     Category,
     PledgeStatus,
@@ -32,7 +32,11 @@ CONFIRMED_MESSAGE = "Thanks — we'll see you then."
 
 
 @router.get("/{alias}/deliveries")
-def family_deliveries(alias: str) -> dict:
+def family_deliveries(
+    alias: str,
+    session: accounts.Session = Depends(accounts.require("family")),
+) -> dict:
+    accounts.owns(session, alias)
     """Wishes on their way to this family, with the window to confirm."""
     with db.connect() as conn:
         family = db.get_family(conn, alias)
@@ -64,8 +68,12 @@ def family_deliveries(alias: str) -> dict:
 
 
 @router.post("/deliveries/respond")
-def respond_to_window(body: WindowAnswer) -> dict:
+def respond_to_window(
+    body: WindowAnswer,
+    session: accounts.Session = Depends(accounts.require("family")),
+) -> dict:
     """The family confirms the window, or says it does not work."""
+    accounts.owns(session, body.family_alias)
     if body.response is WindowResponse.PENDING:
         raise HTTPException(status_code=422, detail="Choose confirm or doesn't work.")
 
@@ -174,7 +182,11 @@ def _stage_for(wish, pledge, review) -> tuple[str, str, bool]:
 
 
 @router.get("/{alias}/wishes")
-def family_wishes(alias: str) -> dict:
+def family_wishes(
+    alias: str,
+    session: accounts.Session = Depends(accounts.require("family")),
+) -> dict:
+    accounts.owns(session, alias)
     """Every wish this family has posted, and where each one has got to."""
     today = date.today()
     with db.connect() as conn:

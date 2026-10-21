@@ -318,8 +318,17 @@ class Request(BaseModel):
 
     def days_waiting(self, today: date | None = None) -> int:
         """How long this wish has been up. Fairness input: a wish that has
-        waited counts for something, independently of how it is written."""
-        return ((today or date.today()) - self.created_at.date()).days
+        waited counts for something, independently of how it is written.
+
+        `created_at` is UTC and `date.today()` is local, so after about 8pm in
+        New Haven the stored date has already rolled over and a wish posted
+        minutes ago reported -1 days waiting. Both sides are read in UTC now,
+        and the result is floored at zero: a wish cannot have waited a
+        negative length of time, and the Matchmaker is handed this number as
+        a fairness input.
+        """
+        reference = today or datetime.now(timezone.utc).date()
+        return max(0, (reference - self.created_at.date()).days)
 
     def public_card(self, today: date | None = None) -> dict:
         """Everything a donor may see, and nothing else.
@@ -467,6 +476,9 @@ class FamilySignUp(BaseModel):
     contact_address: str = Field(min_length=4)
     contact_email: str = Field(min_length=5)
     contact_phone: str | None = None
+    # Carried in, hashed, and dropped. Nothing reads it back out: the
+    # response is built from `public_view()`, which knows nothing of it.
+    password: str = Field(min_length=1, repr=False)
 
     @field_validator("zip")
     @classmethod
@@ -481,6 +493,7 @@ class DonorSignUp(BaseModel):
     contact_address: str = Field(min_length=4)
     contact_email: str = Field(min_length=5)
     contact_phone: str | None = None
+    password: str = Field(min_length=1, repr=False)
     budget_usd: float = Field(ge=0)
     preferred_categories: list[Category] = Field(default_factory=list)
     preference: DonorPreference = DonorPreference.EITHER

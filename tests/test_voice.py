@@ -9,6 +9,8 @@ import re
 from pathlib import Path
 
 import pytest
+
+from helpers import grant_as, sign_in
 from fastapi.testclient import TestClient
 
 from backend import config, coordinator_auth, db, main, seed
@@ -43,7 +45,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "AUDIT_PATH", tmp_path / "audit_trail.json")
     seed.seed(config.DB_PATH)
     coordinator_auth.clear()
-    return TestClient(main.app)
+    return sign_in(TestClient(main.app), 'Neighbor A04')
 
 
 # --------------------------------------------------------------------------
@@ -65,12 +67,14 @@ def test_a_new_signup_gets_a_neighbor_alias(client):
     body = client.post("/api/families", json={
         "zip": "06511", "contact_address": "4 Nightingale Ct, New Haven, CT 06511",
         "contact_email": "new@example.com",
+    "password": "a-good-long-password",
     }).json()
     assert body["alias"].startswith("Neighbor ")
 
     granter = client.post("/api/donors", json={
         "zip": "06511", "contact_address": "9 Rookery Ln, New Haven, CT 06511",
         "contact_email": "give@example.com", "budget_usd": 60,
+        "password": "a-good-long-password",
         "preferred_categories": ["clothing"], "preference": "either",
     }).json()
     assert granter["alias"].startswith("Granter ")
@@ -165,9 +169,7 @@ def test_the_counter_moves_only_when_a_wish_arrives(client):
     it and dropping it at the hub are both still on the way."""
     before = client.get("/api/stats").json()["wishes_granted"]
     wish = client.get("/api/wishes").json()["wishes"][0]
-    granted = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()
+    granted = grant_as(client, "Granter D01", wish["id"]).json()
     assert client.get("/api/stats").json()["wishes_granted"] == before
 
     _move(client, granted["pledge"]["id"], "dropped_off")
@@ -180,15 +182,11 @@ def test_the_counter_moves_only_when_a_wish_arrives(client):
 def test_the_counter_does_not_double_count_a_regranted_wish(client):
     """A wish released, granted again and delivered is one wish granted."""
     wish = client.get("/api/wishes").json()["wishes"][0]
-    first = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()
+    first = grant_as(client, "Granter D01", wish["id"]).json()
     before = client.get("/api/stats").json()["wishes_granted"]
 
     client.post(f"/api/pledges/{first['pledge']['id']}/release?donor_alias=Granter D01")
-    second = client.post("/api/grant", json={
-        "donor_alias": "Granter D02", "request_id": wish["id"],
-    }).json()
+    second = grant_as(client, "Granter D02", wish["id"]).json()
     _move(client, second["pledge"]["id"], "delivered")
     assert client.get("/api/stats").json()["wishes_granted"] == before + 1
 
@@ -196,6 +194,10 @@ def test_the_counter_does_not_double_count_a_regranted_wish(client):
 def test_the_landing_line_names_the_real_region(client):
     body = client.get("/api/stats").json()
     assert body["line"] == "Every wish on this tree is from someone in New Haven."
+    # Counted for somebody with no wishes of their own. A neighbor's own
+    # wishes are kept off their tree, so for them the two would differ — see
+    # test_accounts.py, where that is the point rather than a nuisance.
+    sign_in(client, "Granter D01")
     assert body["wishes_open"] == len(client.get("/api/wishes").json()["wishes"])
 
 
@@ -204,6 +206,9 @@ def test_the_landing_line_names_the_real_region(client):
 # --------------------------------------------------------------------------
 
 def _stage(client, alias, request_id):
+    """What the neighbor is told about one wish. Signs in as them to ask,
+    because this endpoint now answers only to the account that owns it."""
+    sign_in(client, alias)
     wishes = client.get(f"/api/families/{alias}/wishes").json()["wishes"]
     return next(w for w in wishes if w["wish"]["id"] == request_id)
 
@@ -213,12 +218,12 @@ def test_the_two_sides_never_contradict_each_other(client):
     must not be told it was granted. Granted means it arrived."""
     wish = client.get("/api/wishes").json()["wishes"][0]
     alias = wish["family_alias"]
-    granted = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()
+    granted = grant_as(client, "Granter D01", wish["id"]).json()
     pledge = granted["pledge"]["id"]
 
     def granter_label():
+        # _stage() signs in as the neighbor, so come back as the granter.
+        sign_in(client, "Granter D01")
         rows = client.get("/api/donors/Granter D01/granted").json()["granted"]
         return next(r for r in rows if r["pledge_id"] == pledge)["label"]
 
@@ -237,9 +242,7 @@ def test_the_two_sides_never_contradict_each_other(client):
 def test_nothing_says_granted_before_a_wish_arrives(client):
     wish = client.get("/api/wishes").json()["wishes"][0]
     alias = wish["family_alias"]
-    pledge = client.post("/api/grant", json={
-        "donor_alias": "Granter D01", "request_id": wish["id"],
-    }).json()["pledge"]["id"]
+    pledge = grant_as(client, "Granter D01", wish["id"]).json()["pledge"]["id"]
 
     for stage in ("pledged", "dropped_off"):
         if stage != "pledged":
@@ -404,3 +407,48 @@ def test_the_promise_button_says_it_is_a_promise():
         text = (FRONTEND / rel).read_text()
         assert "I'll grant this wish" in text
         assert "'Grant this wish'" not in text
+
+
+# --------------------------------------------------------------------------
+# No page is a dead end
+# --------------------------------------------------------------------------
+
+PAGES = sorted((FRONTEND / "src" / "pages").glob("*.tsx"))
+
+# Two of these are not pages in their own right: FormShell wraps the sign-up
+# forms and is rendered inside them, and GrantConfirm is a step shown within
+# the granter's page. Both sit under a bar drawn by their parent.
+NOT_A_PAGE = {"FormShell.tsx", "GrantConfirm.tsx", "MyWishes.tsx",
+              "MyGranted.tsx", "RunSheet.tsx", "AgentActivity.tsx",
+              "WishReview.tsx"}
+
+
+@pytest.mark.parametrize("page", [p for p in PAGES if p.name not in NOT_A_PAGE],
+                         ids=lambda p: p.name)
+def test_every_page_draws_the_navigation_bar(page):
+    """Including the landing page, About, and the screens after a wish is
+    granted. Whatever brought somebody to a page, there is a way on from it."""
+    source = page.read_text()
+    # A page either draws the bar itself or sits inside FormShell, which does.
+    assert "<TopBar" in source or "<FormShell" in source, f"{page.name} has no navigation"
+    assert "page__nav" not in source, f"{page.name} still uses the old bare header"
+
+
+def test_the_login_page_offers_staff_a_way_in():
+    source = (FRONTEND / "src" / "pages" / "LogIn.tsx").read_text()
+    assert "Admin sign-in" in source
+    assert 'to="/coordinator"' in source
+
+
+def test_the_footer_is_one_component_used_everywhere():
+    """Rather than a copy per page, which is how two of them end up differing."""
+    footer = (FRONTEND / "src" / "components" / "Footer.tsx").read_text()
+    assert 'to="/about"' in footer and 'to="/coordinator"' in footer
+    for name in ("Landing.tsx", "About.tsx", "LogIn.tsx", "HowItWorksPage.tsx"):
+        source = (FRONTEND / "src" / "pages" / name).read_text()
+        assert "<Footer />" in source, name
+
+
+def test_the_about_page_can_be_left():
+    source = (FRONTEND / "src" / "pages" / "About.tsx").read_text()
+    assert "backlink" in source

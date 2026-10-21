@@ -26,7 +26,7 @@ from pydantic_ai import Agent, CachePoint, RunContext
 from pydantic_ai.messages import ModelMessage, ToolCallPart
 from pydantic_ai.settings import ModelSettings
 
-from backend import config, db, scheduling, text
+from backend import accounts, config, db, scheduling, text
 from backend.agents import audit, budget
 from backend.agents.model import build_model
 from backend.models import (
@@ -58,6 +58,9 @@ class MatchDeps:
     donor_alias: str
     session_id: str
     today: date | None = None
+    # A granter who is also a neighbor: their own wishes never become
+    # candidates, so the model is never asked to rank them.
+    own_aliases: list[str] = field(default_factory=list)
     candidate_ids: list[int] = field(default_factory=list)
     truncated: bool = False
 
@@ -115,6 +118,7 @@ def matchmaker_agent() -> Agent:
                 categories=categories or None,
                 request_type=request_type,
                 limit=None if limit is None else limit + 1,
+                exclude_family_aliases=ctx.deps.own_aliases,
             )
 
         truncated = limit is not None and len(found) > limit
@@ -220,7 +224,10 @@ async def find_matches(
     budget.guard(session_id)
 
     agent = matchmaker_agent()
-    deps = MatchDeps(donor_alias=donor.alias, session_id=session_id, today=today)
+    with db.connect() as conn:
+        own = accounts.own_family_aliases(conn, donor.contact_email.lower())
+    deps = MatchDeps(donor_alias=donor.alias, session_id=session_id, today=today,
+                     own_aliases=own)
     started = time.perf_counter()
     call = AgentCallLog(
         agent=AGENT_NAME,

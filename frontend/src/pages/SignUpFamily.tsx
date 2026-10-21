@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { formatPhone, signUpFamily, userMessage } from '../api'
 import HowItWorks from '../components/HowItWorks'
 import { ServiceNotice, ZipField } from '../components/ServiceArea'
-import { setSession } from '../session'
+import { setMe } from '../session'
+import { getMe } from '../api'
+import PasswordField from '../components/PasswordField'
 import FormShell from './FormShell'
 import usePageTitle from '../usePageTitle'
 
@@ -14,6 +16,7 @@ export default function SignUpFamily() {
   const [address, setAddress] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const navigate = useNavigate()
@@ -23,13 +26,14 @@ export default function SignUpFamily() {
     setBusy(true)
     setError(null)
     try {
-      const family = await signUpFamily({
+      await signUpFamily({
         zip: zip.trim(),
         contact_address: address.trim(),
         contact_email: email.trim(),
         contact_phone: phone.trim() || null,
+        password,
       })
-      setSession({ role: 'family', alias: family.alias, zip: family.zip })
+      setMe(await getMe())
       navigate('/family')
     } catch (err) {
       setError(userMessage(err, 'We could not create your account just now. Please try again.'))
@@ -72,6 +76,12 @@ export default function SignUpFamily() {
                 to anyone.
               </span>
             </label>
+
+            <PasswordField
+              value={password} onChange={setPassword} isNew
+              disabled={covered !== true}
+              hint="At least 8 characters. A short phrase you'll remember is ideal."
+            />
 
             <label className="field">
               <span className="field__label">Phone <em>(optional)</em></span>

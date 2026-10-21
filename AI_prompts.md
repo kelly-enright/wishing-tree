@@ -858,3 +858,71 @@ And Admin got **its own slim bar** — same polish, its own links, since
 **Still outstanding, by agreement:** the live safety suite and the token
 measurements, to be re-run together once the design is frozen. The Safety
 prompt has been at `f295594b9779` since Problem 13 and nothing here changed it.
+
+## Problem 15 — Accounts and Navigation
+
+> *Kelly numbered this one "Problem 12"; it is logged here in the order it was
+> worked, after the wording pass, the status rework and the visual refresh.*
+
+### Prompt 1
+
+> Problem 12: "Accounts and navigation"
+>
+> I tested the app myself as a neighbor and a wish granter. This problem fixes how people sign in and move around. Change nothing else.
+>
+> Accounts: replace the browser-only sign-in with real accounts.
+> a.) "Create account" (email, password, plus the existing sign-up fields) and "Log in" (email and password). Keep the sign-up form short: the password is one extra field.
+> b.) Store passwords only as a secure hash (e.g. bcrypt or argon2), use a secure session cookie, and slow down repeated failed login attempts. Never log or display passwords.
+> c.) "Forgot your password?" tells the person to contact the coordinator. The admin view gets a "Reset password" button for a neighbor or wish granter. No emails are sent.
+> d.) "Sign out" simply signs out, since people can log back in.
+> e.) Every seeded account uses one demo password ("neighbor-demo"), documented in the README later. Keep "Continue as…" as the labeled demo shortcut.
+> f.) Admin access: on the login page, add a clear "Staff? Admin sign-in" link to the passcode screen. Keep the footer link too.
+>
+> Navigation: no page is ever a dead end.
+> g.) Every page, including the landing page, About and the post-wish screens, has the top navigation bar. When signed out, it shows the logo, "How it works," "About," "Log in" and "Create account." When signed in, it shows the role's links and the account menu, as now.
+> h.) The About page also gets a clear "Back" link at the top and the same footer as the rest of the site.
+>
+> i.) Add tests: passwords are never stored or returned in plain text, a session can only see its own account, wrong passwords are refused and rate-limited, no public endpoint exposes emails or password hashes, and every page renders the navigation bar.
+> j.) Take screenshots of sign-up, log in, the admin sign-in link and the About page, and update harness.md.
+>
+> Ask any questions you have before starting.
+
+**Three questions asked first**, one of them answered by the data. While
+testing, Kelly had signed up as both a neighbor and a wish granter on the
+same email — so that address already sat on two accounts, and login by email
+had to resolve to one of them. She chose to let **one email hold both**, with
+a *Which side are you here for?* step and *Switch to…* in the account menu,
+and added a safeguard of her own: **a person can never grant their own wish**.
+
+She also chose a **one-time code** for the admin reset (staff never see or
+choose a password) and a small **/how-it-works page** built from the two
+existing boxes, since the brief put that link in the nav but no such page
+existed.
+
+**Outcome:** 352 passing, 41 of them new in `test_accounts.py`.
+
+- **The test suite went from 7 seconds to several minutes** the moment real
+  hashing arrived, because seeding creates 23 accounts and bcrypt is slow on
+  purpose. `config.BCRYPT_ROUNDS` is now configurable, production stays at
+  12, and `conftest.py` lowers it to 4 with a comment explaining why that is
+  safe here and nowhere else. A test asserts the production default.
+- **Three tests that expected 404 now expect 403.** Asking for an alias that
+  does not exist and asking for somebody else's now answer identically, so
+  the endpoints no longer confirm who has an account. That is better
+  behavior, so the tests were rewritten to assert the sameness rather than
+  relaxed.
+- **"Continue as…" logs in for real.** It would have been easier to let it
+  write a session directly, but then the shortcut would demonstrate a bypass
+  rather than the app. It resolves the alias server-side so the demo list
+  stays alias-only, and it refuses once an account has a password of its own
+  — which is what stops a convenience becoming a back door.
+- **A second sign-up on an existing email must supply that password.**
+  Without that check, knowing an address would be enough to take over an
+  account by signing up as the other role.
+- **A bug found on the way, unrelated to accounts.** `days_waiting()`
+  compared a UTC timestamp against a local date, so after 8pm in New Haven
+  every fresh wish reported -1 days waiting — a number the Matchmaker is
+  handed as a fairness input. Fixed to compare UTC to UTC and floor at zero.
+
+**Still outstanding, by agreement:** the live safety suite and the token
+measurements, to be re-run together once the design is frozen.

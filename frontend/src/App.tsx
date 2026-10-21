@@ -4,6 +4,10 @@ import Coordinator from './pages/Coordinator'
 import Donor from './pages/Donor'
 import Intake from './pages/Intake'
 import Landing from './pages/Landing'
+import LogIn from './pages/LogIn'
+import ChooseSide from './pages/ChooseSide'
+import Forgot from './pages/Forgot'
+import HowItWorksPage from './pages/HowItWorksPage'
 import Placeholder from './pages/Placeholder'
 import SignUpDonor from './pages/SignUpDonor'
 import SignUpFamily from './pages/SignUpFamily'
@@ -17,6 +21,10 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/about" element={<About />} />
+      <Route path="/how-it-works" element={<HowItWorksPage />} />
+      <Route path="/login" element={<LogIn />} />
+      <Route path="/choose" element={<ChooseSide />} />
+      <Route path="/forgot" element={<Forgot />} />
       <Route path="/family/signup" element={<SignUpFamily />} />
       <Route path="/family" element={<Intake />} />
       <Route path="/donor/signup" element={<SignUpDonor />} />

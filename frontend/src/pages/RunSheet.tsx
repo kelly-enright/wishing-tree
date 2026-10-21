@@ -3,6 +3,7 @@ import { getRunSheet, setPledgeStatus, type RunSheet as Sheet,
   userMessage,
 } from '../api'
 import { SkeletonRows } from '../components/Skeleton'
+import ResetPassword from '../components/ResetPassword'
 
 /**
  * One week of logistics. The only screen in Wishing Tree that shows a family's
@@ -77,6 +78,7 @@ export default function RunSheet({ token }: { token: string }) {
             <p className="row__who">{row.donor_alias}</p>
             <p className="row__contact">{row.donor_address} · {row.donor_phone}</p>
             <p className="row__item">{row.item}</p>
+            <ResetPassword token={token} alias={row.donor_alias} />
           </div>
           <div className="row__side">
             <span className={`status status--${row.status.replace(' ', '-')}`}>{row.status}</span>
@@ -109,6 +111,7 @@ export default function RunSheet({ token }: { token: string }) {
           <div className="row__main">
             <p className="row__who">{row.family_alias}</p>
             <p className="row__contact">{row.family_address} · {row.family_phone}</p>
+            <ResetPassword token={token} alias={row.family_alias} />
             <ul className="row__items">
               {row.items.map((item, i) => <li key={i}>{item}</li>)}
             </ul>

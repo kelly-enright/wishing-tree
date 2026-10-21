@@ -9,6 +9,8 @@ against the real model are recorded in harness.md and screenshots/.
 from datetime import date
 
 import pytest
+
+from helpers import sign_in
 from fastapi.testclient import TestClient
 
 from backend import config, db, intake_api, main, seed
@@ -53,7 +55,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(safety, "review_wish", _stub_review(True))
     seed.seed(config.DB_PATH)
     intake_api._HISTORY.clear()
-    return TestClient(main.app)
+    return sign_in(TestClient(main.app), 'Neighbor A04')
 
 
 def _stub_turn(message: str, wishes: list[DraftWish], done: bool = False):
@@ -118,14 +120,21 @@ def test_a_family_at_the_wish_cap_cannot_start(client):
         conn.commit()
         assert db.open_wish_count(conn, "Neighbor A07") == config.MAX_OPEN_WISHES_PER_FAMILY
 
+    sign_in(client, "Neighbor A07")
     body = client.post("/api/intake/start", json={"family_alias": "Neighbor A07"}).json()
     assert body["at_wish_cap"] is True
     assert body["session_id"] is None
     assert "as many as we show at once" in body["message"]
 
 
-def test_an_unknown_family_is_404(client):
-    assert client.post("/api/intake/start", json={"family_alias": "Nobody"}).status_code == 404
+def test_an_unknown_family_is_refused_without_saying_whether_it_exists(client):
+    """This used to be a 404. Now the session is checked before the alias is
+    looked up, so an unknown alias and somebody else's alias answer exactly
+    the same — the endpoint cannot be used to find out who has an account."""
+    unknown = client.post("/api/intake/start", json={"family_alias": "Nobody"})
+    someone_else = client.post("/api/intake/start", json={"family_alias": "Neighbor A07"})
+    assert unknown.status_code == someone_else.status_code == 403
+    assert unknown.json()["detail"] == someone_else.json()["detail"]
 
 
 # --------------------------------------------------------------------------

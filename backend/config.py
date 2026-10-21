@@ -213,6 +213,22 @@ def is_allowed_retailer(url: str | None) -> bool:
 
 COORDINATOR_PASSCODE = "wishingtree-demo"
 
+# The one password every seeded demo account shares. Real accounts choose
+# their own; this exists so "Continue as…" can log in properly rather than
+# bypassing the login it is demonstrating.
+DEMO_PASSWORD = "neighbor-demo"
+
+# bcrypt's work factor. 12 is the sensible default for real use: it makes one
+# hash take a quarter-second or so, which nobody notices on a login and which
+# ruins an offline guessing attack. The seed creates 23 accounts, so the test
+# suite lowers this — see tests/conftest.py, which explains why that is safe.
+BCRYPT_ROUNDS = int(os.getenv("WISHINGTREE_BCRYPT_ROUNDS", "12"))
+
+# Send the session cookie over https only. False for local development,
+# where the app is served over http and a secure cookie would never arrive.
+# Set WISHINGTREE_HTTPS=1 when this is deployed anywhere real.
+COOKIE_SECURE = os.getenv("WISHINGTREE_HTTPS", "").strip() in {"1", "true", "yes"}
+
 # --------------------------------------------------------------------------
 # Limits — app behavior
 # --------------------------------------------------------------------------
