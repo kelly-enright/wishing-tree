@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wishing Tree — Kelly Enright</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+
+<style>
+@font-face{font-family:'Fraunces';src:url({{FONT:fraunces-latin.woff2}}) format('woff2');font-weight:400 700;font-style:normal}
+@font-face{font-family:'Inter';src:url({{FONT:inter-latin.woff2}}) format('woff2');font-weight:400 700;font-style:normal}
+
+:root{
+  --evergreen:#2F5D50; --evergreen-deep:#22463C; --evergreen-soft:#4A7A6B; --evergreen-pale:#E3EDE8;
+  --cream:#FBF6EE; --cream-deep:#F2E9D9;
+  --gold:#E0A84B; --gold-deep:#C78E33; --gold-pale:#FAEFD9;
+  --terracotta:#C8664A; --terracotta-pale:#FBEAE4;
+  --sky-top:#DCE9EF; --band-sage:#E8EFE7;
+  --ink:#2B2B2B; --ink-soft:#5F5A53; --line:#E4DED2;
+  --body:'Inter',ui-sans-serif,system-ui,sans-serif;
+  --display:'Fraunces',Georgia,serif;
+}
+
+.reveal{font-family:var(--body);color:var(--ink);font-size:34px}
+.reveal-viewport{background:var(--cream)}
+.reveal .slides{text-align:left}
+
+.reveal h1,.reveal h2,.reveal h3{
+  font-family:var(--display);color:var(--evergreen-deep);
+  text-transform:none;letter-spacing:-0.01em;line-height:1.1;margin:0 0 .4em;
+}
+.reveal h1{font-size:2.3em}
+.reveal h2{font-size:1.45em}
+.reveal h3{font-size:.95em;color:var(--evergreen)}
+.reveal p{line-height:1.45;margin:0 0 .6em}
+.reveal strong{color:var(--evergreen-deep)}
+.reveal em{color:var(--ink-soft);font-style:italic}
+.reveal a{color:var(--evergreen)}
+.reveal ul{display:block;margin:0 0 .5em;padding-left:1.1em}
+.reveal li{margin:0 0 .38em;line-height:1.4}
+.reveal code{font-family:ui-monospace,Menlo,monospace;font-size:.82em;
+  background:var(--cream-deep);padding:.06em .3em;border-radius:4px}
+
+/* A quiet kicker above each heading, so every slide says where it is. */
+.kick{font-size:.5em;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--gold-deep);margin:0 0 .5em}
+
+/* Layout helpers ------------------------------------------------------- */
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:1.1em;align-items:start}
+.cols--wide{grid-template-columns:1.25fr 1fr}
+.cols--narrow{grid-template-columns:1fr 1.3fr}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:.8em}
+.row4{display:grid;grid-template-columns:repeat(4,1fr);gap:.7em}
+.row2x2{display:grid;grid-template-columns:1fr 1fr;gap:.45em 1em;align-items:start}
+/* Height-capped rather than width-capped: the four crops have different
+   shapes, and capping the height is what keeps two rows on one slide. */
+.row2x2 .shot{max-height:182px;width:auto;max-width:100%}
+.row2x2 .cap{margin-top:.3em}
+
+.shot{width:100%;display:block;border:1px solid var(--line);border-radius:10px;
+  box-shadow:0 6px 22px rgba(34,70,60,.13)}
+.cap{font-size:.52em;color:var(--ink-soft);margin:.45em 0 0;line-height:1.35}
+.cap b{color:var(--evergreen-deep)}
+
+/* Big numbers ---------------------------------------------------------- */
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:.7em .8em}
+.stat .big{font-family:var(--display);font-size:1.75em;color:var(--evergreen-deep);
+  line-height:1;display:block;margin-bottom:.15em}
+.stat .lab{font-size:.52em;color:var(--ink-soft);line-height:1.35;display:block}
+.stat--gold{background:var(--gold-pale);border-color:var(--gold-deep)}
+.stat--gold .big{color:var(--gold-deep)}
+.stat--green{background:var(--evergreen-pale);border-color:var(--evergreen-soft)}
+
+.pill{display:inline-block;background:var(--evergreen-pale);color:var(--evergreen-deep);
+  border-radius:999px;padding:.18em .7em;font-size:.6em;font-weight:700;margin:0 .3em .3em 0}
+
+.lede{font-family:var(--display);font-size:1.05em;line-height:1.35;color:var(--evergreen-deep)}
+.quiet{color:var(--ink-soft)}
+.tiny{font-size:.5em;color:var(--ink-soft);line-height:1.4}
+
+.note{background:var(--band-sage);border-left:4px solid var(--evergreen-soft);
+  padding:.5em .7em;border-radius:0 8px 8px 0;font-size:.62em;line-height:1.4}
+.warn{background:var(--terracotta-pale);border-left:4px solid var(--terracotta);
+  padding:.5em .7em;border-radius:0 8px 8px 0;font-size:.62em;line-height:1.4}
+.ph{background:var(--gold-pale);border:2px dashed var(--gold-deep);border-radius:10px;
+  padding:.55em .75em;font-size:.62em;line-height:1.4}
+.ph .tag{display:block;font-size:.75em;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--gold-deep);margin-bottom:.25em}
+
+table.mini{width:100%;border-collapse:collapse;font-size:.56em}
+table.mini td,table.mini th{padding:.3em .45em;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+table.mini th{color:var(--evergreen-deep);font-weight:700;font-size:.9em;
+  text-transform:uppercase;letter-spacing:.05em;background:var(--evergreen-pale)}
+table.mini td.us{background:var(--gold-pale);font-weight:600}
+
+.reveal .progress{color:var(--evergreen)}
+.reveal .controls{color:var(--evergreen-soft)}
+</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- 1 ------------------------------------------------------------------ -->
+<section>
+  <div class="cols cols--narrow">
+    <div>
+      <h1>Wishing&nbsp;Tree</h1>
+      <p style="font-size:.72em;margin:0 0 .8em"><strong>Kelly Enright</strong><br>
+        <span class="quiet" style="font-size:.85em">MGT 409 · AI Foundations for Managers</span></p>
+      <p class="lede">A year-round giving tree that uses AI agents to help
+        neighbors in New Haven ask for what they need, privately, and connects
+        them with neighbors who want to help.</p>
+    </div>
+    <div>
+      <img class="shot" src="{{IMG:s-hero}}" alt="The Wish Tree, with every open wish as a leaf">
+      <p class="cap">Every open wish is a leaf. Tap one to see it.
+        <b>All data shown is invented.</b></p>
+    </div>
+  </div>
+</section>
+
+<!-- 2 ------------------------------------------------------------------ -->
+<section>
+  <p class="kick">2 · The problem</p>
+  <h2>Many people need help.<br>Many want to give.<br>There is no bridge.</h2>
+
+  <div class="cols" style="margin-top:.7em">
+    <div>
+      <p style="font-size:.8em">Seven years at a soup kitchen, winter coat drives,
+        Lasagna Love, my church's giving tree.</p>
+      <p style="font-size:.8em">Every year, the same two groups — and nothing
+        connecting them. <strong>And the tree went up once a year.</strong></p>
+    </div>
+    <div>
+      <div class="stat stat--green" style="margin-bottom:.5em">
+        <span class="big">~40%</span>
+        <span class="lab">of Connecticut households — a record <b>581,000</b> — couldn't
+          afford a basic survival budget in 2023. <b>Over 60% in New Haven.</b></span>
+      </div>
+      <div class="stat stat--gold">
+        <span class="big">Hours</span>
+        <span class="lab">is how fast Angel Tree programs fill. Augusta closed in
+          under 24; Memphis in 10 — after an in-person appointment with ID,
+          birth certificates and proof of income.</span>
+      </div>
+    </div>
+  </div>
+  <p class="tiny" style="margin-top:.6em">ALICE households earn <em>above</em> the
+    poverty line, which is what excludes them from most aid.
+    Sources: CT Mirror 2025 · WRDW 2025 · FOX13 Memphis 2025.</p>
+</section>
+
+<!-- 3 ------------------------------------------------------------------ -->
+<section>
+  <p class="kick">3 · What is new</p>
+  <h2>Others do parts of this</h2>
+
+  <div class="cols cols--wide">
+    <div>
+      <table class="mini">
+        <tr><th>Who</th><th>Where it stops</th></tr>
+        <tr><td>goodDeeds</td><td>App download, verification up front</td></tr>
+        <tr><td>Geenees</td><td>Nonprofit invitation only</td></tr>
+        <tr><td>Benevolent</td><td>Funding follows the story</td></tr>
+        <tr><td>GIVIT</td><td>A charity in the middle of every request</td></tr>
+        <tr><td>Angel Tree</td><td>Christmas only, in person</td></tr>
+        <tr><td>Modest Needs</td><td>Bills only, heavy documentation</td></tr>
+        <tr><td>GoFundMe</td><td>Your network is your outcome</td></tr>
+        <tr><td>Buy Nothing</td><td>No privacy — you post as yourself</td></tr>
+        <tr><td class="us">Wishing Tree</td><td class="us">Year-round, private, no forms</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Our three differences</h3>
+      <ul style="font-size:.74em">
+        <li><strong>Fairness by design.</strong> One neutral format for every
+          wish; ranked on urgency and waiting time, never on storytelling.</li>
+        <li><strong>AI does the hard part.</strong> The intake interview and the
+          privacy review are exactly what forces others into appointments and
+          caseworkers.</li>
+        <li><strong>Year-round and local.</strong> One hub, one weekly delivery,
+          every kind of need.</li>
+      </ul>
+      <div class="warn"><strong>The honest gap:</strong> no partner verification
+        yet. Everyone else on that list has one.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 ------------------------------------------------------------------ -->
+<section>
+  <p class="kick">4 · How it works</p>
+  <h2>Three agents, one path</h2>
+
+  <svg viewBox="0 0 980 232" style="width:100%;height:auto;margin:.2em 0 .5em"
+       xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-label="The pipeline from a neighbor's words to a delivered gift">
+    <defs>
+      <marker id="a" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="7" markerHeight="6" orient="auto">
+        <path d="M0 0 L10 4 L0 8 z" fill="#4A7A6B"/>
+      </marker>
+      <style>
+        .ai{fill:#E3EDE8;stroke:#2F5D50;stroke-width:2}
+        .hu{fill:#FAEFD9;stroke:#C78E33;stroke-width:2}
+        .tr{fill:#fff;stroke:#2F5D50;stroke-width:2}
+        .t{font-family:'Inter',sans-serif;font-size:17px;font-weight:700;fill:#22463C}
+        .s{font-family:'Inter',sans-serif;font-size:13px;fill:#5F5A53}
+        .k{font-family:'Inter',sans-serif;font-size:11px;font-weight:700;fill:#2F5D50;letter-spacing:.1em}
+        .ln{stroke:#4A7A6B;stroke-width:2.4;fill:none;marker-end:url(#a)}
+      </style>
+    </defs>
+
+    <rect class="hu" x="4"   y="18" width="172" height="66" rx="11"/>
+    <text class="t" x="18" y="46">A neighbor types</text>
+    <text class="s" x="18" y="68">what would help</text>
+
+    <rect class="ai" x="206" y="18" width="172" height="66" rx="11"/>
+    <text class="k" x="220" y="40">AGENT</text>
+    <text class="t" x="220" y="62">Intake</text>
+    <text class="s" x="220" y="79">drafts wishes</text>
+
+    <rect class="hu" x="408" y="18" width="172" height="66" rx="11"/>
+    <text class="t" x="422" y="46">The neighbor</text>
+    <text class="s" x="422" y="68">edits and approves</text>
+
+    <rect class="ai" x="610" y="18" width="186" height="66" rx="11"/>
+    <text class="k" x="624" y="40">AGENT</text>
+    <text class="t" x="624" y="62">Privacy &amp; Safety</text>
+    <text class="s" x="624" y="79">removes, rewrites, flags</text>
+
+    <rect class="tr" x="826" y="18" width="150" height="66" rx="11"/>
+    <text class="t" x="840" y="46">Wish Tree</text>
+    <text class="s" x="840" y="68">public, anonymous</text>
+
+    <path class="ln" d="M176 51 H200"/>
+    <path class="ln" d="M378 51 H402"/>
+    <path class="ln" d="M580 51 H604"/>
+    <path class="ln" d="M796 51 H820"/>
+    <path class="ln" d="M901 84 V112 H92 V140"/>
+
+    <rect class="ai" x="4"   y="142" width="176" height="66" rx="11"/>
+    <text class="k" x="18" y="164">AGENT</text>
+    <text class="t" x="18" y="186">Matchmaker</text>
+    <text class="s" x="18" y="203">ranks for one granter</text>
+
+    <rect class="hu" x="210" y="142" width="176" height="66" rx="11"/>
+    <text class="t" x="224" y="170">A wish granter</text>
+    <text class="s" x="224" y="192">commits to a wish</text>
+
+    <rect class="hu" x="416" y="142" width="176" height="66" rx="11"/>
+    <text class="t" x="430" y="170">Admin: drop-off</text>
+    <text class="s" x="430" y="192">Thursdays at the hub</text>
+
+    <rect class="hu" x="622" y="142" width="176" height="66" rx="11"/>
+    <text class="t" x="636" y="170">Admin: delivery</text>
+    <text class="s" x="636" y="192">Saturdays, by hand</text>
+
+    <path class="ln" d="M180 175 H204"/>
+    <path class="ln" d="M386 175 H410"/>
+    <path class="ln" d="M592 175 H616"/>
+  </svg>
+
+  <div class="row3" style="font-size:.6em">
+    <div><strong>Intake</strong> — turns plain English into wishes you approve.</div>
+    <div><strong>Privacy &amp; Safety</strong> — the only route to the tree. Removes anything identifying.</div>
+    <div><strong>Matchmaker</strong> — ranks on urgency and waiting time, never on wording.</div>
+  </div>
+  <p class="tiny" style="margin-top:.5em">Code re-checks every rule the agents are
+    asked to follow. <strong>A prompt is a request; code is a promise.</strong></p>
+</section>
+
+<!-- 5 ------------------------------------------------------------------ -->
+<section>
+  <p class="kick">5 · Demo</p>
+  <h2>One wish, start to finish</h2>
+
+  <div class="row2x2" style="margin-top:.3em">
+    <div>
+      <img class="shot" src="{{IMG:s-intake}}" alt="The intake conversation">
+      <p class="cap"><b>1.</b> A neighbor types it in their own words. The agent
+        says it will leave the names out.</p>
+    </div>
+    <div>
+      <img class="shot" src="{{IMG:s-ontree}}" alt="The wish on the tree">
+      <p class="cap"><b>2.</b> Checked for privacy, then on the tree — rewritten
+        into one neutral format.</p>
+    </div>
+    <div>
+      <img class="shot" src="{{IMG:s-granter}}" alt="A wish granter opening a wish">
+      <p class="cap"><b>3.</b> A wish granter taps a leaf and commits. They never
+        learn who asked.</p>
+    </div>
+    <div>
+      <img class="shot" src="{{IMG:s-runsheet}}" alt="The admin run sheet">
+      <p class="cap"><b>4.</b> Admin drops off Thursday, delivers Saturday. The
+        only screen with an address.</p>
+    </div>
+  </div>
+  <p class="tiny" style="margin-top:.35em">Live at
+    <strong>wishing-tree-demo.onrender.com</strong> — all data shown is invented.</p>
+</section>
+
+<!-- 6 ------------------------------------------------------------------ -->
+<section>
+  <p class="kick">6 · Cost to run</p>
+  <h2>The AI is the cheap part</h2>
+
+  <div class="row3" style="margin-top:.5em">
+    <div class="stat">
+      <span class="big">$0.0013</span>
+      <span class="lab">per <b>neighbor journey</b><br>intake + privacy review</span>
+    </div>
+    <div class="stat">
+      <span class="big">$0.0005</span>
+      <span class="lab">per <b>wish granter journey</b><br>one Matchmaker run</span>
+    </div>
+    <div class="stat stat--green">
+      <span class="big">$10.56</span>
+      <span class="lab">a month at <b>10,000 users</b><br>every model call, everything</span>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:.8em">
+    Kept there by explicit prompt caching, a 15-candidate limit, and turn and
+    token caps — <strong>none of which cost us anything</strong>. More candidates
+    returned the same five wishes in the same order. A 300-token output cap did
+    bind, and broke 2 of 10 intakes outright: <strong>the cap is a trap, the
+    prompt is the lever.</strong>
+  </div>
+
+  <div class="warn" style="margin-top:.6em">
+    <strong>The real constraint is a person.</strong> Ten thousand users cost
+    about eleven dollars of model calls a month — and need far more than the
+    <strong>~6 hours a week</strong> of admin time that one drop-off window and
+    one delivery run already take.
+  </div>
+</section>
+
+<!-- 7 ------------------------------------------------------------------ -->
+<section>
+  <p class="kick">7 · Safety</p>
+  <h2>Privacy enforced in code</h2>
+
+  <div class="cols cols--wide" style="margin-top:.3em">
+    <div>
+      <img class="shot" src="{{IMG:s-removed}}" alt="A wish with personal details removed before publishing">
+      <p class="cap"><b>A neighbor typed</b> a child's name, a named high school
+        and a phone number. Published as <b>"Twin bed frame"</b> — and told
+        exactly what went.</p>
+    </div>
+    <div>
+      <div class="stat stat--green" style="margin-bottom:.55em">
+        <span class="big">10 / 10</span>
+        <span class="lab">live attack tests passed against the real model —
+          injection, PII, cash requests, scams, caps, passcode. $0.0039.</span>
+      </div>
+      <p><span class="pill">Two layers</span><span class="pill">Closed vocabulary</span>
+         <span class="pill">Caps server-side</span><span class="pill">No contact details to agents</span></p>
+      <p class="tiny">Wishes are data, never instructions. Python re-checks the
+        agent and can only make a wish <em>less</em> public. The admin passcode
+        and demo login shortcut are deliberately demo-grade.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 8 ------------------------------------------------------------------ -->
+<section>
+  <p class="kick">8 · Impact</p>
+  <h2>What we can say, and what we can't</h2>
+
+  <div class="cols" style="margin-top:.4em">
+    <div>
+      <div class="stat" style="margin-bottom:.5em">
+        <span class="big">9.8 s</span>
+        <span class="lab">median model time per intake, across <b>35 real
+          sessions</b> in the audit trail. End to end in the app: 44 s and 102 s.</span>
+      </div>
+      <div class="warn">Against today: an in-person appointment with ID, birth
+        certificates and proof of income — for a program that may already have
+        filled.</div>
+    </div>
+    <div>
+      <div class="ph" style="margin-bottom:.5em">
+        <span class="tag">Placeholder — tester quote</span>
+        A neighbor's own words about using the intake.
+      </div>
+      <div class="ph">
+        <span class="tag">Placeholder — before and after</span>
+        What an existing program took them, against what this took.
+      </div>
+    </div>
+  </div>
+
+  <p class="tiny" style="margin-top:.7em"><strong>To be clear:</strong> the "24
+    wishes granted" counter and the gold leaves in every screenshot are invented
+    demo data. Not one real wish has been granted yet.</p>
+</section>
+
+<!-- 9 ------------------------------------------------------------------ -->
+<section>
+  <p class="kick">9 · What's next</p>
+  <h2>From demo to something a community relies on</h2>
+
+  <div class="cols" style="margin-top:.5em">
+    <div>
+      <h3>Build</h3>
+      <ul style="font-size:.74em">
+        <li><strong>Partner mode</strong>, piloted with a soup kitchen's winter
+          clothing drive — the drive I used to organize by hand.</li>
+        <li><strong>Partner verification</strong> through referrers: schools,
+          churches and pantries already know who is struggling.</li>
+        <li><strong>Volunteer delivery</strong>, opt-in on both sides, so
+          neighbors who want to meet can.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Grow</h3>
+      <ul style="font-size:.74em">
+        <li><strong>Wish granters</strong> through Instagram, student ambassadors
+          and the SOM community.</li>
+        <li><strong>Wishes</strong> through trusted partners — the same
+          relationship that solves verification.</li>
+        <li><strong>Community leads</strong> per region, the way Lasagna Love
+          grew.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:.5em">Nobody having a hard month goes looking
+    for a giving website. They talk to their child's school.</div>
+</section>
+
+<!-- 10 ----------------------------------------------------------------- -->
+<section>
+  <div class="cols cols--narrow" style="align-items:center">
+    <div>
+      <h1 style="font-size:1.9em">Thank you</h1>
+      <p class="lede" style="margin-bottom:.8em">The giving tree, online and all
+        year round.</p>
+      <p style="font-size:.66em;line-height:1.9">
+        <strong>Code</strong> &nbsp;github.com/kelly-enright/wishing-tree<br>
+        <strong>Live</strong> &nbsp;wishing-tree-demo.onrender.com<br>
+        <span class="tiny">The free host takes about a minute to wake up.</span>
+      </p>
+    </div>
+    <div style="text-align:center">
+      <svg width="62%" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg"
+           role="img" aria-label="Monty, a corgi">
+        <path d="M22 36C19 25 21 14 26 12c5-2 11 7 13 18z" fill="#C8663B"/>
+        <path d="M74 36c3-11 1-22-4-24-5-2-11 7-13 18z" fill="#C8663B"/>
+        <path d="M25 33c-2-8-1-15 2-16s7 5 8 12z" fill="#F0C3A8"/>
+        <path d="M71 33c2-8 1-15-2-16s-7 5-8 12z" fill="#F0C3A8"/>
+        <ellipse cx="48" cy="52" rx="28" ry="24" fill="#D5713F"/>
+        <path d="M48 28c4 0 7 4 8 10s-1 12-8 12-10-6-8-12 4-10 8-10z" fill="#FBF6EE"/>
+        <ellipse cx="48" cy="63" rx="16" ry="12" fill="#FBF6EE"/>
+        <ellipse cx="29" cy="58" rx="7" ry="6" fill="#FBF6EE" opacity="0.85"/>
+        <ellipse cx="67" cy="58" rx="7" ry="6" fill="#FBF6EE" opacity="0.85"/>
+        <path d="M34 48c2-3 6-3 8 0" stroke="#2B2B2B" stroke-width="3" stroke-linecap="round"/>
+        <path d="M54 48c2-3 6-3 8 0" stroke="#2B2B2B" stroke-width="3" stroke-linecap="round"/>
+        <ellipse cx="48" cy="59" rx="4.6" ry="3.4" fill="#2B2B2B"/>
+        <path d="M48 62.5v3" stroke="#2B2B2B" stroke-width="2" stroke-linecap="round"/>
+        <path d="M41 66c3 4 11 4 14 0" stroke="#2B2B2B" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M44 69c2 4 6 4 8 0z" fill="#E08E8E"/>
+      </svg>
+      <p class="cap" style="text-align:center"><b>Monty</b> — drawn from scratch,
+        like everything else here.</p>
+    </div>
+  </div>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    transition: 'fade',
+    transitionSpeed: 'fast',
+    controls: true,
+    progress: true,
+    slideNumber: 'c/t',
+    // A 16:9 canvas scaled to whatever it is shown on, so the deck looks the
+    // same on a laptop, a projector and in an email client's preview.
+    width: 1280,
+    height: 720,
+    margin: 0.055,
+    minScale: 0.2,
+    maxScale: 1.6,
+  });
+</script>
+</body>
+</html>

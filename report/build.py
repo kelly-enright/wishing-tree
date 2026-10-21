@@ -1,11 +1,15 @@
-"""Build report.html — one file that opens by double-clicking, anywhere.
+"""Build report.html and slides.html — files that open by double-clicking.
 
-Everything the report needs is inlined: the two fonts the app uses, every
-screenshot, and the stylesheet. The source lives in `report/source.html` with
-`{{FONT:…}}` and `{{IMG:…}}` tokens, so the prose stays readable and this
-script does the encoding.
+Everything is inlined: the two fonts the app uses, every screenshot, and the
+stylesheet. The sources live beside this script with `{{FONT:…}}` and
+`{{IMG:…}}` tokens, so the prose stays readable and this script does the
+encoding.
 
     ./.venv/bin/python report/build.py
+
+The one thing not inlined is reveal.js itself, which the slides load from a
+CDN. The deck therefore needs a connection to present, even though every
+image in it travels with the file.
 
 Screenshots are capped at 1000px wide before encoding: they are shown about
 6.5 inches across on letter paper, so anything wider is bytes nobody sees.
@@ -21,8 +25,10 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SOURCE = ROOT / "report" / "source.html"
-OUT = ROOT / "report.html"
+BUILDS = [
+    (ROOT / "report" / "report.src.html", ROOT / "report.html"),
+    (ROOT / "report" / "slides.src.html", ROOT / "slides.html"),
+]
 # Cropped copies first: several screenshots carry a lot of empty page below
 # the content, which is invisible on screen and a third of a printed page here.
 CROPS = ROOT / "report" / "crops"
@@ -59,9 +65,10 @@ def image(name: str) -> str:
     return "data:image/jpeg;base64," + base64.b64encode(data).decode()
 
 
-def main() -> None:
-    html = SOURCE.read_text(encoding="utf-8")
-
+def build(source: Path, out: Path) -> None:
+    if not source.exists():
+        return
+    html = source.read_text(encoding="utf-8")
     used: list[str] = []
 
     def swap(match: re.Match) -> str:
@@ -72,13 +79,16 @@ def main() -> None:
     html = re.sub(r"\{\{(FONT|IMG):([^}]+)\}\}", swap, html)
 
     left = re.findall(r"\{\{[^}]+\}\}", html)
-    assert not left, f"unreplaced tokens: {sorted(set(left))}"
+    assert not left, f"{source.name}: unreplaced tokens {sorted(set(left))}"
 
-    OUT.write_text(html, encoding="utf-8")
-    size = OUT.stat().st_size / 1_000_000
-    print(f"{OUT.relative_to(ROOT)} — {size:.1f} MB, {len(used)} assets inlined")
-    for name in used:
-        print(f"  {name}")
+    out.write_text(html, encoding="utf-8")
+    size = out.stat().st_size / 1_000_000
+    print(f"{out.relative_to(ROOT)} — {size:.1f} MB, {len(used)} assets inlined")
+
+
+def main() -> None:
+    for source, out in BUILDS:
+        build(source, out)
 
 
 if __name__ == "__main__":
