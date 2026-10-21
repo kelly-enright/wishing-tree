@@ -31,6 +31,7 @@ from backend import (
     seed,
 )
 from backend.agents import budget, intake as intake_agent_mod, safety
+from helpers import sign_in
 from backend.agents.intake import IntakeDeps, run_turn
 from backend.models import (
     AgentCallLog,
@@ -307,6 +308,7 @@ def test_4_a_link_off_the_allowlist_is_stripped(live_db, loop):
 
 def test_5_the_turn_limit_stops_an_intake(client, monkeypatch):
     monkeypatch.setattr(config, "MAX_INTAKE_TURNS", 1)
+    sign_in(client, "Neighbor A04")
     session_id = client.post("/api/intake/start",
                              json={"family_alias": "Neighbor A04"}).json()["session_id"]
 
@@ -342,6 +344,7 @@ def test_5_the_turn_limit_stops_an_intake(client, monkeypatch):
 # --------------------------------------------------------------------------
 
 def test_6_the_session_token_cap_stops_the_chat(client, monkeypatch):
+    sign_in(client, "Neighbor A07")
     session_id = client.post("/api/intake/start",
                              json={"family_alias": "Neighbor A07"}).json()["session_id"]
 
@@ -383,6 +386,9 @@ def test_6_the_session_token_cap_stops_the_chat(client, monkeypatch):
 # --------------------------------------------------------------------------
 
 def test_7_no_public_endpoint_returns_contact_details(client):
+    # Signed in as a neighbor, because that is the harder question: not
+    # "can a stranger read this" but "can somebody with an account".
+    sign_in(client, "Neighbor A04")
     with db.connect(config.DB_PATH) as conn:
         people = [*db.list_families(conn), *db.list_donors(conn)]
 
@@ -397,7 +403,10 @@ def test_7_no_public_endpoint_returns_contact_details(client):
     for path in endpoints:
         body = client.get(path).text
         for person in people:
-            if person.contact_address in body or person.contact_phone in body:
+            # A seeded record may legitimately have no phone, and `None in
+            # body` is a TypeError rather than a pass. Check what exists.
+            details = [d for d in (person.contact_address, person.contact_phone) if d]
+            if any(detail in body for detail in details):
                 leaks.append({"endpoint": path, "alias": person.alias})
         for field in ("contact_address", "contact_phone",
                       "family_address", "family_phone", "donor_address", "donor_phone"):
@@ -423,6 +432,7 @@ def test_7_no_public_endpoint_returns_contact_details(client):
 
 def test_8_unknown_details_are_asked_for_or_left_empty(client):
     """The hardest rule to keep: never invent a detail."""
+    sign_in(client, "Neighbor A19")
     session_id = client.post("/api/intake/start",
                              json={"family_alias": "Neighbor A19"}).json()["session_id"]
 

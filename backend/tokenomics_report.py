@@ -125,10 +125,16 @@ def write_report(data: dict, path: Path) -> None:
         }
 
     d_default = arm(intakes)
-    d_mid = arm(data.get("intakes_cap700", []))
+    # `intakes_mid` is the middle arm. The key used to be `intakes_cap700`,
+    # named after the number rather than the role, which is how the report
+    # and the script that feeds it drifted apart: measure.py stopped writing
+    # that key and this read a missing list as a column of zeros.
+    d_mid = arm(data.get("intakes_mid", data.get("intakes_cap700", [])))
     d_tight = arm(data["intakes_tight"])
     tight_cap, default_cap = data["tight_cap"], data["default_cap"]
+    mid_cap = data.get("mid_cap", 700)
     failures = data.get("tight_failures", [])
+    mid_failures = data.get("mid_failures", [])
     attempted = len(data["intakes_tight"]) + len(failures)
     failure_rate = len(failures) / attempted * 100 if attempted else 0
     saving = d_default["cost"] - d_tight["cost"]
@@ -249,17 +255,17 @@ stops a busy wall quietly becoming an expensive prompt.
 Output is the dearest bucket, so a cap per reply is the most direct lever.
 Three arms, because the first tighter cap turned out not to be tight at all.
 
-| | Default ({default_cap}) | 700 | {tight_cap} |
+| | Default ({default_cap}) | {mid_cap} | {tight_cap} |
 |---|---|---|---|
 | Output tokens per call | {d_default['output_per_call']:,.0f} | {d_mid['output_per_call']:,.0f} | {d_tight['output_per_call']:,.0f} |
 | Cost per intake | ${d_default['cost']:.6f} | ${d_mid['cost']:.6f} | ${d_tight['cost']:.6f} |
 | Turns per intake | {d_default['turns']:.1f} | {d_mid['turns']:.1f} | {d_tight['turns']:.1f} |
 | Wishes drafted | {d_default['wishes']:.1f} | {d_mid['wishes']:.1f} | {d_tight['wishes']:.1f} |
 | Wishes with a cost | {d_default['with_cost']:.1f} | {d_mid['with_cost']:.1f} | {d_tight['with_cost']:.1f} |
-| **Intakes that failed outright** | **0 of {d_default['runs']}** | **0 of {d_mid['runs']}** | **{len(failures)} of {attempted}** |
+| **Intakes that failed outright** | **0 of {d_default['runs']}** | **{len(mid_failures)} of {d_mid['runs'] + len(mid_failures)}** | **{len(failures)} of {attempted}** |
 
-**A cap of 700 does nothing.** Mean output is about
-{d_default['output_per_call']:,.0f} tokens a call, so 700 never binds; the cost
+**A cap of {mid_cap} does nothing.** Mean output is about
+{d_default['output_per_call']:,.0f} tokens a call, so {mid_cap} never binds; the cost
 difference between those two arms is run-to-run variance, not a saving. This is
 worth saying plainly because it is the easy mistake: setting a cap, seeing a
 lower bill in one sample, and concluding the cap caused it.

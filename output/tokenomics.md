@@ -1,6 +1,6 @@
 # Tokenomics — Wishing Tree
 
-Measured against **gpt-6-luna** on 2026-10-20. Every number
+Measured against **gpt-6-luna** on 2026-10-21. Every number
 here comes from a real run; nothing is estimated except where it says so.
 
 Raw per-run records: `output/tokenomics_runs.json`.
@@ -39,9 +39,9 @@ which turns out to decide most of what follows.
 
 | Agent | Runs | Calls/run | Input | Cached | Cache write | Output | Latency | $/call | $/run |
 |---|---|---|---|---|---|---|---|---|---|
-| Intake | 10 | 2.0 | 265 | 4,511 | 1,520 | 405 | 10.2 s | $0.000464 | $0.000928 |
-| Privacy & Safety | 10 | 1.0 | 252 | 3,696 | 490 | 443 | 13.1 s | $0.000345 | $0.000345 |
-| Matchmaker | 10 | 1.0 | 378 | 5,842 | 1,434 | 514 | 6.8 s | $0.000532 | $0.000532 |
+| Intake | 10 | 2.0 | 246 | 5,689 | 2,186 | 386 | 0.9 s | $0.000548 | $0.001096 |
+| Privacy & Safety | 10 | 1.0 | 277 | 5,877 | 419 | 489 | 0.5 s | $0.000384 | $0.000384 |
+| Matchmaker | 10 | 1.0 | 353 | 5,643 | 1,268 | 420 | 0.4 s | $0.000460 | $0.000460 |
 
 Cached input is the largest bucket in every row, which is the explicit
 prompt-cache breakpoint doing its job.
@@ -49,23 +49,23 @@ prompt-cache breakpoint doing its job.
 ## Cost per journey
 
 **A family journey** — one intake, then a safety review for each wish it
-produced (0.9 wishes per intake, measured):
+produced (0.6 wishes per intake, measured):
 
 | Part | Cost |
 |---|---|
-| Intake (2.0 calls) | $0.000928 |
-| Safety reviews (× 0.9) | $0.000311 |
-| **Whole family journey** | **$0.001238** |
+| Intake (2.0 calls) | $0.001096 |
+| Safety reviews (× 0.6) | $0.000230 |
+| **Whole family journey** | **$0.001326** |
 
 **A donor journey** — one matchmaker run. Browsing the wall, filtering and
 granting are all plain database work and cost nothing.
 
 | Part | Cost |
 |---|---|
-| **Whole donor journey** | **$0.000532** |
+| **Whole donor journey** | **$0.000460** |
 
-Roughly: **808 family journeys to the dollar**, and
-**1,878 donor journeys to the dollar**.
+Roughly: **754 family journeys to the dollar**, and
+**2,173 donor journeys to the dollar**.
 
 ## Monthly cost at scale
 
@@ -79,8 +79,8 @@ Stated assumptions, so they can be argued with:
 
 | Users | Families | Donors | Family cost | Donor cost | **Monthly total** |
 |---|---|---|---|---|---|
-| 100 | 33 | 67 | $0.04 | $0.07 | **$0.11** |
-| 10,000 | 3,333 | 6,667 | $4.13 | $7.10 | **$11.23** |
+| 100 | 33 | 67 | $0.04 | $0.06 | **$0.11** |
+| 10,000 | 3,333 | 6,667 | $4.42 | $6.14 | **$10.56** |
 
 At ten thousand users the model bill is **$11 a month** —
 less than one volunteer coordinator's phone plan. The binding constraint on
@@ -93,13 +93,13 @@ candidates. Run at 15 and with no limit, on the same five donors:
 
 | Donor | Input @15 | Cost @15 | Input @all | Cost @all | Top five | Order |
 |---|---|---|---|---|---|---|
-| Donor D01 | 8,476 | $0.000539 | 8,462 | $0.000679 | same five | same order |
-| Donor D02 | 6,516 | $0.000366 | 6,516 | $0.000375 | same five | same order |
-| Donor D03 | 7,562 | $0.000592 | 7,531 | $0.000573 | same five | same order |
-| Donor D04 | 9,152 | $0.000730 | 9,162 | $0.000723 | same five | same order |
-| Donor D05 | 6,561 | $0.000365 | 6,526 | $0.000346 | same five | same order |
+| Granter D01 | 8,947 | $0.000568 | 8,978 | $0.000680 | same five | same order |
+| Granter D02 | 7,023 | $0.000560 | 7,020 | $0.000561 | same five | same order |
+| Granter D03 | 3,992 | $0.000127 | 3,992 | $0.000130 | same five | same order |
+| Granter D04 | 9,302 | $0.000729 | 9,260 | $0.000683 | same five | same order |
+| Granter D05 | 7,057 | $0.000317 | 7,058 | $0.000347 | same five | same order |
 
-Average cost: **$0.000518** at 15, **$0.000539** with no limit
+Average cost: **$0.000460** at 15, **$0.000480** with no limit
 (+4%).
 
 5 of 5 donors got the **same five wishes** either way.
@@ -118,28 +118,28 @@ Three arms, because the first tighter cap turned out not to be tight at all.
 
 | | Default (1600) | 700 | 300 |
 |---|---|---|---|
-| Output tokens per call | 405 | 456 | 350 |
-| Cost per intake | $0.000928 | $0.000777 | $0.000650 |
+| Output tokens per call | 386 | 330 | 347 |
+| Cost per intake | $0.001096 | $0.000649 | $0.000676 |
 | Turns per intake | 2.0 | 2.0 | 2.0 |
-| Wishes drafted | 0.9 | 0.9 | 0.9 |
-| Wishes with a cost | 0.5 | 0.5 | 0.4 |
-| **Intakes that failed outright** | **0 of 10** | **0 of 10** | **3 of 10** |
+| Wishes drafted | 0.6 | 0.6 | 0.8 |
+| Wishes with a cost | 0.6 | 0.6 | 0.8 |
+| **Intakes that failed outright** | **0 of 10** | **0 of 10** | **2 of 10** |
 
 **A cap of 700 does nothing.** Mean output is about
-405 tokens a call, so 700 never binds; the cost
+386 tokens a call, so 700 never binds; the cost
 difference between those two arms is run-to-run variance, not a saving. This is
 worth saying plainly because it is the easy mistake: setting a cap, seeing a
 lower bill in one sample, and concluding the cap caused it.
 
-**A cap of 300 binds, and breaks things.** 3 of
-10 intakes (30%) failed outright with *"Model token
+**A cap of 300 binds, and breaks things.** 2 of
+10 intakes (20%) failed outright with *"Model token
 limit (300) exceeded before any response was generated"* — the
-structured reply could not be produced at all. The 7 that did
-finish averaged $0.000650, a saving of $0.000277
-(30%) per intake.
+structured reply could not be produced at all. The 8 that did
+finish averaged $0.000676, a saving of $0.000420
+(38%) per intake.
 
-**Keeping 1600.** A saving of 30% of a tenth of a cent is worth
-nothing against a 30% chance that a family who has just typed
+**Keeping 1600.** A saving of 38% of a tenth of a cent is worth
+nothing against a 20% chance that a family who has just typed
 out what their children need gets an error instead of a wish. And the saving is
 overstated anyway: the failed runs are not free — the tokens were spent before
 the limit was hit — they are just wasted.

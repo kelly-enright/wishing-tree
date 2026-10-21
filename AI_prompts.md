@@ -1464,3 +1464,80 @@ remembering before chasing an animation that is only asleep.
 
 **Still outstanding, by agreement:** the live safety suite and the token
 measurements.
+
+## Problem 24 — README, Final Measurements, Cold Start, and GitHub
+
+### Prompt 1
+
+> Problem 21: "README, final measurements, fresh-clone dry run, and GitHub"
+>
+> The design and all agent prompts are now frozen. The teaching staff must have the app running within 10 minutes of a fresh clone, or I get 0 for that row.
+>
+> a.) Write README.md: what Wishing Tree is (one paragraph), the three roles (neighbor making a wish, wish granter, admin), and step-by-step setup: create the venv, install requirements, put .env in the repo folder or one level above it, seed the database, start the app. Say which port it runs on and how to change it if that port is busy, and how to reset the demo data.
+>
+> b.) Include a "Trying it out" section: the demo logins (an example neighbor email and an example wish granter email, both with password neighbor-demo), the "Continue as…" demo shortcut, and the admin passcode (wishingtree-demo) with how to reach Admin sign-in. Give a short walkthrough: a neighbor makes a wish, a wish granter finds it on the Wish Tree and commits to it, the admin marks it dropped off and delivered.
+>
+> c.) Include a "Seeing the AI at work" section: open "Show AI details" on any neighbor or wish granter screen for that session's token usage and cost, and Admin → Agent activity for every agent call with its tokens, cost and intake times.
+>
+> d.) Explain how to run the fast test suite, and separately the live safety tests and the token measurement script.
+>
+> e.) Make sure .env.example lists PORTKEY_API_KEY, .gitignore excludes .env, .venv and any local databases, and no secrets are committed anywhere in the git history.
+>
+> f.) Rerun the live safety suite and the token measurement script, including the candidate-limit and output-cap experiments, against the final prompts. Update output/safety_test_results.json, output/tokenomics.md and harness.md (including sections 19–20) so every number matches the final app. Tell me which numbers changed meaningfully.
+>
+> g.) Do a dry run: clone the repo into a brand-new folder, put .env one level above it, follow the README exactly, and use the app as a new person would. Fix anything that breaks and tell me what you fixed.
+>
+> h.) Push to GitHub. Remind me to make the repo public or add zlisto as a collaborator.
+>
+> i.) When everything else is done, reseed the demo database so it's back to a clean state for testing and recording.
+>
+> Ask any questions you have before starting.
+
+**Questions asked before starting:** how to create and share the repo (private
+with zlisto added, chosen), and what to call it (`wishing-tree`, chosen).
+Everything else was answerable from the code: the history was already clean,
+`gh` was already authenticated, and a full rerun cost about 4¢, which was not
+worth pausing for.
+
+**Outcome:** 522 fast tests and 10 live tests passing. Cold start: 11 seconds.
+
+- **(f) found two bugs in the evidence, not in the app.** The live safety suite
+  came back 6 of 10 — three tests called the intake API without signing in
+  (that endpoint has required a session since accounts were added) and one
+  compared `None in body` for a seeded person with no phone. The suite predated
+  authentication and nothing had re-run it since. Both are the same lesson:
+  evidence excluded from the default suite rots silently.
+- **The measurement script and its report had drifted apart.** `measure.py`
+  wrote two output-cap arms; the report rendered three, reading the middle one
+  from a key the script no longer wrote. The result was a column of zeros and
+  the sentence *"A cap of 700 binds, and breaks things. 0 of 10 intakes (0%)
+  failed outright"* — self-contradictory in nine words. The key was named after
+  its number (`intakes_cap700`) rather than its role, which is how they drifted.
+  Fixed by running both tighter arms and labeling the columns from the data.
+- **No conclusion changed.** Intake got slightly dearer (its prompt grew), the
+  matchmaker slightly cheaper, and the 300-token cap broke 2 of 10 intakes
+  instead of 3 of 10. Every claim in §20 reads the same.
+- **(g) found nothing broken in the app.** Port 8000 was busy on this machine,
+  so the app refused to start and printed the reason and the exact command to
+  use instead — which is the single most likely thing to cost a grader ten
+  minutes, and it cost one line. Skipping the optional seed step also works:
+  the app builds the database on first start.
+- **One self-inflicted scare during the dry run:** deleting the database while
+  a server still held it returned 500 from every endpoint, which looked like a
+  broken auto-seed until a zombie process turned up on the port. `pkill -f` had
+  not matched it.
+- **(e) was already satisfied.** Every blob in all 28 commits scanned for
+  key-shaped strings and for the real key out of `../.env`: no hits.
+
+### Which numbers changed
+
+| | Before | After |
+|---|---|---|
+| Safety suite | 10 held, $0.0031 | 10 held, $0.0039 |
+| Intake, per run | $0.000928 | $0.001096 |
+| Safety review, per run | $0.000345 | $0.000384 |
+| Matchmaker, per run | $0.000532 | $0.000478 |
+| Neighbor journey | $0.00124 | $0.00133 |
+| Wish granter journey | $0.00053 | $0.00046 |
+| 10,000 users / month | $11.23 | $10.56 |
+| Intakes failing at a 300 cap | 3 of 10 | 2 of 10 |

@@ -261,22 +261,29 @@ async def run_all() -> dict:
         *(one_match(d, "limitall", None, gate) for d in donors)
     )
 
-    tight = 700
-    print(f"  D.  ten intakes at a tighter output cap ({tight})…")
+    # Two tighter caps, not one. A single tighter arm can only answer "does
+    # this cap bind?"; two answer the question worth asking, which is *where*
+    # it starts to bind — and the answer is between them.
     original_cap = config.MAX_OUTPUT_TOKENS_INTAKE
-    config.MAX_OUTPUT_TOKENS_INTAKE = tight
-    intake_mod.intake_agent.cache_clear()
-    try:
-        intakes_tight = await asyncio.gather(
-            *(one_intake(s, "intake-tight", gate) for s in SCENARIOS),
-            return_exceptions=True,
-        )
-    finally:
-        config.MAX_OUTPUT_TOKENS_INTAKE = original_cap
-        intake_mod.intake_agent.cache_clear()
 
-    failures = [r for r in intakes_tight if isinstance(r, Exception)]
-    intakes_tight = [r for r in intakes_tight if not isinstance(r, Exception)]
+    async def at_cap(cap: int, label: str):
+        print(f"  D.  ten intakes at an output cap of {cap}…")
+        config.MAX_OUTPUT_TOKENS_INTAKE = cap
+        intake_mod.intake_agent.cache_clear()
+        try:
+            runs = await asyncio.gather(
+                *(one_intake(s, label, gate) for s in SCENARIOS),
+                return_exceptions=True,
+            )
+        finally:
+            config.MAX_OUTPUT_TOKENS_INTAKE = original_cap
+            intake_mod.intake_agent.cache_clear()
+        broke = [f"{type(r).__name__}: {r}" for r in runs if isinstance(r, Exception)]
+        return [r for r in runs if not isinstance(r, Exception)], broke
+
+    mid, tight = 700, 300
+    intakes_mid, mid_failures = await at_cap(mid, "intake-mid")
+    intakes_tight, tight_failures = await at_cap(tight, "intake-tight")
 
     return {
         "intakes_default": list(intakes_default),
@@ -284,10 +291,13 @@ async def run_all() -> dict:
         "matches": list(match_runs),
         "limit_15": list(matches_15),
         "limit_all": list(matches_all),
+        "intakes_mid": intakes_mid,
+        "mid_cap": mid,
+        "mid_failures": mid_failures,
         "intakes_tight": intakes_tight,
         "tight_cap": tight,
         "default_cap": original_cap,
-        "tight_failures": [f"{type(e).__name__}: {e}" for e in failures],
+        "tight_failures": tight_failures,
     }
 
 
