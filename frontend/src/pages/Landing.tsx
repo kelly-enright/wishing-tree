@@ -13,6 +13,7 @@ import WishCard from '../components/WishCard'
 import {
   CategoryRange, CountUp, DriftingLeaves, Hills, Reveal, ThreeSteps,
 } from '../components/LandingBits'
+import { MontyArrives } from '../components/MontyPlays'
 import Footer from '../components/Footer'
 import { ServiceNotice } from '../components/ServiceArea'
 import { homePath, setMe, useSession } from '../session'
@@ -107,6 +108,8 @@ export default function Landing() {
         alias={session?.alias} me={me}
         onSwitch={signOut} onSwitchSide={switchSide}
       />
+
+      <MontyArrives />
 
       <header className="hero">
         <h1 className="hero__tagline">Grant a neighbor's wish, any time of year</h1>

@@ -1092,3 +1092,51 @@ measurements.
 
 **Still outstanding, by agreement:** the live safety suite and the token
 measurements.
+
+## Problem 19 — Last Fixes, and Monty
+
+### Prompt 1 (cut off partway through item g)
+
+> Not yet, one last round first. After this, the design is frozen.
+>
+> Fixes:
+> a.) Clicking "My wishes" with no wishes sends me back to "Make a wish." The "land on Make a wish" rule should only apply once, right after a new neighbor signs in. The "My wishes" tab must always open "My wishes," showing the friendly empty state ("No wishes yet") with a "Make a new wish" button when there are none. Add a test for it.
+> b.) On the Make a wish page, the "Show AI details" box ran off the right edge of the window and the account menu wasn't fully visible. Check that nothing runs off the edge on any signed-in page at common desktop and phone widths.
+> c.) The header must always highlight the current page (on About, it highlighted "My wishes").
+> d.) On phone widths, the signed-out header loses "How it works" and "About." Add a small menu button so they're reachable on phones.
+>
+> Monty:
+> e.) Landing page only: when the page first loads, Monty trots along the bottom edge of the header, bounds through a small pile of leaves that puff up around him, then settles sitting beside the logo. About 3–4 seconds, once per visit, never repeating while on the page.
+> f.) A short animation of Monty playing in a small pile of leaves in three places: beside my portrait on the About page, on the wish granter's thank-you screen after committing to a wish, and when a wish is marked delivered and its leaf turns gold. A few seconds each, not looping endlessly.
+> g.) Keep the neighbor's own pages (Make a wish, My wishes) calm, with  *[message ends here]*
+
+### Prompt 2 (mid-round)
+
+> Three more things from testing:
+> a.) The account menu in the top right should show the person's first name when they gave one (e.g. "Dana"), not their alias. Inside the menu, show "Others see you as Neighbor A04." Fall back to the alias only when there's no name. This should match on every page and both sides.
+> b.) The page background stops partway down on short pages, leaving a gray band at the bottom. The background should always fill the whole window, however short the page is.
+> c.) Confirm that nothing runs off the right edge on any page; on the Make a wish page, "Show AI details" and the account menu were still cut off.
+
+**Outcome:** 416 passing. Everything above is done except the tail of (g),
+which the message cut off mid-sentence.
+
+- **The cut-off was real and I nearly missed it.** My first sweep measured
+  element rectangles against the viewport and found nothing, because the
+  preview pane crops its screenshots and I was partly reading those. The
+  actual cause was the header's flex layout: `.topbar__links { flex: 1 }`
+  with no `min-width: 0` pushes everything to its right off the window
+  instead of giving way itself. Measuring at 390px found it: the Sign up
+  button overflowed by 8px.
+- **The same stacking bug, a fourth time.** `position: relative` on a page's
+  children keeps overriding `position: fixed` on things that place
+  themselves — the tab bar, the drift layer twice, and now Monty's entrance.
+  The exclusion is one shared `.layer` marker now rather than a list.
+- **Monty needed a lane, and `margin-top` would not give him one.** The
+  arrival block has no height, so a margin collapses straight through it to
+  the hero. The hero uses `padding-top` instead.
+- **"Once per visit" lives in `sessionStorage`, not state.** A visitor who
+  goes to About and comes back should not be greeted again, and a remount
+  would otherwise replay it.
+- **The header was never at the top.** Both page containers had 44–72px of
+  padding above the pinned bar, so it floated down the page until you
+  scrolled past it.

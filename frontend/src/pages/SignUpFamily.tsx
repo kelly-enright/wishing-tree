@@ -36,7 +36,10 @@ export default function SignUpFamily() {
         first_name: firstName.trim() || null,
       })
       setMe(await getMe())
-      navigate('/family')
+      // Straight to the chat: a brand new neighbor has no wishes to look
+      // at, and asking for one is what they came to do. This is the only
+      // place that rule applies — "My wishes" always opens "My wishes".
+      navigate('/family/new')
     } catch (err) {
       setError(userMessage(err, 'We could not create your account just now. Please try again.'))
       setBusy(false)

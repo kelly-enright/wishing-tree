@@ -1178,7 +1178,7 @@ Agents arrive in later problems; these are the ones already standing.
 
 ## 25. Tests
 
-`./.venv/bin/python -m pytest` — **406 passing**, in under two seconds, every agent stubbed.
+`./.venv/bin/python -m pytest` — **416 passing**, in under two seconds, every agent stubbed.
 
 `./.venv/bin/python -m pytest -m live` — **10 more** against the real model, excluded by default because they spend tokens. Every agent is stubbed, so the suite is free to run.
 
@@ -1876,3 +1876,82 @@ darkened past the line.
 | Tests | 406 passing, 10 deselected |
 | Sideways scroll | none, on either page, at any width |
 | Agent prompts changed | none |
+
+## 34. Last fixes, and Monty
+
+### A tab opens the page it names
+
+"My wishes" bounced anyone with no wishes straight to the chat, which meant
+the tab could not be opened at all until you had one — it looked broken
+rather than empty. The page always shows the page now, with a "No wishes
+yet" state and the one button that answers it. Landing on the chat is
+something **sign-up** does once, on the way in.
+
+### A link is lit by the route
+
+`roleLinks()` — used on pages that are not a role's own screen, like About —
+was handing back `neighborLinks('wishes')`, which hard-codes "My wishes" as
+the current page. So About lit a tab you were not on. It passes no argument
+now and the bar matches the route itself.
+
+### The same stacking bug, a fourth time
+
+`position: relative` on a page's direct children overrode `position: fixed`
+or `absolute` on anything that places itself. It has now flattened the bottom
+tab bar, the drift layer on the landing page, the drift layer on About, and
+Monty's entrance.
+
+The exclusion is no longer a list that has to be remembered. Anything that
+positions itself carries **`.layer`**, and the rule excludes that one name.
+
+### Nothing runs off the edge
+
+The cause was in the header's flex layout: `.topbar__links { flex: 1 }` with
+no `min-width: 0` pushed everything to its right off the window rather than
+giving way itself. The link row shrinks and scrolls now; `.topbar__right` is
+`flex: 0 0 auto`, so the account menu can never be pushed anywhere.
+
+Two more found by measuring rather than looking:
+
+- The bar's content box was 1120px against the page's 1040, so the account
+  menu sat 64px right of everything below it. They are the same box now.
+- At 390px the signed-out header carried a wordmark, a menu button, a log-in
+  and a filled button — 8px more than the screen. Tighter padding under
+  480px, and the signed-out bottom tab bar is gone: the new menu button
+  replaces it, and the two together did not fit.
+
+The AI panel was also sticking at `top: 24px`, which slid it under the
+56px header. It clears it now.
+
+### The background, and the header's own position
+
+`height: 100%` capped the body at one screen. `min-height` instead, and cream
+on `html` as well, so there is no page length at which nothing is painted.
+
+Both page containers had top padding above the pinned header, so the bar
+floated 44–72px down the page until you scrolled. They start at zero now.
+
+### Monty
+
+**Arriving**, on the landing page only: he trots in from the right, bounds
+through a pile of leaves that scatters under him, and settles beside the
+wordmark. 3.4 seconds, once a visit — held in `sessionStorage`, not state,
+so going to About and back does not greet you again.
+
+He needed a lane. The hero has `padding-top`, not `margin-top`, because the
+arrival block has no height and a margin would collapse straight through it.
+
+**Playing**, 2.6 seconds, in the three places worth marking: beside the
+portrait on About, on the thank-you screen after committing to a wish, and
+on a wish that has been delivered.
+
+Nothing loops. Every animation is declared `both`, which holds the last frame
+rather than snapping back, and each runs once. Under reduced motion the
+drawing stays and the movement goes — which is the right way round, because
+the drawing is the content.
+
+| | |
+|---|---|
+| Tests | 416 passing, 10 deselected |
+| Overflow at 390, 760, 1024 | none |
+| Animations that loop | none |

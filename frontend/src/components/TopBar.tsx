@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
-  ChevronDown, HeartHandshake, HelpCircle, Info, ListChecks, LogIn,
+  ChevronDown, HeartHandshake, HelpCircle, Info, ListChecks, LogIn, Menu,
   Repeat, Sparkles, TreePine, UserPlus,
 } from 'lucide-react'
 import Logo from './Logo'
@@ -52,12 +52,14 @@ const SIGNED_OUT: NavLink[] = [
  * The neighbor's links. Two pages, not two halves of one, so the highlight is
  * decided by which page you are on rather than by where you have scrolled.
  */
-export function neighborLinks(on: 'wishes' | 'new'): NavLink[] {
+export function neighborLinks(on?: 'wishes' | 'new'): NavLink[] {
   return [
     { label: 'My wishes', short: 'Wishes', to: '/family',
-      icon: <ListChecks size={17} aria-hidden="true" />, active: on === 'wishes' },
+      icon: <ListChecks size={17} aria-hidden="true" />,
+      active: on ? on === 'wishes' : undefined },
     { label: 'Make a wish', short: 'Ask', to: '/family/new',
-      icon: <Sparkles size={17} aria-hidden="true" />, active: on === 'new' },
+      icon: <Sparkles size={17} aria-hidden="true" />,
+      active: on ? on === 'new' : undefined },
     { label: 'About', short: 'About', to: '/about',
       icon: <Info size={17} aria-hidden="true" /> },
   ]
@@ -69,10 +71,10 @@ export function roleLinks(role: 'family' | 'donor'): NavLink[] {
     icon: <Info size={17} aria-hidden="true" />,
   }
   if (role === 'family') {
-    return [
-      ...neighborLinks('wishes').slice(0, 2),
-      about,
-    ]
+    // No `on` argument: nothing is the current page, so the bar falls back
+    // to matching the route. On About that lights About, which is where you
+    // are — reusing neighborLinks('wishes') here lit "My wishes" instead.
+    return [...neighborLinks().slice(0, 2), about]
   }
   return [
     { label: 'Wish Tree', short: 'Tree', to: '/donor',
@@ -111,6 +113,11 @@ export default function TopBar({
             {shown.map((link) => <BarLink key={link.label} link={link} />)}
           </nav>
 
+          {/* Signed out on a phone there is no bottom tab bar to hold them,
+              so How it works and About would be unreachable. This button is
+              the only place they live at that width. */}
+          {!alias && !links && <SignedOutMenu links={shown} />}
+
           <div className="topbar__right">
             {trailing}
 
@@ -143,7 +150,10 @@ export default function TopBar({
         </div>
       </header>
 
-      {shown.length > 0 && (
+      {/* Only for a signed-in person's own sections. A signed-out visitor
+          reaches How it works and About from the menu button above, and
+          having both did not fit on a 390px phone. */}
+      {shown.length > 0 && (alias || links) && (
         <nav className="tabbar" aria-label="Sections">
           {shown.map((link) => (
             <BarLink key={link.label} link={link} bottom />
@@ -177,12 +187,60 @@ function BarLink({ link, bottom = false }: { link: NavLink; bottom?: boolean }) 
   )
 }
 
+function SignedOutMenu({ links }: { links: NavLink[] }) {
+  const [open, setOpen] = useState(false)
+  const box = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const away = (e: MouseEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false)
+    }
+    const escape = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', away)
+    document.addEventListener('keydown', escape)
+    return () => {
+      document.removeEventListener('mousedown', away)
+      document.removeEventListener('keydown', escape)
+    }
+  }, [open])
+
+  return (
+    <div className="phonemenu" ref={box}>
+      <button
+        type="button" className="phonemenu__btn"
+        aria-expanded={open} aria-haspopup="menu" aria-label="Menu"
+        onClick={() => setOpen((was) => !was)}
+      >
+        <Menu size={19} aria-hidden="true" />
+      </button>
+
+      {open && (
+        <div className="account__menu" role="menu">
+          {links.map((link) => (
+            <Link
+              key={link.label} to={link.to ?? '/'} role="menuitem"
+              className="account__item" onClick={() => setOpen(false)}
+            >
+              {link.icon}
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 /**
- * The alias, and a badge that says something useful.
+ * Who you are, to you.
  *
- * Their initial if they gave a name — it is theirs, and only they and the
- * coordinator ever see it. Otherwise the code from the alias, A04 or D01,
- * because a first initial taken from "Neighbor A04" would read "N" for every
+ * Your name if you gave one — it is yours, and only you and the coordinator
+ * ever see it. The alias is what everyone else sees, so the menu says so
+ * rather than leaving you to guess which of the two strangers read.
+ *
+ * With no name, the alias does both jobs and the badge carries its code:
+ * a first initial taken from "Neighbor A04" would read "N" for every
  * neighbor in New Haven.
  */
 function AccountMenu({
@@ -195,8 +253,9 @@ function AccountMenu({
 }) {
   const [open, setOpen] = useState(false)
   const box = useRef<HTMLDivElement>(null)
-  const code = me?.first_name
-    ? me.first_name.trim().charAt(0).toUpperCase()
+  const name = me?.first_name?.trim() || null
+  const code = name
+    ? name.charAt(0).toUpperCase()
     : alias.split(' ').pop() ?? alias
   const other = me?.roles?.find((r) => r.alias !== alias) ?? null
 
@@ -224,14 +283,19 @@ function AccountMenu({
         onClick={() => setOpen((was) => !was)}
       >
         <span className="account__badge" aria-hidden="true">{code}</span>
-        <span className="account__alias">{alias}</span>
+        <span className="account__alias">{name ?? alias}</span>
         <ChevronDown size={14} aria-hidden="true" />
       </button>
 
       {open && (
         <div className="account__menu" role="menu">
           <p className="account__who">
-            Signed in as<br /><strong>{alias}</strong>
+            Signed in as<br /><strong>{name ?? alias}</strong>
+            {name && (
+              <><br /><span className="account__alias-note">
+                Others see you as {alias}.
+              </span></>
+            )}
             {me?.email && <><br /><span className="account__email">{me.email}</span></>}
           </p>
 

@@ -3,6 +3,7 @@ import { getMyWishes, respondToWindow, userMessage, type WishProgress } from '..
 import { MontySays } from '../components/Monty'
 import { when } from '../dates'
 import { useToast } from '../components/Toast'
+import { MontyInLeaves } from '../components/MontyPlays'
 import { SkeletonRows } from '../components/Skeleton'
 
 const ORDER: WishProgress['stage'][] = [
@@ -98,6 +99,10 @@ export default function MyWishes({ alias }: { alias: string }) {
             )}
           </header>
 
+          {/* A wish that has arrived is the moment the whole app is for. */}
+          {row.stage === 'delivered' && (
+            <MontyInLeaves size={52} replay={row.wish.id} />
+          )}
           <p className="track__item">{row.wish.item_description}</p>
           {row.stage !== 'on_the_tree' && <p className="track__detail">{row.detail}</p>}
 

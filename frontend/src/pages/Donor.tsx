@@ -19,6 +19,7 @@ import { useSession } from '../session'
 import NeedsSignIn, { PageLoading } from '../components/NeedsSignIn'
 import { signOut, switchSide } from '../auth'
 import { MapLink } from '../components/ItemLink'
+import { MontyInLeaves } from '../components/MontyPlays'
 import { longDay, when } from '../dates'
 import TopBar from '../components/TopBar'
 import { useToast } from '../components/Toast'
@@ -172,7 +173,10 @@ export default function Donor() {
           links={[]} alias={session.alias} me={me}
           onSwitch={signOut} onSwitchSide={switchSide}
         />
-        <h1 className="page__title">You just made a neighbor's week. Thank you.</h1>
+        <div className="thanks">
+          <MontyInLeaves size={84} replay={granted.wish.id} />
+          <h1 className="page__title">You just made a neighbor's week. Thank you.</h1>
+        </div>
         <p className="page__blurb">{granted.wish.item_description}</p>
 
         <section className={`logistics logistics--${logistics.kind}`}>

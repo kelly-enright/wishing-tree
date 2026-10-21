@@ -704,9 +704,9 @@ def test_the_signed_out_header_puts_the_two_ways_in_on_the_right():
 # --------------------------------------------------------------------------
 
 def test_every_piece_of_landing_motion_can_be_switched_off():
-    css = (FRONTEND / "src" / "styles.css").read_text()
-    reduced = css[css.rindex("@media (prefers-reduced-motion: reduce)"):]
-    for piece in (".tree--swaying .leaf", ".drift__leaf", ".reveal"):
+    reduced = reduced_motion_rules()
+    for piece in (".tree--swaying .leaf", ".drift__leaf", ".reveal",
+                  ".arrive", ".pile"):
         assert piece in reduced, piece
     assert ".drift { display: none; }" in reduced
 
@@ -794,6 +794,29 @@ NEW_BACKGROUNDS = {"--glow-peach": "#F8E6D2", "--band-sage": "#E8EFE7",
                    "--band-sand": "#F6EBDA", "--hill-sage": "#C9D7C6"}
 
 
+def reduced_motion_rules() -> str:
+    """Every `prefers-reduced-motion` block in the stylesheet, joined.
+
+    There is more than one — motion was added in several passes — so a test
+    that looks only at the last would quietly stop checking the others.
+    """
+    blocks = []
+    needle = "@media (prefers-reduced-motion: reduce)"
+    start = CSS.find(needle)
+    while start != -1:
+        depth, i = 0, CSS.index("{", start)
+        for i in range(i, len(CSS)):
+            if CSS[i] == "{":
+                depth += 1
+            elif CSS[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    break
+        blocks.append(CSS[start:i + 1])
+        start = CSS.find(needle, i)
+    return "\n".join(blocks)
+
+
 def test_the_new_tones_are_the_ones_in_the_stylesheet():
     """So this file cannot drift away from what the app actually paints."""
     for name, value in {**TEXT_COLORS, **NEW_BACKGROUNDS}.items():
@@ -845,9 +868,12 @@ def test_the_leaves_never_sit_on_top_of_anything():
     assert "pointer-events: none" in block[:200]
     assert "z-index: 0" in block[:200]
     # And the content is lifted above them, with the self-positioning pieces
-    # left alone — the bug that flattened the tab bar twice.
-    assert ".landing > *:not(.topbar):not(.tabbar):not(.drift)" in CSS
-    assert ".about > *:not(.topbar):not(.tabbar):not(.drift)" in CSS
+    # left alone. That rule has now flattened the tab bar, the drift layer
+    # twice and Monty's entrance, so the exclusion is one shared marker
+    # rather than a list that has to be remembered.
+    assert ".landing > *:not(.topbar):not(.tabbar):not(.layer)" in CSS
+    assert ".about > *:not(.topbar):not(.tabbar):not(.layer)" in CSS
+    assert 'className="drift layer"' in BITS.read_text()
 
 
 def test_the_landing_page_has_one_logo_not_two():
@@ -902,6 +928,112 @@ def test_the_grain_is_too_faint_to_notice():
 
 
 def test_all_of_the_new_motion_switches_off():
-    reduced = CSS[CSS.rindex("@media (prefers-reduced-motion: reduce)"):]
+    reduced = reduced_motion_rules()
     assert ".drift__fall, .drift__leaf { animation: none; }" in reduced
     assert ".drift { display: none; }" in reduced
+
+
+# --------------------------------------------------------------------------
+# A tab opens the page it names
+# --------------------------------------------------------------------------
+
+def test_my_wishes_always_opens_my_wishes():
+    """It used to bounce anybody with no wishes to the chat, so the tab
+    could not be opened until you had one — it looked broken, not empty."""
+    page = (FRONTEND / "src" / "pages" / "MyWishesPage.tsx").read_text()
+    assert "navigate('/family/new'" not in page
+    assert "No wishes yet" in page
+    assert 'to="/family/new"' in page          # the way on from the empty state
+
+    # Landing on the chat is something sign-up does once, on the way in.
+    signup = (FRONTEND / "src" / "pages" / "SignUpFamily.tsx").read_text()
+    assert "navigate('/family/new')" in signup
+
+
+def test_a_header_link_is_lit_by_the_route_not_by_a_guess():
+    bar = (FRONTEND / "src" / "components" / "TopBar.tsx").read_text()
+    # `roleLinks` is for pages that are not the role's own screen. Passing no
+    # `on` leaves the highlight to the route — it used to hand over
+    # neighborLinks('wishes'), which lit "My wishes" while you were on About.
+    assert "return [...neighborLinks().slice(0, 2), about]" in bar
+    assert "active: on ? on === 'wishes' : undefined" in bar
+
+
+def test_the_signed_out_header_has_a_way_to_the_other_pages_on_a_phone():
+    bar = (FRONTEND / "src" / "components" / "TopBar.tsx").read_text()
+    assert "function SignedOutMenu" in bar
+    assert "{!alias && !links && <SignedOutMenu links={shown} />}" in bar
+    # And the bottom bar is for a signed-in person's own sections, so the two
+    # are never on screen together — at 390px they did not both fit.
+    assert "{shown.length > 0 && (alias || links) && (" in bar
+
+
+def test_the_account_menu_shows_a_name_and_explains_the_alias():
+    bar = (FRONTEND / "src" / "components" / "TopBar.tsx").read_text()
+    assert "{name ?? alias}" in bar
+    assert "Others see you as {alias}." in bar
+    # The badge still falls back to the alias code, because an initial taken
+    # from "Neighbor A04" reads N for every neighbor in New Haven.
+    assert "alias.split(' ').pop() ?? alias" in bar
+
+
+def test_the_background_covers_a_page_of_any_height():
+    assert "html { background: var(--cream); }" in CSS
+    assert "html, body, #root { min-height: 100%; }" in CSS
+    assert "html, body, #root { height: 100%; }" not in CSS
+
+
+def test_the_pinned_header_starts_at_the_top_of_the_page():
+    """It used to sit 72px down until you scrolled, because the page it is
+    the first child of had that much padding above it."""
+    for rule in (".landing {", ".page {"):
+        block = CSS[CSS.index(rule):]
+        block = block[:block.index("}")]
+        assert "padding: 0 " in block, rule
+
+
+# --------------------------------------------------------------------------
+# Monty, moving
+# --------------------------------------------------------------------------
+
+MONTY = FRONTEND / "src" / "components" / "MontyPlays.tsx"
+
+
+def test_monty_arrives_once_a_visit_and_then_stops():
+    source = MONTY.read_text()
+    assert "sessionStorage.getItem('wishingtree.greeted')" in source
+    assert "setPhase('done')" in source
+    # The whole thing is under four seconds, as asked.
+    assert "setTimeout(() => setPhase('done'), 3800)" in source
+    trot = CSS[CSS.index("@keyframes trot"):]
+    assert "3.4s" in CSS[CSS.index(".arrive__monty {"):][:260]
+
+
+def test_monty_plays_in_leaves_in_the_three_places_asked_for():
+    pages = FRONTEND / "src" / "pages"
+    using = {p.name for p in pages.glob("*.tsx") if "<MontyInLeaves" in p.read_text()}
+    assert using == {"About.tsx", "Donor.tsx", "MyWishes.tsx"}
+
+    # On the neighbor's list it marks a wish that has arrived, and nothing else.
+    wishes = (pages / "MyWishes.tsx").read_text()
+    assert "row.stage === 'delivered' && (" in wishes
+
+
+def test_no_monty_animation_loops():
+    source = MONTY.read_text()
+    assert "infinite" not in source
+    for block in ("@keyframes trot", "@keyframes romp", "@keyframes puff"):
+        assert block in CSS
+    # Each is declared `both`, which holds the last frame rather than
+    # snapping back, and none of them repeats.
+    assert "animation: trot 3.4s cubic-bezier(0.25, 0.6, 0.3, 1) both" in CSS
+    assert "animation: romp 2.6s ease-in-out both" in CSS
+
+
+def test_monty_holds_still_for_anyone_who_asked_for_stillness():
+    source = MONTY.read_text()
+    assert "function wantsStillness" in source
+    assert source.count("wantsStillness()") >= 3
+    reduced = reduced_motion_rules()
+    assert ".arrive { display: none; }" in reduced
+    assert ".pile { display: none; }" in reduced

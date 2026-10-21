@@ -185,7 +185,7 @@ export function Hills() {
  */
 export function DriftingLeaves() {
   return (
-    <div className="drift" aria-hidden="true">
+    <div className="drift layer" aria-hidden="true">
       {LEAVES.map((leaf, i) => (
         <span key={i} className="drift__fall" style={leaf.fall}>
           <span className="drift__leaf" style={leaf.spin} />

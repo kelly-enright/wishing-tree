@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { getMyWishes, userMessage, type WishProgress } from '../api'
@@ -14,6 +14,11 @@ import usePageTitle from '../usePageTitle'
 /**
  * A neighbor's own wishes, and nothing else.
  *
+ * This page always shows this page. It used to bounce anybody with no wishes
+ * straight to the chat, which meant the "My wishes" tab could not be opened
+ * at all until you had one — the tab looked broken rather than empty. Landing
+ * on the chat is now something sign-up does once, on the way in.
+ *
  * Split from the chat because they answer different questions. This page is
  * "where did my wishes get to?"; the chat is "I want to ask for something".
  * Having both on one scroll meant the tab highlight could never be honest —
@@ -27,18 +32,13 @@ export default function MyWishesPage() {
   const { session, me, loading } = useSession()
   const [rows, setRows] = useState<WishProgress[] | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const navigate = useNavigate()
 
   useEffect(() => {
     if (!session) return
     getMyWishes(session.alias)
-      .then((data) => {
-        setRows(data.wishes)
-        // First visit, nothing posted: the chat is the useful page.
-        if (data.wishes.length === 0) navigate('/family/new', { replace: true })
-      })
+      .then((data) => setRows(data.wishes))
       .catch((e) => setError(userMessage(e, 'We could not load your wishes.')))
-  }, [session, navigate])
+  }, [session])
 
   if (loading) return <PageLoading />
   if (!session || session.role !== 'family') return <NeedsSignIn want="family" />
@@ -64,10 +64,16 @@ export default function MyWishesPage() {
       {error && <p className="form__error">{error}</p>}
 
       {rows?.length === 0 ? (
-        <MontySays mood="calm">
-          <strong>Nothing on the tree yet.</strong><br />
-          When you make a wish, it'll show up here with where it has got to.
-        </MontySays>
+        <div className="emptywishes">
+          <MontySays mood="calm">
+            <strong>No wishes yet.</strong><br />
+            When you make a wish, it'll show up here with where it has got to.
+          </MontySays>
+          <Link className="btn btn--primary" to="/family/new">
+            <Plus size={16} aria-hidden="true" />
+            Make a new wish
+          </Link>
+        </div>
       ) : (
         <MyWishes alias={session.alias} />
       )}
