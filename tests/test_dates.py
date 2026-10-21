@@ -126,3 +126,29 @@ def test_how_far_off_a_date_is(iso, expected):
 
 def test_nothing_is_rendered_for_a_missing_date():
     assert run([["longDay", None], ["when", None, None], ["deadline", ""]]) == ["", "", ""]
+
+
+# --------------------------------------------------------------------------
+# A standing weekly window
+# --------------------------------------------------------------------------
+
+def test_a_weekly_window_reads_the_way_a_person_says_it():
+    """"Thursday 4:00 PM-7:00 PM" is a database row. "Thursdays 4–7 PM" is
+    how somebody tells you when to come."""
+    assert run([
+        ["weekly", "Thursday 4:00 PM-7:00 PM"],
+        ["weekly", "Saturday 10:00 AM-1:00 PM"],
+    ]) == ["Thursdays 4–7 PM", "Saturdays 10 AM–1 PM"]
+
+
+def test_the_day_is_plural_because_it_happens_every_week():
+    """A singular "Thursday" reads as one particular Thursday, which is the
+    opposite of what a standing window means."""
+    for said in run([["weekly", "Thursday 4:00 PM-7:00 PM"]]):
+        assert said.startswith("Thursdays")
+
+
+def test_a_window_we_do_not_recognize_comes_back_whole():
+    """Better an unformatted truth than a mangled one."""
+    assert run([["weekly", "by arrangement"]]) == ["by arrangement"]
+    assert run([["weekly", None]]) == [""]

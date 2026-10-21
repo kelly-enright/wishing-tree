@@ -1489,3 +1489,157 @@ def test_monty_sits_beside_the_thank_you_headline():
     assert "flex-direction: column" in stacked
     assert "align-items: center" in stacked
     assert "text-align: center" in stacked
+
+
+# --------------------------------------------------------------------------
+# Opening a wish from the tree
+# --------------------------------------------------------------------------
+
+COMPONENTS = FRONTEND / "src" / "components"
+WISHOPEN = COMPONENTS / "WishOpen.tsx"
+TREE = COMPONENTS / "WishTree.tsx"
+DONOR = FRONTEND / "src" / "pages" / "Donor.tsx"
+LANDING = FRONTEND / "src" / "pages" / "Landing.tsx"
+
+
+def test_the_tree_no_longer_draws_the_wish_it_opened():
+    """It used to push a card in under the tree, which moved everything the
+    moment you tapped a leaf. The tree now only says which leaf is lit; the
+    wish is drawn beside it or over it, and nothing shifts."""
+    tree = TREE.read_text()
+    assert "selectedId" in tree and "onSelect" in tree
+    assert "tree__picked" not in tree
+    # The type is still imported; the component is not rendered here.
+    assert "<WishCard" not in tree
+    assert ".tree__picked" not in CSS
+
+
+def test_a_leaf_selects_rather_than_toggles():
+    """A control that sometimes opens and sometimes closes is one you have to
+    think about. Closing is the close button, Escape, or a tap outside."""
+    tree = TREE.read_text()
+    assert "onClick={() => onSelect(wish)}" in tree
+    assert "setOpenId(openId === wish.id ? null : wish.id)" not in tree
+
+
+def test_the_lit_leaf_is_the_open_wish():
+    tree = TREE.read_text()
+    assert "selectedId === wish.id ? ' leaf--on' : ''" in tree
+    assert "aria-pressed={selectedId === wish.id}" in tree
+
+
+def test_a_wish_closes_on_escape_and_on_a_tap_outside():
+    source = WISHOPEN.read_text()
+    assert "event.key === 'Escape'" in source
+    # `pointerdown`, so a tap that starts outside closes even if it drifts.
+    assert "addEventListener('pointerdown', onOutside)" in source
+    assert "box.current?.contains(event.target as Node)" in source
+
+
+def test_closing_a_wish_puts_the_keyboard_back_on_its_leaf():
+    """A keyboard user who closes a wish should be on the leaf they came
+    from, not at the top of the page."""
+    source = WISHOPEN.read_text()
+    assert "export function leafId" in source
+    assert "document.getElementById(leafId(wishId))?.focus()" in source
+    assert TREE.read_text().count("id={leafId(wish.id)}") == 1
+    # And focus goes into the wish when it opens.
+    assert source.count("box.current?.focus()") == 2
+
+
+def test_the_sheet_is_modal_and_keeps_tab_inside_it():
+    """It covers what is behind it, so Tab must not wander off into a tree
+    nobody can see."""
+    source = WISHOPEN.read_text()
+    assert 'role="dialog"' in source and 'aria-modal="true"' in source
+    assert "event.key !== 'Tab'" in source
+    assert "event.preventDefault()" in source
+    # The panel is not modal — the page behind it is still there to use.
+    panel = source[source.index("export function WishPanel"):source.index("export function WishSheet")]
+    assert "aria-modal" not in panel
+
+
+def test_the_sheet_places_itself_and_says_so():
+    """Fifth time: the rule that gives a page's direct children
+    `position: relative` flattens anything that positions itself, so anything
+    that does carries `.layer`."""
+    assert 'className="sheetwrap layer"' in WISHOPEN.read_text()
+    assert "position: fixed; inset: 0; z-index: 60" in CSS
+
+
+def test_the_wish_panel_takes_over_the_column_beside_the_tree():
+    donor = DONOR.read_text()
+    assert "{!narrow && openWish ? (" in donor
+    assert "<WishPanel" in donor
+    # Closing brings the two panels back.
+    assert "onClose={() => setOpenWish(null)}" in donor
+    assert "<DonorHowItWorks compact />" in donor
+    assert "<HowItArrives region={region} />" in donor
+
+
+def test_how_it_works_is_beside_the_tree_on_a_wide_screen():
+    """Nothing stands between the filters and the tree any more."""
+    donor = DONOR.read_text()
+    # The folded line is the phone version only, and starts folded.
+    assert "{narrow && !matches && (" in donor
+    assert 'id="donor-how" title="How it works" defaultOpen={false}' in donor
+    # And it is not also in the side panel there, or it is said twice.
+    assert "{!narrow && !matches && <DonorHowItWorks compact />}" in donor
+
+
+def test_the_side_column_is_wide_enough_for_a_wish():
+    """232px held a note about drop-offs. It has to hold a whole wish card
+    now, cost and deadline side by side."""
+    rule = CSS[CSS.index(".wall { display: grid"):]
+    rule = rule[:rule.index("}")]
+    assert "300px" in rule
+
+
+def test_the_landing_hero_opens_a_wish_the_same_way():
+    """Signed out, on the hero tree: a sheet at every width, because a
+    centered column has no panel beside it to put a wish in."""
+    landing = LANDING.read_text()
+    assert "<WishSheet" in landing
+    assert 'grantLabel="Grant this wish"' in landing
+    assert "onGrant={grantAfterSignIn}" in landing
+    assert "selectedId={openWish?.id ?? null}" in landing
+    # Capped and centered above phone width, or it reads as stretched.
+    capped = CSS[CSS.index("@media (min-width: 620px) {"):]
+    assert "max-width: 560px; margin: 0 auto;" in capped[:200]
+
+
+def test_granting_from_the_hero_carries_the_wish_through_sign_in():
+    landing = LANDING.read_text()
+    assert "/donor?wish=${wish.id}" in landing
+    assert "navigate(`/login?next=${encodeURIComponent(back)}`)" in landing
+
+
+# --------------------------------------------------------------------------
+# How it arrives
+# --------------------------------------------------------------------------
+
+ARRIVES = COMPONENTS / "HowItArrives.tsx"
+
+
+def test_how_it_arrives_says_the_times_the_way_a_person_does():
+    source = ARRIVES.read_text()
+    assert "Drop-off: {weekly(region.dropoff_window)}" in source
+    assert "Delivery: {weekly(region.delivery_window)}" in source
+    # The raw label is a database row, not a sentence.
+    assert "{region.dropoff_window}" not in source.replace(
+        "{weekly(region.dropoff_window)}", "")
+
+
+def test_the_rent_line_says_who_gets_paid():
+    source = ARRIVES.read_text()
+    said = " ".join(source.split())
+    assert ("Wishing Tree pays rent and utilities directly to the landlord or "
+            "provider, never cash to a neighbor.") in said
+    # The old wording is gone everywhere, not just here.
+    for page in (FRONTEND / "src").rglob("*.tsx"):
+        assert "paid straight to the landlord or provider" not in page.read_text(), page.name
+
+
+def test_both_presentations_stop_for_anyone_who_asked_for_stillness():
+    reduced = reduced_motion_rules()
+    assert ".wishpanel, .sheetwrap__scrim, .wishsheet { animation: none; }" in reduced

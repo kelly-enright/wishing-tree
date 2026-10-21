@@ -1401,3 +1401,66 @@ because that section names the British forms in order to forbid them.
 **Still outstanding, by agreement:** the live safety suite and the token
 measurements. All three prompt versions changed this round, so §19–20 figures
 are further out of date.
+
+## Problem 23 — Opening a Wish from the Tree
+
+### Prompt 1
+
+> Opening a wish from the tree, and tidying the Wish Tree page:
+>
+> a.) Move "How it works" out from between the filters and the tree. On wider screens, the side panel to the right of the tree shows "How it works" (the three steps) with "How it arrives" underneath by default, so the tree sits right below the filters. On phones, "How it works" sits above the tree as a single collapsed line that expands when tapped.
+>
+> b.) When someone taps a leaf, show that wish where they're already looking. On wider screens, the wish card replaces the side panel's contents, with "I'll grant this wish" and a close button that brings "How it works" and "How it arrives" back. On phones, the wish card slides up from the bottom as a sheet over the tree, with a clear close button. The tapped leaf stays highlighted while its wish is open. Close with Escape or tapping outside, and keep keyboard focus sensible for accessibility.
+>
+> c.) In the "How it arrives" panel, use the friendly time format ("Drop-off: Thursdays 4–7 PM," "Delivery: Saturdays 10 AM–1 PM") and change the rent line to: "Wishing Tree pays rent and utilities directly to the landlord or provider, never cash to a neighbor."
+>
+> d.) The same tap-a-leaf behavior applies on the landing page's hero tree for signed-out visitors (wish card with "Grant this wish" leading to sign-in).
+>
+> e.) Update tests and take fresh screenshots.
+
+**Outcome:** 522 passing, 10 deselected.
+
+- **The structural change is that the tree stopped drawing its own answer.**
+  It used to own the selection and push a card in underneath itself, so
+  tapping a leaf moved everything below it and put the wish a scroll away
+  from the leaf. Selection is controlled now — `selectedId` and `onSelect` —
+  and the tree draws only the lit leaf.
+- **One behavior changed with it, deliberately:** a leaf selects rather than
+  toggles. A control that sometimes opens and sometimes closes is one you
+  have to think about, and there are three ways to close now.
+- **`useDismiss` listens on `pointerdown`, not `click`,** so a tap that starts
+  outside closes even if the finger drifts — and a leaf counts as "outside"
+  on purpose, so tapping a different leaf swaps the wish in one gesture. The
+  listener is armed on a `setTimeout(…, 0)`, or the click that opened the
+  wish closes it again on the way up.
+- **Focus goes back to the leaf.** `leafId()` stamps each leaf button, and
+  closing focuses it, so a keyboard user lands where they came from. The
+  sheet is a real modal — `role="dialog"`, `aria-modal`, Tab trapped inside —
+  and the panel deliberately is not, because the page behind it is still
+  usable.
+- **One judgment call, stated.** (d) says "the same tap-a-leaf behavior", but
+  the landing hero is a centered column with no side panel. It gets the sheet
+  at every width, capped at 560px and centered above 620px, because
+  full-bleed is right on a phone and stretched on a laptop.
+- **A bug the first pass introduced:** on phones the side column stacks under
+  the tree, so "How it works" rendered both as the folded line *and* in the
+  side column — twice on one screen. It is now rendered in exactly one place
+  at a time.
+- **The side column went 232px → 300px.** It holds a whole wish card now.
+- **`weekly()` is a new date helper**, tested through Node with the others:
+  "Thursday 4:00 PM-7:00 PM" → "Thursdays 4–7 PM". Plural, because a singular
+  "Thursday" reads as one particular Thursday.
+
+**Verified in the browser:** Escape, outside-click and the close button on
+both presentations; focus back on the right leaf; switching leaves leaving
+exactly one lit; "How it works" appearing once at each width; the hero's
+"Grant this wish" landing on `/login?next=%2Fdonor%3Fwish%3D2`; no horizontal
+overflow at 375px or 1024px; the list view untouched.
+
+**A note on method.** Measuring the sheet from the page showed it frozen at
+`translateY(100%)` with `currentTime: 0`. That was the headless tab not
+painting, not a bug — a screenshot forces a paint and the sheet is up. Worth
+remembering before chasing an animation that is only asleep.
+
+**Still outstanding, by agreement:** the live safety suite and the token
+measurements.

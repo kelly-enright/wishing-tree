@@ -9,6 +9,7 @@ import Monty from '../components/Monty'
 import TopBar from '../components/TopBar'
 import useBodyClass from '../useBodyClass'
 import WishTree from '../components/WishTree'
+import { WishSheet } from '../components/WishOpen'
 import WishCard from '../components/WishCard'
 import {
   CategoryRange, CountUp, DriftingLeaves, Hills, Reveal, ThreeSteps,
@@ -55,6 +56,10 @@ export default function Landing() {
     ? [...tree.wishes].sort((a, b) => b.days_waiting - a.days_waiting)[0]
     : null
   const navigate = useNavigate()
+  // Tapping a leaf on the hero tree opens the wish over it. A sheet at every
+  // width here, not just on a phone: the hero is a centered column with no
+  // panel beside it to put a wish in.
+  const [openWish, setOpenWish] = useState<Wish | null>(null)
 
   useEffect(() => { getStats().then(setStats).catch(() => setStats(null)) }, [])
 
@@ -139,12 +144,11 @@ export default function Landing() {
               wishes={tree.wishes}
               granted={tree.recently_granted}
               grantedWindowDays={tree.granted_window_days}
-              onGrant={grantAfterSignIn}
-              granting={null}
               onSeeList={() => navigate('/how-it-works')}
+              selectedId={openWish?.id ?? null}
+              onSelect={setOpenWish}
               compact
               swaying
-              grantLabel="Grant this wish"
             />
           </div>
         )}
@@ -157,6 +161,16 @@ export default function Landing() {
           </p>
         </div>
       </header>
+
+      {openWish && (
+        <WishSheet
+          wish={openWish}
+          onGrant={grantAfterSignIn}
+          granting={false}
+          grantLabel="Grant this wish"
+          onClose={() => setOpenWish(null)}
+        />
+      )}
 
       {session && (
         <section className="welcome" aria-label="Signed in">

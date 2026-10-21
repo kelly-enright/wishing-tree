@@ -71,6 +71,22 @@ export function hours(windowLabel: string | null | undefined): string {
     : `${from} ${s1.toUpperCase()}–${to} ${s2.toUpperCase()}`
 }
 
+/**
+ * A weekly window, said the way a person says it: "Thursdays 4–7 PM".
+ *
+ * Plural, because it happens every week — a singular "Thursday" reads as one
+ * particular Thursday, which is the opposite of what a standing window means.
+ * A label this does not recognize comes back whole rather than mangled.
+ */
+export function weekly(windowLabel: string | null | undefined): string {
+  if (!windowLabel) return ''
+  const day = /^(Sun|Mon|Tues?|Wed(?:nes)?|Thur?s?|Fri|Sat(?:ur)?)(?:day)?\s+/i
+    .exec(windowLabel)
+  const time = hours(windowLabel)
+  if (!day) return time || windowLabel
+  return time ? `${day[0].trim()}s ${time}` : `${day[0].trim()}s`
+}
+
 /** "Thursday, Oct 22, 4–7 PM" */
 export function when(iso: string | null | undefined, windowLabel?: string | null): string {
   const day = longDay(iso)

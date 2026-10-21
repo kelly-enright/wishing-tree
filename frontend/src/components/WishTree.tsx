@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import type { Category, WishCard as Wish } from '../api'
 import CategoryIcon from './CategoryIcon'
-import WishCard from './WishCard'
+import { leafId } from './WishOpen'
 
 /**
  * The Wish Tree: every open wish is a leaf.
@@ -65,18 +65,20 @@ type Leaf =
   | { kind: 'granted'; category: Category; seat: number }
 
 export default function WishTree({
-  wishes, granted, grantedWindowDays, onGrant, granting, onSeeList,
-  compact = false, grantLabel, swaying = false, hills,
+  wishes, granted, grantedWindowDays, onSeeList, selectedId, onSelect,
+  compact = false, swaying = false, hills,
 }: {
   wishes: Wish[]
   granted: { id: number; category: Category }[]
   grantedWindowDays: number
-  onGrant: (wish: Wish) => void
-  granting: number | null
   onSeeList: () => void
+  /** Which leaf is lit. The wish itself is drawn by whoever owns this — in
+   *  the panel beside the tree, or in a sheet over it — so the tree stays
+   *  still while a wish is read. */
+  selectedId: number | null
+  onSelect: (wish: Wish) => void
   /** Smaller, for the landing hero. */
   compact?: boolean
-  grantLabel?: string
   /** Leaves breathe. Only the hero asks for this — on the granter's tree it
    *  would be movement under something they are trying to read. */
   swaying?: boolean
@@ -84,7 +86,6 @@ export default function WishTree({
    *  so it lands at the base rather than under the caption. */
   hills?: React.ReactNode
 }) {
-  const [openId, setOpenId] = useState<number | null>(null)
   const seats = useMemo(canopyPositions, [])
 
   const shown = wishes.slice(0, seats.length)
@@ -98,8 +99,6 @@ export default function WishTree({
       kind: 'granted' as const, category: g.category, seat: shown.length + i,
     })),
   ]
-
-  const selected = shown.find((w) => w.id === openId) ?? null
 
   return (
     <div className={`tree${compact ? ' tree--compact' : ''}${swaying ? ' tree--swaying' : ''}`}>
@@ -159,11 +158,15 @@ export default function WishTree({
           const urgent = (wish.badges ?? []).some((b) => b.kind === 'needed_by')
           return (
             <button
-              key={wish.id} type="button" style={{ ...style, background: LEAF_COLORS[wish.category] }}
-              className={`leaf leaf--open${openId === wish.id ? ' leaf--on' : ''}${urgent ? ' leaf--soon' : ''}`}
+              key={wish.id} id={leafId(wish.id)} type="button"
+              style={{ ...style, background: LEAF_COLORS[wish.category] }}
+              className={`leaf leaf--open${selectedId === wish.id ? ' leaf--on' : ''}${urgent ? ' leaf--soon' : ''}`}
               data-sway={leaf.seat % 5}
-              onClick={() => setOpenId(openId === wish.id ? null : wish.id)}
-              aria-pressed={openId === wish.id}
+              // Always selects rather than toggling: closing is the close
+              // button, Escape, or a tap outside, and a leaf that sometimes
+              // opens and sometimes closes is a leaf you have to think about.
+              onClick={() => onSelect(wish)}
+              aria-pressed={selectedId === wish.id}
               aria-label={`${wish.item_description} — ${wish.family_alias}`}
             >
               <CategoryIcon category={wish.category} size={19} />
@@ -190,22 +193,8 @@ export default function WishTree({
         )}
       </p>
 
-      {selected ? (
-        <div className="tree__picked">
-          <WishCard
-            wish={selected}
-            onGrant={onGrant}
-            granting={granting === selected.id}
-            grantLabel={grantLabel}
-          />
-          <button type="button" className="btn btn--light btn--small" onClick={() => setOpenId(null)}>
-            Close
-          </button>
-        </div>
-      ) : (
-        wishes.length > 0 && (
-          <p className="tree__hint">Tap a leaf to see the wish.</p>
-        )
+      {selectedId === null && wishes.length > 0 && (
+        <p className="tree__hint">Tap a leaf to see the wish.</p>
       )}
     </div>
   )

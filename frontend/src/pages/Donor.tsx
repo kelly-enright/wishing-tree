@@ -7,11 +7,13 @@ import {
   userMessage,
 } from '../api'
 import DonorHowItWorks from '../components/DonorHowItWorks'
+import HowItArrives from '../components/HowItArrives'
 import Collapsible from '../components/Collapsible'
 import Thinking from '../components/Thinking'
 import TokenPanel from '../components/TokenPanel'
 import WishCard from '../components/WishCard'
 import WishTree from '../components/WishTree'
+import { WishPanel, WishSheet, useNarrow } from '../components/WishOpen'
 import Monty, { MontySays } from '../components/Monty'
 import GrantConfirm from './GrantConfirm'
 import MyGranted from './MyGranted'
@@ -60,6 +62,11 @@ export default function Donor() {
   const [goldDays, setGoldDays] = useState(30)
   const [busy, setBusy] = useState<'wall' | 'match' | number | null>('wall')
   const [error, setError] = useState<string | null>(null)
+  // The wish a tapped leaf opened. It lives here rather than in the tree
+  // because it is drawn outside the tree — in the panel beside it on a wide
+  // screen, in a sheet over it on a phone.
+  const [openWish, setOpenWish] = useState<Wish | null>(null)
+  const narrow = useNarrow(900)
 
   function loadWall(next: WallFilters) {
     setBusy('wall')
@@ -397,8 +404,12 @@ export default function Donor() {
         </div>
       )}
 
-      {!matches && (
-        <Collapsible id="donor-how" title="How it works">
+      {/* On a phone there is no room beside the tree, so "How it works" sits
+          above it as one folded line. On a wide screen it lives in the panel
+          to the right instead, and nothing stands between the filters and
+          the tree. */}
+      {narrow && !matches && (
+        <Collapsible id="donor-how" title="How it works" defaultOpen={false}>
           <DonorHowItWorks compact />
         </Collapsible>
       )}
@@ -410,9 +421,9 @@ export default function Donor() {
               wishes={showing}
               granted={matches ? [] : gold}
               grantedWindowDays={goldDays}
-              onGrant={openConfirmation}
-              granting={typeof busy === 'number' ? busy : null}
               onSeeList={() => setView('list')}
+              selectedId={openWish?.id ?? null}
+              onSelect={setOpenWish}
             />
           )}
 
@@ -453,20 +464,38 @@ export default function Donor() {
 
         <div className="wall__side">
           {matches && <TokenPanel usage={usage} />}
-          {region && (
-            <aside className="hubcard">
-              <h2 className="hubcard__title">How it arrives</h2>
-              <p>Drop off at <strong>{region.hub_name}</strong>, {region.hub_address}.</p>
-              <p>Drop-off: {region.dropoff_window}</p>
-              <p>Delivery: {region.delivery_window}</p>
-              <p className="hubcard__note">
-                Rent and utility wishes are paid straight to the landlord or provider —
-                never cash to a neighbor.
-              </p>
-            </aside>
+
+          {/* One panel, two jobs. With nothing open it explains the place;
+              tap a leaf and the wish takes it over, so the answer appears
+              where the question was asked and the tree never moves. */}
+          {!narrow && openWish ? (
+            <WishPanel
+              wish={openWish}
+              reason={matches?.find((m) => m.request_id === openWish.id)?.reason}
+              onGrant={openConfirmation}
+              granting={busy === openWish.id}
+              onClose={() => setOpenWish(null)}
+            />
+          ) : (
+            <>
+              {/* Not on a phone: there it is the folded line above the tree,
+                  and saying it twice on one screen is worse than not at all. */}
+              {!narrow && !matches && <DonorHowItWorks compact />}
+              {region && <HowItArrives region={region} />}
+            </>
           )}
         </div>
       </div>
+
+      {narrow && openWish && (
+        <WishSheet
+          wish={openWish}
+          reason={matches?.find((m) => m.request_id === openWish.id)?.reason}
+          onGrant={openConfirmation}
+          granting={busy === openWish.id}
+          onClose={() => setOpenWish(null)}
+        />
+      )}
       </>
       )}
     </main>

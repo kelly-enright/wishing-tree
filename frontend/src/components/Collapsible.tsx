@@ -13,14 +13,20 @@ import { ChevronDown } from 'lucide-react'
  * shut, which looks like a bug.
  */
 export default function Collapsible({
-  id, title, children,
-}: { id: string; title: string; children: React.ReactNode }) {
+  id, title, children, defaultOpen = true,
+}: {
+  id: string; title: string; children: React.ReactNode
+  /** False where the box is a line to tap rather than something to read —
+   *  on a phone, above a tree that wants the screen. */
+  defaultOpen?: boolean
+}) {
   const key = `wishingtree.${id}.folded`
   const [open, setOpen] = useState(() => {
     try {
-      return localStorage.getItem(key) !== 'yes'
+      const saved = localStorage.getItem(key)
+      return saved === null ? defaultOpen : saved !== 'yes'
     } catch {
-      return true
+      return defaultOpen
     }
   })
 

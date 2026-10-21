@@ -2332,3 +2332,107 @@ spelling fix.
 | Live model calls this round | 2, $0.0009 |
 | Files touched by the spelling sweep | 14 |
 | Class-name collisions found | 1 (`.steps`) |
+
+## 39. Opening a wish where the person is already looking
+
+Five changes to the Wish Tree page, and one idea underneath all of them: a
+tree you tap should answer where you tapped it.
+
+### The tree stopped drawing its own answer
+
+`WishTree` used to own the selection and push a card in **underneath** the
+tree. Tapping a leaf moved everything below it, and the wish appeared a
+scroll away from the leaf that opened it.
+
+Selection is now controlled: the tree takes `selectedId` and `onSelect` and
+draws only the lit leaf. The wish itself is drawn by whoever owns the state —
+in the panel beside the tree, or in a sheet over it — so nothing shifts.
+
+One behavior changed with it. **A leaf selects rather than toggles.** A
+control that sometimes opens and sometimes closes is one you have to think
+about, and there are now three ways to close: the close button, Escape, and
+a tap outside.
+
+### Two presentations of the same thing
+
+`WishOpen.tsx` holds both, because they share everything except where they
+sit.
+
+| | `WishPanel` | `WishSheet` |
+|---|---|---|
+| Where | the column beside the tree | up from the bottom, over the tree |
+| When | wide screens | phones, and the landing hero at any width |
+| Modal | no — the page behind is still usable | yes, with a focus trap |
+| Closes on | ✕, Escape, click outside | Close, Escape, tap the scrim |
+
+Both hand focus back to the leaf that opened them. That is what `leafId()` is
+for: the tree stamps each leaf button with `leaf-<id>`, and closing calls
+`document.getElementById(leafId(wishId))?.focus()`. A keyboard user who closes
+a wish lands on the leaf they came from, not at the top of the page.
+
+`useDismiss` listens on **`pointerdown`** rather than `click`, so a tap that
+starts outside closes even if the finger drifts — and a leaf counts as
+"outside" on purpose. Tapping a different leaf closes this wish and opens that
+one in the same gesture, which is what it looks like it should do. Verified:
+switching leaves leaves exactly one lit.
+
+The listener is armed on a `setTimeout(…, 0)`. Without that, the click that
+opened the wish closes it again on the way back up.
+
+### Where "How it works" went
+
+It sat between the filters and the tree, which is the one place nothing should
+be — the filters narrow the tree, so they should touch it.
+
+- **Wide:** in the panel to the right, with "How it arrives" underneath.
+- **Phone:** one folded line above the tree, `defaultOpen={false}`, since
+  there is no beside on a phone.
+
+It is rendered in exactly one of those at a time. The first pass rendered both
+on a phone (the side column stacks under the tree there), so "How it works"
+appeared twice on one screen.
+
+The side column went from 232px to **300px**: it holds a whole wish card now,
+not just a note about drop-offs.
+
+### How it arrives, in words
+
+`weekly()` in `dates.ts` turns `"Thursday 4:00 PM-7:00 PM"` — a database row —
+into **"Thursdays 4–7 PM"**. Plural, because it happens every week: a singular
+"Thursday" reads as one particular Thursday, which is the opposite of what a
+standing window means. A label it does not recognize comes back whole, so
+"by arrangement" does not become "arrangement".
+
+The rent line is now Kelly's: *"Wishing Tree pays rent and utilities directly
+to the landlord or provider, never cash to a neighbor."* A test checks the old
+wording is gone from every page, not just from this one.
+
+### The landing hero
+
+Same behavior for a signed-out visitor, as a **sheet at every width** — the
+hero is a centered column with no panel beside it to put a wish in. Above
+620px the sheet caps at 560px and centers, because full-bleed is right on a
+phone and stretched on a laptop. "Grant this wish" carries the wish through
+sign-in: `/login?next=%2Fdonor%3Fwish%3D2`, confirmed in the browser.
+
+### Checked in the browser
+
+| | |
+|---|---|
+| Escape, outside-click, ✕ | close on both presentations |
+| Focus after closing | back on the leaf (`leaf-18`, `leaf-29`) |
+| Switching leaves | swaps the wish, exactly one leaf lit |
+| "How it works" | once, in the right place, at both widths |
+| Horizontal overflow | none at 375px or 1024px |
+| List view | untouched, all 27 cards keep their own grant button |
+
+One thing worth recording about the method: measuring the sheet's position
+from `preview_eval` showed it frozen at `translateY(100%)` with
+`currentTime: 0`. That was the headless tab not painting, not a bug — a
+screenshot forces a paint and the sheet is up. Worth remembering before
+chasing an animation that is only asleep.
+
+| | |
+|---|---|
+| Tests | 522 passing, 10 deselected |
+| New components | 2 (`WishOpen`, `HowItArrives`) |
