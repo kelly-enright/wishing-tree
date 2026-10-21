@@ -66,7 +66,7 @@ type Leaf =
 
 export default function WishTree({
   wishes, granted, grantedWindowDays, onGrant, granting, onSeeList,
-  compact = false, grantLabel, swaying = false,
+  compact = false, grantLabel, swaying = false, hills,
 }: {
   wishes: Wish[]
   granted: { id: number; category: Category }[]
@@ -80,6 +80,9 @@ export default function WishTree({
   /** Leaves breathe. Only the hero asks for this — on the granter's tree it
    *  would be movement under something they are trying to read. */
   swaying?: boolean
+  /** Ground to plant the tree in. Drawn inside the canvas, behind the trunk,
+   *  so it lands at the base rather than under the caption. */
+  hills?: React.ReactNode
 }) {
   const [openId, setOpenId] = useState<number | null>(null)
   const seats = useMemo(canopyPositions, [])
@@ -101,8 +104,13 @@ export default function WishTree({
   return (
     <div className={`tree${compact ? ' tree--compact' : ''}${swaying ? ' tree--swaying' : ''}`}>
       <div className="tree__canvas">
+        {hills}
         <svg className="tree__art" viewBox="0 0 400 420" aria-hidden="true">
-          <ellipse cx="200" cy="398" rx="128" ry="16" fill="var(--evergreen-pale)" />
+          {/* The tree's own shadow, for when it stands on plain cream. With
+              hills behind it this reads as a puddle, so it gives way. */}
+          {!hills && (
+            <ellipse cx="200" cy="398" rx="128" ry="16" fill="var(--evergreen-pale)" />
+          )}
           {/* canopy backdrop */}
           <ellipse cx="200" cy="150" rx="176" ry="136" fill="#EAF1EC" />
           <ellipse cx="200" cy="146" rx="150" ry="114" fill="#E0EBE2" />

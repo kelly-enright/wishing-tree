@@ -5,13 +5,13 @@ import {
   type Account, type Stats, type WallFilters, type WishWall, type WishCard as Wish,
   userMessage,
 } from '../api'
-import Logo from '../components/Logo'
 import Monty from '../components/Monty'
 import TopBar from '../components/TopBar'
+import useBodyClass from '../useBodyClass'
 import WishTree from '../components/WishTree'
 import WishCard from '../components/WishCard'
 import {
-  CategoryRange, CountUp, DriftingLeaves, Reveal, ThreeSteps,
+  CategoryRange, CountUp, DriftingLeaves, Hills, Reveal, ThreeSteps,
 } from '../components/LandingBits'
 import Footer from '../components/Footer'
 import { ServiceNotice } from '../components/ServiceArea'
@@ -41,6 +41,7 @@ const EMPTY_FILTERS: WallFilters = {
 }
 
 export default function Landing() {
+  useBodyClass('wt-warm')
   const [stats, setStats] = useState<Stats | null>(null)
   const [accounts, setAccounts] = useState<{ families: Account[]; donors: Account[] } | null>(null)
   const [showAccounts, setShowAccounts] = useState(false)
@@ -101,15 +102,14 @@ export default function Landing() {
   }
 
   return (
-    <main className="landing">
+    <main className="landing grain">
       <TopBar
         alias={session?.alias} me={me}
         onSwitch={signOut} onSwitchSide={switchSide}
       />
 
       <header className="hero">
-        <div className="hero__logo"><Logo plain size={52} /></div>
-        <p className="hero__tagline">Grant a neighbor's wish, any time of year</p>
+        <h1 className="hero__tagline">Grant a neighbor's wish, any time of year</h1>
 
         {/* The counter and the service area say the same kind of thing — this
             is real, and it is here — so they say it together, once. */}
@@ -133,6 +133,7 @@ export default function Landing() {
         {tree && tree.wishes.length > 0 && (
           <div className="hero__tree">
             <WishTree
+              hills={<Hills />}
               wishes={tree.wishes}
               granted={tree.recently_granted}
               grantedWindowDays={tree.granted_window_days}
@@ -184,13 +185,13 @@ export default function Landing() {
         ))}
       </section>
 
-      <section className="band" aria-label="How it works">
+      <section className="band band--sage" aria-label="How it works">
         <h2 className="band__title">How it works</h2>
         <ThreeSteps />
       </section>
 
       {example && (
-        <section className="band" aria-label="An example wish">
+        <section className="band band--sand" aria-label="An example wish">
           <Reveal>
             <h2 className="band__title">Here's what a wish looks like</h2>
             <p className="band__blurb">

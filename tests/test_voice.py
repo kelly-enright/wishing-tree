@@ -727,8 +727,10 @@ def test_nothing_on_the_landing_page_flashes():
     assert "7s" in sway[:120]
     glint = css[css.index("@keyframes glint"):]
     assert "0%, 92%, 100% { opacity: 0; }" in glint      # dark 92% of the time
+    # The drift's own timings moved onto the elements when it was made
+    # visible; `test_the_falling_leaves_are_actually_visible_now` checks them.
     drift = css[css.index(".drift__leaf {"):]
-    assert "46s" in drift[:400] and "opacity: 0.06" in drift[:400]
+    assert "opacity: 0.18" in drift[:300]
 
 
 # --------------------------------------------------------------------------
@@ -763,3 +765,143 @@ def test_no_other_about_wording_changed():
         "I'm Kelly, an MBA student at Yale School of Management.",
     ):
         assert sentence in flat, sentence
+
+
+# --------------------------------------------------------------------------
+# Warmth: the glow, the hills, the bands, the grain
+# --------------------------------------------------------------------------
+
+CSS = (FRONTEND / "src" / "styles.css").read_text()
+
+
+def _hex_luminance(value: str) -> float:
+    r, g, b = (int(value[i:i + 2], 16) / 255 for i in (1, 3, 5))
+
+    def channel(c: float) -> float:
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+
+    return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+
+
+def contrast(fg: str, bg: str) -> float:
+    light, dark = sorted((_hex_luminance(fg), _hex_luminance(bg)), reverse=True)
+    return (light + 0.05) / (dark + 0.05)
+
+
+TEXT_COLORS = {"--ink": "#2B2B2B", "--ink-soft": "#5F5A53",
+               "--evergreen-deep": "#22463C"}
+NEW_BACKGROUNDS = {"--glow-peach": "#F8E6D2", "--band-sage": "#E8EFE7",
+                   "--band-sand": "#F6EBDA", "--hill-sage": "#C9D7C6"}
+
+
+def test_the_new_tones_are_the_ones_in_the_stylesheet():
+    """So this file cannot drift away from what the app actually paints."""
+    for name, value in {**TEXT_COLORS, **NEW_BACKGROUNDS}.items():
+        assert f"{name}:" in CSS
+        assert value in CSS, f"{name} is no longer {value}"
+
+
+@pytest.mark.parametrize("bg", sorted(NEW_BACKGROUNDS))
+def test_text_stays_readable_on_every_warm_background(bg):
+    """Every text color against every new background, at the AA bar of 4.5."""
+    for text, fg in TEXT_COLORS.items():
+        got = contrast(fg, NEW_BACKGROUNDS[bg])
+        assert got >= 4.5, f"{text} on {bg} is only {got:.1f}:1"
+
+
+def test_the_falling_leaves_are_actually_visible_now():
+    bits = BITS.read_text()
+    assert bits.count("animationDuration") == 18        # nine leaves, fall and spin
+    block = CSS[CSS.index(".drift__leaf {"):]
+    assert "opacity: 0.18" in block[:300]
+
+    # Fifteen to twenty-five seconds each, as asked.
+    import re as _re
+    seconds = [float(s) for s in _re.findall(r"animationDuration: '(\d+(?:\.\d+)?)s'", bits)]
+    falls = [s for s in seconds if s >= 15]
+    assert len(falls) == 9
+    assert all(15 <= s <= 25 for s in falls), falls
+
+
+def test_the_leaves_sway_and_spin_as_well_as_fall():
+    assert "@keyframes fall" in CSS
+    sway = CSS[CSS.index("@keyframes sway-fall"):]
+    assert "translateX(-16px) rotate(0deg)" in sway[:260]
+    assert "rotate(300deg)" in sway[:400]
+
+
+def test_the_leaves_are_only_on_the_two_pages_that_asked_for_them():
+    pages = FRONTEND / "src" / "pages"
+    with_leaves = {p.name for p in pages.glob("*.tsx")
+                   if "<DriftingLeaves" in p.read_text()}
+    assert with_leaves == {"Landing.tsx", "About.tsx"}
+
+    warm = {p.name for p in pages.glob("*.tsx") if "useBodyClass('wt-warm')" in p.read_text()}
+    assert warm == {"Landing.tsx", "About.tsx"}
+
+
+def test_the_leaves_never_sit_on_top_of_anything():
+    block = CSS[CSS.index(".drift {"):]
+    assert "pointer-events: none" in block[:200]
+    assert "z-index: 0" in block[:200]
+    # And the content is lifted above them, with the self-positioning pieces
+    # left alone — the bug that flattened the tab bar twice.
+    assert ".landing > *:not(.topbar):not(.tabbar):not(.drift)" in CSS
+    assert ".about > *:not(.topbar):not(.tabbar):not(.drift)" in CSS
+
+
+def test_the_landing_page_has_one_logo_not_two():
+    source = LANDING.read_text()
+    assert "hero__logo" not in source
+    assert "<Logo" not in source                      # the header carries it
+    assert '<h1 className="hero__tagline">' in source  # the tagline is the headline
+
+
+def test_the_tree_is_planted():
+    assert "export function Hills" in BITS.read_text()
+    assert 'hills={<Hills />}' in LANDING.read_text()
+    # Inside the canvas, where the ground is, not under the caption.
+    tree = (FRONTEND / "src" / "components" / "WishTree.tsx").read_text()
+    canvas = tree[tree.index('className="tree__canvas"'):]
+    assert "{hills}" in canvas[:160]
+    # And the flat shadow gives way, or it reads as a puddle on the grass.
+    assert "{!hills && (" in tree
+
+
+def test_nothing_decorative_widens_the_page():
+    """Both bugs this problem produced: a 300%-wide hill and an absolutely
+    positioned glow, each of which gave the page a sideways scrollbar."""
+    hills = CSS[CSS.index(".hills {"):]
+    assert "width: 100vw" in hills[:420]
+    assert "width: 300%" not in CSS
+    # The glow is painted on the body, which is the size of the window.
+    assert "body.wt-warm {" in CSS
+    assert ".about::before" not in CSS
+
+
+def test_the_bands_alternate_and_fade_into_each_other():
+    source = LANDING.read_text()
+    assert 'band band--sage" aria-label="How it works"' in source
+    assert 'band band--sand" aria-label="An example wish"' in source
+    # Each selector appears twice — once for the shared full-bleed layout,
+    # once for its own gradient. It is the gradient we are checking.
+    for band in ("band--sage", "band--sand"):
+        rule = re.search(rf"\.{band} \{{\s*background:(.+?)\}}", CSS, re.S)
+        assert rule, band
+        # Transparent at both ends, so one gives way to the next.
+        assert "transparent 0%" in rule.group(1)
+        assert "transparent 100%" in rule.group(1)
+
+
+def test_the_grain_is_too_faint_to_notice():
+    # The definition, not the one-line z-index tweak that follows it.
+    grain = CSS[CSS.index(".grain::after {\n"):]
+    assert "opacity: 0.035" in grain[:200]
+    assert "feTurbulence" in grain[:900]               # inline, no asset to ship
+    assert "pointer-events: none" in grain[:200]
+
+
+def test_all_of_the_new_motion_switches_off():
+    reduced = CSS[CSS.rindex("@media (prefers-reduced-motion: reduce)"):]
+    assert ".drift__fall, .drift__leaf { animation: none; }" in reduced
+    assert ".drift { display: none; }" in reduced

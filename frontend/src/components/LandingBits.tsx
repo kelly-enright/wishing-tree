@@ -148,6 +148,33 @@ export function CategoryRange() {
   )
 }
 
+// -------------------------------------------------------------------- hills
+
+/**
+ * Two soft rises of sage behind the base of the tree.
+ *
+ * Without them the tree floats on cream. They are drawn wider than the tree
+ * and bled off both edges, so they read as ground going on rather than as a
+ * shape that happens to sit under it.
+ */
+export function Hills() {
+  return (
+    <svg
+      className="hills" viewBox="0 0 600 120" preserveAspectRatio="none"
+      aria-hidden="true" focusable="false"
+    >
+      <path
+        d="M0 86c74-26 136-30 208-12 70 17 118 22 180 8 54-12 118-16 212 2v36H0z"
+        fill="var(--hill-sage)"
+      />
+      <path
+        d="M0 104c96-20 160-20 236-6 78 15 136 16 204 4 50-9 110-12 160-2v20H0z"
+        fill="var(--hill-sage-deep)" opacity="0.75"
+      />
+    </svg>
+  )
+}
+
 // --------------------------------------------------------------- background
 
 /**
@@ -159,9 +186,41 @@ export function CategoryRange() {
 export function DriftingLeaves() {
   return (
     <div className="drift" aria-hidden="true">
-      {[0, 1, 2, 3, 4].map((i) => (
-        <span key={i} className={`drift__leaf drift__leaf--${i}`} />
+      {LEAVES.map((leaf, i) => (
+        <span key={i} className="drift__fall" style={leaf.fall}>
+          <span className="drift__leaf" style={leaf.spin} />
+        </span>
       ))}
     </div>
   )
 }
+
+/**
+ * Nine leaves, each with its own lane, speed, sway and spin.
+ *
+ * Written out rather than randomised so the page looks the same every load —
+ * and so each one can be placed deliberately. The lanes favour the margins:
+ * the content column is centred and capped at 1120px, so on anything wide
+ * these fall beside the text rather than behind it. They sit under
+ * everything regardless, and take no clicks.
+ */
+const LEAVES: { fall: React.CSSProperties; spin: React.CSSProperties }[] = [
+  { fall: { left: '4%',  animationDuration: '19s', animationDelay: '-3s' },
+    spin: { animationDuration: '7s',  background: 'var(--evergreen-soft)' } },
+  { fall: { left: '11%', animationDuration: '24s', animationDelay: '-14s' },
+    spin: { animationDuration: '9s',  background: 'var(--evergreen)' } },
+  { fall: { left: '19%', animationDuration: '16s', animationDelay: '-8s' },
+    spin: { animationDuration: '6s',  background: 'var(--gold)' } },
+  { fall: { left: '31%', animationDuration: '22s', animationDelay: '-19s' },
+    spin: { animationDuration: '8s',  background: 'var(--evergreen-soft)' } },
+  { fall: { left: '48%', animationDuration: '25s', animationDelay: '-11s' },
+    spin: { animationDuration: '10s', background: 'var(--evergreen-pale)' } },
+  { fall: { left: '64%', animationDuration: '18s', animationDelay: '-22s' },
+    spin: { animationDuration: '7.5s', background: 'var(--evergreen)' } },
+  { fall: { left: '77%', animationDuration: '21s', animationDelay: '-5s' },
+    spin: { animationDuration: '8.5s', background: 'var(--gold-deep)' } },
+  { fall: { left: '88%', animationDuration: '17s', animationDelay: '-16s' },
+    spin: { animationDuration: '6.5s', background: 'var(--evergreen-soft)' } },
+  { fall: { left: '95%', animationDuration: '23s', animationDelay: '-9s' },
+    spin: { animationDuration: '9.5s', background: 'var(--evergreen)' } },
+]

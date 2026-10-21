@@ -1178,7 +1178,7 @@ Agents arrive in later problems; these are the ones already standing.
 
 ## 25. Tests
 
-`./.venv/bin/python -m pytest` — **391 passing**, in under two seconds, every agent stubbed.
+`./.venv/bin/python -m pytest` — **406 passing**, in under two seconds, every agent stubbed.
 
 `./.venv/bin/python -m pytest -m live` — **10 more** against the real model, excluded by default because they spend tokens. Every agent is stubbed, so the suite is free to run.
 
@@ -1792,3 +1792,87 @@ Thursdays 4–7 PM at Yale School of Management · Delivery Saturdays 10 AM–1 
 | New component | `LandingBits.tsx` — count-up, reveal, steps, range, drift |
 | Agent prompts changed | none |
 | Invented content | none — the hero and the example are live data |
+
+## 33. Warmth
+
+Look only again, and all of it from Kelly using the app.
+
+### The leaves you can actually see
+
+The first drift was 6% opacity and took a minute to cross — invisible, which
+is the same as absent. Nine leaves now at **18%** (13% on a phone), fifteen
+to twenty-five seconds top to bottom, each with its own lane, speed, sway and
+spin so no two move alike.
+
+The fall and the spin are **separate elements**. One `transform` cannot hold
+a vertical journey and a rotation on different clocks, and folding both into
+one set of keyframes makes the sway lurch at the seam.
+
+They are on the landing page and About, and nowhere else — not the login
+page, not How it works, not a signed-in screen. A test walks `pages/` and
+fails if that set ever grows.
+
+### The same bug, three times
+
+`position: relative` on a page's direct children — added so content sits
+above the drift — overrode `position: fixed` on anything that positions
+itself against the window. It flattened the bottom tab bar in Problem 17,
+the drift layer on the landing page, and then the drift layer on About
+through a *second* copy of the rule in the warmth block. All three now carry
+the same `:not()` list, and there is a test naming the pattern.
+
+### Two ways to give a page a sideways scrollbar
+
+Both appeared here and both are worth recording.
+
+**Hills drawn at 300% width.** `overflow-x: clip` on the containing block did
+not stop them widening the document. They are drawn at exactly `100vw` now
+and stretched by `preserveAspectRatio="none"`, which is what that attribute
+is for.
+
+**An absolutely positioned glow.** Wide enough to look like light is wider
+than the column it sits in, and an absolutely positioned child contributes to
+its ancestor's scrollable overflow. Painting it on the page element instead
+did not work either — the page is a centred column, so the glow stopped at
+its edge and left a visible rectangle.
+
+It is on **`body`** now, via a `wt-warm` class added while those two pages
+are open. The body is the only box reliably the size of the window.
+
+### Warmth, in order down the page
+
+| | |
+|---|---|
+| Hero | a peach glow, late afternoon rather than noon |
+| Under the tree | two rises of sage, bled off both edges, so it is planted |
+| How it works | a light sage band |
+| The example wish | a warm sand band |
+| Everything | paper grain at 3.5%, inline `feTurbulence`, no asset to ship |
+
+Bands fade to transparent at top and bottom rather than cutting, so one gives
+way to the next. The tree's own flat shadow gives way when hills are behind
+it, or it reads as a puddle on the grass.
+
+Signed-in screens get the body's existing warm gradient and nothing else: no
+hills, no bands, no leaves. Those pages are for reading and doing.
+
+### Contrast
+
+Every text color against every new background, computed rather than eyeballed:
+
+| | `--ink` | `--ink-soft` | `--evergreen-deep` |
+|---|---|---|---|
+| glow peach | 11.6:1 | 5.6:1 | 8.6:1 |
+| band sage | 12.1:1 | 5.8:1 | 8.9:1 |
+| band sand | 12.0:1 | 5.8:1 | 8.9:1 |
+| hill sage | 9.5:1 | 4.6:1 | 7.0:1 |
+
+The tightest pairing is 4.6:1 against an AA bar of 4.5, and no text sits on
+the hills anyway. A test recomputes all twelve and fails if a tone is ever
+darkened past the line.
+
+| | |
+|---|---|
+| Tests | 406 passing, 10 deselected |
+| Sideways scroll | none, on either page, at any width |
+| Agent prompts changed | none |

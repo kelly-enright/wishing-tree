@@ -2,7 +2,9 @@ import { ArrowLeft } from 'lucide-react'
 import KellyAndMonty from '../components/KellyAndMonty'
 import TopBar, { roleLinks } from '../components/TopBar'
 import Footer from '../components/Footer'
+import { DriftingLeaves } from '../components/LandingBits'
 import usePageTitle from '../usePageTitle'
+import useBodyClass from '../useBodyClass'
 import { useSession } from '../session'
 import { signOut, switchSide } from '../auth'
 import { homePath } from '../session'
@@ -16,10 +18,13 @@ import { Link } from 'react-router-dom'
  * Wishing Tree is not in her words below, it is not here.
  */
 export default function About() {
+  useBodyClass('wt-warm')
   usePageTitle('About')
   const { session, me } = useSession()
   return (
-    <main className="page about">
+    <main className="page about grain">
+      <DriftingLeaves />
+
       <TopBar
         links={session ? roleLinks(session.role) : undefined}
         alias={session?.alias} me={me}

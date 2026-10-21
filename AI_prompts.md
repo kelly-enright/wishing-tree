@@ -1042,3 +1042,53 @@ is invented — the hero and the example are live data.
 
 **Still outstanding, by agreement:** the live safety suite and the token
 measurements.
+
+## Problem 18 — Warmth
+
+### Prompt 1
+
+> A few more visual changes from my testing:
+>
+> Falling leaves:
+> a.) The falling leaves on the landing page are too faint to notice. Make them actually visible but still calm: about 8–10 leaves at roughly 15–20% opacity, falling gently from top to bottom with a slight sway and rotation, each taking about 15–25 seconds, never covering text or buttons. Add the same to the About page. Don't add them to the login, How it works or any signed-in pages.
+>
+> Landing page:
+> b.) Remove the large logo under the header on the landing page, since the header already shows it, and let the tagline be the main headline.
+>
+> Warmer background, using our existing palette:
+> c.) Landing hero: a soft radial glow behind the tree, like late-afternoon sunlight, fading from a pale golden peach to our cream.
+> d.) Gentle rolling hills in muted sage at the base of the tree, so it looks planted rather than floating.
+> e.) Alternating soft section backgrounds down the landing page (cream, a very light sage band behind "How it works," a warm sand tone behind the example wish, then cream), with smooth transitions between them.
+> f.) A very faint paper-grain texture over the background, subtle enough not to notice consciously.
+> g.) The About page gets the warm glow and grain. Signed-in pages get only a subtle warm gradient instead of flat cream, no hills or bands.
+>
+> h.) Keep text contrast fully readable everywhere, check everything at phone widths, keep all motion off under the reduced-motion setting, take fresh screenshots and update harness.md.
+
+**Outcome:** 406 passing, no sideways scroll on any page at any width.
+
+- **The same bug, three times.** `position: relative` on a page's direct
+  children — there so content sits above the drift — overrides
+  `position: fixed` on anything that positions itself against the window. It
+  had already flattened the bottom tab bar; here it flattened the drift layer
+  on the landing page, and then again on About through a second copy of the
+  rule. All three carry the same `:not()` list now, and a test names the
+  pattern so the next person adding a stacking rule sees why.
+- **Two ways to give a page a sideways scrollbar**, both of which I managed.
+  Hills drawn at 300% width, where `overflow-x: clip` on the container did
+  not stop them widening the document — they are `100vw` and stretched by
+  `preserveAspectRatio="none"` now. And an absolutely positioned glow, which
+  contributes to its ancestor's scrollable overflow; painting it on the page
+  element instead left a visible rectangle, because the page is a centred
+  column. It lives on `body` now, added by a class while those two pages are
+  open, since the body is the only box the size of the window.
+- **The fall and the spin are separate elements.** One `transform` cannot
+  hold a vertical journey and a rotation on different clocks; folding both
+  into one keyframe set makes the sway lurch at the seam.
+- **Contrast was computed, not eyeballed.** Twelve pairings, worst 4.6:1
+  against an AA bar of 4.5, and a test recomputes them so darkening a tone
+  later fails the suite rather than the reader.
+- **The tree's flat shadow gives way to the hills**, or it reads as a puddle
+  on the grass.
+
+**Still outstanding, by agreement:** the live safety suite and the token
+measurements.
