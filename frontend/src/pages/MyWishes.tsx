@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getMyWishes, respondToWindow, userMessage, type WishProgress } from '../api'
 import { MontySays } from '../components/Monty'
-import { when } from '../dates'
+import { costLabel } from '../money'
+import { deadline as deadlineText, when } from '../dates'
 import { useToast } from '../components/Toast'
 import { SkeletonRows } from '../components/Skeleton'
 
@@ -72,22 +73,20 @@ export default function MyWishes({ alias }: { alias: string }) {
   }
 
   const sorted = [...rows].sort((a, b) => ORDER.indexOf(a.stage) - ORDER.indexOf(b.stage))
-  // The honest sentence about the tree is worth saying, and worth saying
-  // once. Three wishes used to repeat it three times, which is how careful
-  // wording starts reading like boilerplate.
-  const anyOnTheTree = sorted.some((row) => row.stage === 'on_the_tree')
 
   return (
     <section className="mywishes" id="mywishes" aria-label="My wishes">
       <h2 className="mywishes__title">My wishes</h2>
 
-      {anyOnTheTree && (
-        <p className="mywishes__how">
-          Wishes on the tree are where neighbors can see them. We can't promise
-          someone will grant a wish, but we'll do our best to find a neighbor
-          who can help.
-        </p>
-      )}
+      {/* Said once, at the top, rather than on each card: three wishes used to
+          repeat it three times, which is how careful wording starts reading
+          like boilerplate. It introduces the section, so it is here whatever
+          state the wishes are in. */}
+      <p className="mywishes__how">
+        Neighbors nearby can see your wishes on the tree. We can't promise
+        every wish will be granted, but we'll do our best to find someone who
+        can help.
+      </p>
 
       {sorted.map((row) => (
         <article key={row.wish.id} className={`track track--${row.stage}`}>
@@ -100,6 +99,39 @@ export default function MyWishes({ alias }: { alias: string }) {
 
           <p className="track__item">{row.wish.item_description}</p>
           {row.stage !== 'on_the_tree' && <p className="track__detail">{row.detail}</p>}
+
+          {/* The same two facts a wish granter weighs, shown to the person who
+              asked: what it costs and when it is needed. "Estimated" is the
+              price guide's number rather than one the family gave, and saying
+              which is which is the difference between a figure and a guess. */}
+          <dl className="track__facts">
+            <div><dt>Cost</dt><dd>
+              {costLabel(row.wish)}
+              {row.wish.cost_is_estimate && (
+                <span className="pill-estimate">Estimated</span>
+              )}
+            </dd></div>
+            <div><dt>Needed by</dt><dd>
+              {row.wish.deadline ? deadlineText(row.wish.deadline) : 'No deadline'}
+            </dd></div>
+          </dl>
+
+          {/* Where this wish stands, on the whole path rather than as one
+              word. A stage on its own tells you nothing about what is left. */}
+          {row.track && (
+            <ol className="progress" aria-label="Progress">
+              {row.track.map((step) => (
+                <li
+                  key={step.key}
+                  className={`progress__step${step.done ? ' progress__step--done' : ''}${step.now ? ' progress__step--now' : ''}`}
+                  aria-current={step.now ? 'step' : undefined}
+                >
+                  <span className="progress__dot" aria-hidden="true" />
+                  <span className="progress__label">{step.label}</span>
+                </li>
+              ))}
+            </ol>
+          )}
 
           {row.direct_payment && row.direct_payment_note && (
             <p className="track__rent">{row.direct_payment_note}</p>

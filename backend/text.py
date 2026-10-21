@@ -82,3 +82,72 @@ def held_reason(flag_kinds, over_cap_label: str | None = None) -> str:
         if kind in flag_kinds:
             return HELD_REASONS[kind]
     return HELD_DEFAULT
+
+
+# --------------------------------------------------------------------------
+# What was taken out of a wish before it went up
+# --------------------------------------------------------------------------
+#
+# "Taken out before anyone saw it" is a promise, so it has to be true. Two
+# things went wrong with it in practice, and both are fixed here rather than
+# only in the agent's prompt, because a prompt is a request and this is the
+# guarantee.
+#
+# 1. Rewording was reported as a removal. Shortening a wish, or rewriting it
+#    into the house voice, is not a privacy removal; saying it was teaches a
+#    neighbor to distrust a message that should mean something.
+# 2. The agent used its own vocabulary. "A use-purpose detail" is not a thing
+#    anyone says, and it is not a thing anyone can check.
+#
+# So this is a closed vocabulary. Whatever the review returns is matched
+# against it; anything that does not name one of these is not a personal
+# detail and never reaches the neighbor.
+
+PERSONAL_REMOVALS: tuple[tuple[tuple[str, ...], str], ...] = (
+    # Most specific first: "a child's name" has to win over "a name".
+    (("child's name", "childs name", "child name", "children's name",
+      "kid's name"), "a child's name"),
+    (("school",), "a school name"),
+    (("employer", "workplace", "place of work", "company name"),
+     "an employer's name"),
+    (("landlord",), "a landlord's name"),
+    (("doctor", "medical", "diagnosis", "condition", "treatment",
+      "hospital", "clinic", "illness"), "a medical detail"),
+    # Email and phone come before the address rule: "an email address" has
+    # the word "address" in it, and the longest match is not the right one.
+    (("email", "e-mail"), "an email address"),
+    (("phone", "mobile number", "cell number", "telephone"), "a phone number"),
+    (("social media", "instagram", "facebook", "handle", "username"),
+     "a social media handle"),
+    (("street address", "home address", "address", "apartment number",
+      "unit number", "apartment", "street"), "an address"),
+    # The catch-all for a name, last, so a more specific kind claims it first.
+    (("name",), "a name"),
+)
+
+_NOT_A_REMOVAL = {"", "none", "nothing", "n/a", "na", "no", "-"}
+
+
+def personal_removals(removed) -> list[str]:
+    """The kinds of personal detail taken out, in words a neighbor uses.
+
+    Only genuinely identifying things survive this: a name, a child's name, a
+    school, an address, a phone number, an email, an employer, a medical
+    detail. Everything else the review happened to mention — a tightened
+    sentence, a dropped adjective, its own jargon — is dropped, because it was
+    never a privacy removal in the first place.
+
+    Order within the list follows the order the review gave, and duplicates
+    collapse: two names taken out is still "a name" said once.
+    """
+    out: list[str] = []
+    for item in removed or []:
+        said = str(item).strip().lower()
+        if said in _NOT_A_REMOVAL or said.startswith(("no ", "none ", "nothing ")):
+            continue
+        for keywords, plain in PERSONAL_REMOVALS:
+            if any(word in said for word in keywords):
+                if plain not in out:
+                    out.append(plain)
+                break
+    return out

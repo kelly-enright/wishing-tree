@@ -13,7 +13,7 @@ import pytest
 from helpers import grant_as, sign_in
 from fastapi.testclient import TestClient
 
-from backend import config, coordinator_auth, db, main, seed
+from backend import config, coordinator_auth, db, main, seed, text
 
 # Words that describe people from a distance. None of them belongs in
 # anything a person using Wishing Tree reads.
@@ -286,8 +286,19 @@ def test_the_safety_prompt_asks_for_the_published_form():
     text = (config.PROMPTS_DIR / "safety_agent.md").read_text()
     assert "No first person" in text
     assert "No relationships" in text
-    assert "No reasons and no circumstances" in text
+    assert "No circumstances, but keep the purpose" in text
     assert "Shower chair for an adult" in text
+
+
+def test_the_safety_prompt_keeps_what_an_item_is_for():
+    """The house voice strips the household's story. It had been reading that
+    as license to strip the item's purpose too, which is the one piece of
+    context a granter actually buys from."""
+    text = (config.PROMPTS_DIR / "safety_agent.md").read_text()
+    assert "**and what it is for**" in text
+    assert "A detail that identifies nobody is not yours to take." in text
+    # And the line it has to hold: the thing, not the household.
+    assert "whether it describes the thing or the household" in text
 
 
 # --------------------------------------------------------------------------
@@ -354,6 +365,7 @@ def test_the_run_sheet_may_keep_its_compact_dates(client):
 # --------------------------------------------------------------------------
 
 FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
+BACKEND = Path(__file__).resolve().parent.parent / "backend"
 
 
 def test_the_fonts_are_served_by_this_app():
@@ -1272,3 +1284,208 @@ def test_a_signed_in_page_gets_a_hint_of_sky_and_no_scenery():
     assert warm == {"Landing.tsx", "About.tsx"}
     hills = {p.name for p in pages.glob("*.tsx") if "<Hills" in p.read_text()}
     assert hills == {"Landing.tsx"}
+
+
+# --------------------------------------------------------------------------
+# What was taken out, and what was only reworded
+# --------------------------------------------------------------------------
+
+MYWISHES = FRONTEND / "src" / "pages" / "MyWishes.tsx"
+
+
+@pytest.mark.parametrize("said,expected", [
+    # The things that are genuinely personal, however the review phrases them.
+    ("a child's name", ["a child's name"]),
+    ("the child name Sofia", ["a child's name"]),
+    ("a school name", ["a school name"]),
+    ("the name of her high school", ["a school name"]),
+    ("a street address", ["an address"]),
+    ("an apartment number", ["an address"]),
+    ("a phone number", ["a phone number"]),
+    ("an email address", ["an email address"]),
+    ("an employer name", ["an employer's name"]),
+    ("the landlord's name", ["a landlord's name"]),
+    ("a medical detail", ["a medical detail"]),
+    ("the name of the hospital", ["a medical detail"]),
+    ("a parent's name", ["a name"]),
+    # And everything that is not. Tidying a wish is not a privacy removal.
+    ("a use-purpose detail", []),
+    ("shortened for clarity", []),
+    ("rewrote in the third person", []),
+    ("the reason it is needed", []),
+    ("first-person phrasing", []),
+    ("none", []),
+    ("", []),
+])
+def test_only_personal_details_are_reported_as_removed(said, expected):
+    assert text.personal_removals([said]) == expected
+
+
+def test_the_same_kind_twice_is_said_once():
+    """Two names taken out is still "a name" said once — a neighbor reading
+    their own wish does not need the count."""
+    assert text.personal_removals(
+        ["a child's name", "a child's name", "another child name"],
+    ) == ["a child's name"]
+
+
+def test_a_reworded_wish_reports_nothing_taken_out():
+    """The whole failure this guards: a wish that was only rewritten came back
+    saying something had been taken out of it, in words nobody uses."""
+    assert text.personal_removals(
+        ["a use-purpose detail", "condensed the description"],
+    ) == []
+
+
+def test_the_promise_is_filtered_everywhere_it_is_read(client):
+    """Written on the way in and filtered again on the way out, so a wish
+    reviewed before this rule existed still reads in plain words."""
+    for path in ("backend/intake_api.py", "backend/family_api.py",
+                 "backend/main.py"):
+        source = (Path(__file__).resolve().parent.parent / path).read_text()
+        assert "personal_removals" in source, path
+
+
+def test_the_safety_prompt_names_the_closed_vocabulary():
+    prompt = (config.PROMPTS_DIR / "safety_agent.md").read_text()
+    assert "**Rewording is not a removal.**" in prompt
+    # Every phrase the code will accept is offered to the agent by name, so
+    # the two cannot drift apart.
+    for _keywords, plain in text.PERSONAL_REMOVALS:
+        assert plain in prompt, plain
+
+
+# --------------------------------------------------------------------------
+# My wishes
+# --------------------------------------------------------------------------
+
+def test_my_wishes_says_what_the_tree_can_and_cannot_promise():
+    source = MYWISHES.read_text()
+    assert "Neighbors nearby can see your wishes on the tree." in source
+    assert "We can't promise" in source
+    assert "we'll do our best to find someone who" in source
+    # Said once, at the top, and not gated on a wish happening to be up.
+    assert source.count("mywishes__how") == 1
+    assert "anyOnTheTree" not in source
+
+
+def test_each_wish_card_shows_cost_and_deadline():
+    source = MYWISHES.read_text()
+    assert "costLabel(row.wish)" in source
+    assert "cost_is_estimate" in source and "pill-estimate" in source
+    assert "'No deadline'" in source
+    # The same helper the wish granter's card uses, so one wish reads the same
+    # on both sides.
+    card = (FRONTEND / "src" / "components" / "WishCard.tsx").read_text()
+    assert "costLabel" in card
+    assert "function cost(" not in card
+
+
+def test_the_tracker_shows_the_whole_path_with_the_stage_marked():
+    source = MYWISHES.read_text()
+    assert "progress__step--now" in source and "progress__step--done" in source
+    assert "aria-current={step.now ? 'step' : undefined}" in source
+
+    api = (BACKEND / "family_api.py").read_text()
+    assert 'TRACK = ["being_checked", "on_the_tree", "granted", "on_its_way", "delivered"]' in api
+    # A held wish is off the track, not early on it.
+    assert "if stage not in TRACK:\n        return None" in api
+
+
+def test_the_tracker_uses_the_payment_words_for_a_rent_wish():
+    """"On its way" is wrong for money going to a landlord, and the page
+    should not have to know that — the server labels the track."""
+    api = (BACKEND / "family_api.py").read_text()
+    assert '(RENT_STAGES.get(key) if is_rent else None) or STAGES[key]' in api
+    assert MYWISHES.read_text().count("RENT") == 0
+
+
+def test_the_tracker_labels_are_the_words_asked_for():
+    api = (BACKEND / "family_api.py").read_text()
+    for label in ("Being checked", "On the tree", "A neighbor picked your wish",
+                  "On its way", "Delivered"):
+        assert f'"{label}"' in api, label
+
+
+def test_a_wish_carries_its_track_to_the_page(client):
+    sign_in(client, "Neighbor A04")
+    body = client.get("/api/families/Neighbor A04/wishes").json()
+    assert body["wishes"], "the seed should give this neighbor wishes"
+    for row in body["wishes"]:
+        track = row["track"]
+        if row["stage"] == "not_posted":
+            assert track is None
+            continue
+        assert [s["key"] for s in track] == [
+            "being_checked", "on_the_tree", "granted", "on_its_way", "delivered",
+        ]
+        assert sum(s["now"] for s in track) == 1
+        now = next(i for i, s in enumerate(track) if s["now"])
+        assert all(s["done"] for s in track[:now])
+        assert not any(s["done"] for s in track[now:])
+
+
+# --------------------------------------------------------------------------
+# American English
+# --------------------------------------------------------------------------
+
+# Spellings and phrasings that are correct English and the wrong English for
+# a project written in and about New Haven, Connecticut.
+BRITISH = (
+    "colour", "favourite", "neighbour", "behaviour", "defence", "offence",
+    "licence", "centre", "metre", "litre", "fibre", "grey",
+    "organise", "recognise", "apologise", "realise", "customise",
+    "analyse", "prioritise", "summarise",
+    "labelled", "cancelled", "travelling", "modelling", "signalling",
+    "whilst", "amongst", "learnt", "spelt", "postcode", "post code",
+    "straight away", "have a read", "has got to", "have got to",
+    "tick the box", "ticked", "programme", "enquire", "aeroplane",
+)
+
+# The files people read from, or that the models read from.
+AMERICAN_ENGLISH_PATHS = (
+    *(FRONTEND / "src").rglob("*.tsx"),
+    *(FRONTEND / "src").rglob("*.ts"),
+    FRONTEND / "src" / "styles.css",
+    *BACKEND.rglob("*.py"),
+    *(Path(__file__).resolve().parent.parent / "prompts").glob("*.md"),
+)
+
+
+@pytest.mark.parametrize("word", BRITISH)
+def test_the_app_is_written_in_american_english(word):
+    """Spelling and phrasing both. The agents' prompts are in here too, so
+    their replies come out the same way."""
+    for path in AMERICAN_ENGLISH_PATHS:
+        body = path.read_text().lower()
+        if path.parent.name == "prompts":
+            # The prompts name the British forms in order to forbid them.
+            body = body.split("## how you write")[0]
+        assert word not in body, f"{word!r} in {path.name}"
+
+
+def test_each_agent_prompt_asks_for_american_english():
+    for name in ("intake_agent.md", "safety_agent.md", "matchmaker_agent.md"):
+        prompt = (config.PROMPTS_DIR / name).read_text()
+        assert "American English throughout" in prompt, name
+
+
+# --------------------------------------------------------------------------
+# Monty on the thank-you screen
+# --------------------------------------------------------------------------
+
+def test_monty_sits_beside_the_thank_you_headline():
+    """`flex-wrap: wrap` let the headline take its own line at an awkward
+    width and left him stranded above it at the left margin, which reads as a
+    bug rather than a layout."""
+    rule = CSS[CSS.index(".thanks {"):]
+    rule = rule[:rule.index("}")]
+    assert "flex-wrap: nowrap" in rule
+
+    # And the stacked version is deliberate: centered, under a query. There
+    # is more than one 560px block, so find the one that mentions `.thanks`.
+    stacked = CSS[CSS.rindex("@media (max-width: 560px) {", 0, CSS.index(".thanks { flex-direction")):]
+    stacked = stacked[:stacked.index("}")]
+    assert "flex-direction: column" in stacked
+    assert "align-items: center" in stacked
+    assert "text-align: center" in stacked

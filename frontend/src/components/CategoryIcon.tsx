@@ -6,7 +6,7 @@ import type { Category } from '../api'
 /**
  * One icon per category, from Lucide (ISC licensed, bundled with the app).
  *
- * The icons are a second way to read a card at a glance — colour and shape
+ * The icons are a second way to read a card at a glance — color and shape
  * before words — which matters on a wall of thirty wishes on a phone.
  */
 const ICONS = {

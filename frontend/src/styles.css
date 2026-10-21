@@ -1504,6 +1504,57 @@ textarea.field__input { resize: vertical; font: inherit; }
 .track__item { margin: 0 0 5px; font-weight: 600; color: var(--evergreen-deep); line-height: 1.5; }
 .track__detail { margin: 0; color: var(--ink-soft); line-height: 1.6; font-size: 0.93rem; }
 
+/* The same two facts a wish granter weighs, shown to the person who asked. */
+.track__facts {
+  margin: 10px 0 0;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 7px 12px;
+}
+.track__facts > div { display: flex; flex-direction: column; }
+.track__facts dt {
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.track__facts dd { margin: 0; font-size: 0.88rem; font-weight: 600; color: var(--ink); }
+
+/* Where a wish stands, on the whole path rather than as one word.
+
+   Named `progress`, not `steps`: the landing page's three "How it works"
+   cards already own `.steps`, and a tracker silently inheriting a
+   three-column grid is the kind of collision a stylesheet this size invites.
+   Vertical, because "A neighbor picked your wish" does not fit five across on
+   a phone, and a tracker that wraps mid-label reads as a mistake. */
+.progress {
+  margin: 12px 0 0; padding: 0; list-style: none;
+}
+.progress__step {
+  position: relative;
+  display: grid; grid-template-columns: 16px 1fr; align-items: center;
+  gap: 9px; padding: 5px 0;
+  font-size: 0.86rem; color: var(--ink-soft);
+}
+/* The rail, drawn by each step down to the next one — so a step that is done
+   colors the segment below it and the line fills in as the wish moves. */
+.progress__step::before {
+  content: ""; position: absolute;
+  left: 7px; top: 50%; width: 2px; height: 100%;
+  background: var(--line);
+}
+.progress__step:last-child::before { display: none; }
+.progress__dot {
+  width: 10px; height: 10px; margin-left: 3px;
+  border-radius: 50%; background: var(--line);
+  position: relative; z-index: 1;
+}
+.progress__step--done .progress__dot { background: var(--evergreen-soft); }
+.progress__step--done::before { background: var(--evergreen-soft); }
+.progress__step--now { color: var(--evergreen-deep); font-weight: 700; }
+.progress__step--now .progress__dot {
+  background: var(--evergreen);
+  box-shadow: 0 0 0 4px var(--evergreen-pale);
+}
+
 .track__rent, .track__removed {
   margin: 10px 0 0;
   padding: 10px 13px;
@@ -1754,7 +1805,7 @@ textarea.field__input { resize: vertical; font: inherit; }
 
 .tree__art { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-/* Leaves are real buttons: 44px, focusable, and labelled. */
+/* Leaves are real buttons: 44px, focusable, and labeled. */
 .leaf {
   position: absolute;
   width: 44px;
@@ -1968,7 +2019,7 @@ textarea.field__input { resize: vertical; font: inherit; }
 .filters__how strong { color: var(--evergreen-deep); font-weight: 600; }
 
 /* ------------------------------------------------- the grant gate, visibly shut */
-/* The gold button is inert until the box is ticked. Without this it reads as
+/* The gold button is inert until the box is checked. Without this it reads as
    broken rather than locked, so the box gets a border while it is waiting. */
 .confirm__agree--waiting {
   border: 1px dashed var(--gold-deep);
@@ -2712,7 +2763,7 @@ textarea.field__input { resize: vertical; font: inherit; }
    any stronger and the cream stops being cream.
    
    On the body, because that is the only box the size of the window. On the
-   page element the sky stops at the edge of a centred column and leaves a
+   page element the sky stops at the edge of a centered column and leaves a
    visible rectangle; as an absolutely positioned child it is wide enough to
    give the page a sideways scrollbar.
    
@@ -2923,9 +2974,23 @@ body.wt-warm {
   .sparkles--go .sparkles__dot { animation: none; }
 }
 
-/* Monty and the headline, side by side on the thank-you screen. */
-.thanks { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.thanks .page__title { margin: 0; }
+/* Monty and the headline, side by side on the thank-you screen — and stacked
+   on purpose when there is genuinely no room.
+
+   `flex-wrap: wrap` let the headline decide, and at an awkward width it took
+   its own line and left Monty stranded above it at the left margin. That
+   reads as a bug. With `nowrap` the headline shrinks and wraps inside its own
+   column instead, which is what "beside him whenever there's room" means; the
+   query below is the deliberate stacked version. */
+.thanks {
+  display: flex; align-items: center; gap: 16px; flex-wrap: nowrap;
+}
+.thanks .page__title { margin: 0; min-width: 0; }
+.thanks .sparkles { flex: none; }
+
+@media (max-width: 560px) {
+  .thanks { flex-direction: column; align-items: center; text-align: center; }
+}
 .about__who .sparkles { align-self: start; }
 
 /* How long each intake ran. Operational, so it lives on the admin page. */

@@ -410,6 +410,11 @@ async def _review_and_publish(request: Request, session_id: str) -> dict:
             ),
         }
 
+    # What the neighbor will be told was taken out. Filtered to genuinely
+    # personal things, in plain words — a reworded sentence is not a privacy
+    # removal, and "a use-purpose detail" is not a phrase anyone says.
+    removed = text.personal_removals(review.removed)
+
     cleaned = safety.apply_to_request(request, review)
     cleaned.status = (
         RequestStatus.OPEN if review.approved else RequestStatus.PENDING_REVIEW
@@ -421,7 +426,7 @@ async def _review_and_publish(request: Request, session_id: str) -> dict:
             conn,
             request_id=request.id,
             approved=review.approved,
-            removed=review.removed,
+            removed=removed,
             flags=[f.model_dump(mode="json") for f in review.flags],
             enforced=enforced,
             note_to_family=review.note_to_family,
@@ -441,7 +446,7 @@ async def _review_and_publish(request: Request, session_id: str) -> dict:
         # The card as it now sits on the tree, so the confirmation shows the
         # real thing rather than a summary of it.
         "card": cleaned.public_card() if review.approved else None,
-        "removed": review.removed,
+        "removed": removed,
         "flags": [f.model_dump(mode="json") for f in review.flags],
         "enforced": enforced,
         "held_reason": None if review.approved else text.held_reason(kinds),

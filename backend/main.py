@@ -22,7 +22,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Response
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from backend import accounts, config, db, safety_checks, seed
+from backend import accounts, config, db, safety_checks, seed, text
 from backend.agents import budget as budget_module
 from backend.coordinator_api import router as coordinator_router
 from backend.coordinator_auth import issue_token, require_coordinator
@@ -352,7 +352,8 @@ def coordinator_activity(limit: int = 200) -> dict:
             "tools_called": [t for t in (call["tools_called"] or "").split(",") if t],
             "input_summary": safety_checks.scrub(call["input_summary"]),
             "output_summary": safety_checks.scrub(call["output_summary"]),
-            "removed": review["removed"] if review else [],
+            "removed": text.personal_removals(
+                review["removed"] if review else []),
             "flags": review["flags"] if review else [],
             "enforced": review["enforced"] if review else [],
             "input_tokens": call["input_tokens"],

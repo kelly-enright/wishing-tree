@@ -3,15 +3,7 @@ import CategoryIcon from './CategoryIcon'
 import { ItemLink } from './ItemLink'
 import { ShieldCheck, Sparkles } from 'lucide-react'
 import { deadline as deadlineText } from '../dates'
-
-function cost(wish: Wish): string {
-  if (wish.budget_min_usd != null && wish.budget_max_usd != null) {
-    return `$${wish.budget_min_usd.toFixed(0)}–$${wish.budget_max_usd.toFixed(0)}`
-  }
-  if (wish.estimated_cost_usd != null) return `$${wish.estimated_cost_usd.toFixed(0)}`
-  if (wish.budget_max_usd != null) return `up to $${wish.budget_max_usd.toFixed(0)}`
-  return '—'
-}
+import { costLabel } from '../money'
 
 /**
  * One wish as a wish granter sees it. Built from the card the server sends,
@@ -79,7 +71,7 @@ export default function WishCard({
 
       <dl className="card__facts">
         <div><dt>Cost</dt><dd>
-          {cost(wish)}
+          {costLabel(wish)}
           {wish.cost_is_estimate && <span className="pill-estimate">Estimated</span>}
         </dd></div>
         <div><dt>Needed by</dt><dd>

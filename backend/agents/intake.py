@@ -86,7 +86,7 @@ def _match_score(probe: str, candidate: str) -> float:
     """How well a family's wording matches a price-guide entry.
 
     Mostly word overlap, because "boys winter coat" and "children's winter
-    coat" are the same thing while looking quite different to a character-level
+    coat" are the same thing while looking quite different from a character-level
     comparison. A little string similarity breaks ties.
     """
     probe_words, candidate_words = _words(probe), _words(candidate)

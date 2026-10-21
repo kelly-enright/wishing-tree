@@ -51,7 +51,7 @@ def build() -> str:
         "to. A figure that is wrong by half is a donor turning up with the wrong",
         "thing, so each row is worth a minute against a real store.",
         "",
-        "The **Checked** column is for you: write the real price you found, or a tick.",
+        "The **Checked** column is for you: write the real price you found, or a check mark.",
         "",
     ]
 

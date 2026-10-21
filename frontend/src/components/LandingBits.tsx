@@ -33,7 +33,7 @@ export function CountUp({ to, duration = 900 }: { to: number; duration?: number 
     const step = (now: number) => {
       const through = Math.min(1, (now - begun) / duration)
       // Ease out: quick at first, then settling, which is how a number
-      // landing somewhere ought to feel.
+      // landing somewhere should feel.
       setShown(Math.round(to * (1 - Math.pow(1 - through, 3))))
       if (through < 1) frame = requestAnimationFrame(step)
     }
@@ -200,7 +200,7 @@ export function DriftingLeaves() {
  *
  * Written out rather than randomised so the page looks the same every load —
  * and so each one can be placed deliberately. The lanes favour the margins:
- * the content column is centred and capped at 1120px, so on anything wide
+ * the content column is centered and capped at 1120px, so on anything wide
  * these fall beside the text rather than behind it. They sit under
  * everything regardless, and take no clicks.
  */

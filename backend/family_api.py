@@ -120,6 +120,11 @@ STAGES = {
     "not_posted": "Not on the tree yet",
 }
 
+# The five stages a wish moves through, in order. `not_posted` is not one of
+# them — a wish being held is off the track, not early on it — so a card in
+# that state shows the reason instead of a tracker with nowhere to go.
+TRACK = ["being_checked", "on_the_tree", "granted", "on_its_way", "delivered"]
+
 # Rent and utilities move as a payment, not a parcel.
 RENT_STAGES = {
     "granted": "A neighbor picked your wish",
@@ -183,13 +188,29 @@ def _stage_for(wish, pledge, review) -> tuple[str, str, bool]:
     return "being_checked", "Just submitted.", False
 
 
+def _track_for(is_rent: bool, stage: str) -> list[dict] | None:
+    """The five stages with the current one marked, or None when off-track."""
+    if stage not in TRACK:
+        return None
+    here = TRACK.index(stage)
+    return [
+        {
+            "key": key,
+            "label": (RENT_STAGES.get(key) if is_rent else None) or STAGES[key],
+            "done": i < here,
+            "now": i == here,
+        }
+        for i, key in enumerate(TRACK)
+    ]
+
+
 @router.get("/{alias}/wishes")
 def family_wishes(
     alias: str,
     session: accounts.Session = Depends(accounts.require("family")),
 ) -> dict:
     accounts.owns(session, alias)
-    """Every wish this family has posted, and where each one has got to."""
+    """Every wish this family has posted, and where each one stands."""
     today = date.today()
     with db.connect() as conn:
         family = db.get_family(conn, alias)
@@ -225,7 +246,13 @@ def family_wishes(
                 "delivery": delivery,
                 "direct_payment": is_rent,
                 "direct_payment_note": RENT_NOTE if is_rent else None,
-                "removed_before_posting": review["removed"] if review else [],
+                # Filtered again on the way out, so a wish reviewed before
+                # this rule existed still reads in plain words.
+                # The whole track, labeled for this wish, so the page does
+                # not have to repeat the rent-versus-parcel wording.
+                "track": _track_for(is_rent, stage),
+                "removed_before_posting": text.personal_removals(
+                    review["removed"] if review else []),
             })
 
     order = ["granted", "on_its_way", "being_checked", "on_the_tree",

@@ -94,7 +94,7 @@ def matchmaker_agent() -> Agent:
     ) -> dict:
         """Open wishes matching a donor's constraints.
 
-        `zip` is read as *the donor's area*, not an exact postcode match: it
+        `zip` is read as *the donor's area*, not an exact zip code match: it
         resolves to the region that covers it, and every open wish in that
         region is eligible. A donor in 06512 driving to the hub in 06511 is
         the normal case, and matching zip-for-zip returned nothing at all.

@@ -1292,3 +1292,112 @@ wish ("Pack of highlighters") as Granter D02. Nothing overflows at 375px.
 
 **Still outstanding, by agreement:** the live safety suite and the token
 measurements.
+
+## Problem 22 — My Wishes, the Privacy Promise, and American English
+
+### Prompt 1
+
+> Fixes on My wishes and a few related details:
+>
+> a.) Only show "Taken out before anyone saw it" when something genuinely personal was removed: a name, a child's name, a school, an address, a phone number, an email, an employer, or a medical detail. Describe it in plain words ("a child's name"), never with internal labels like "use-purpose detail." Rewording or shortening a wish is not a privacy removal and should never be reported as one.
+>
+> b.) Replace the intro line on My wishes with: "Neighbors nearby can see your wishes on the tree. We can't promise every wish will be granted, but we'll do our best to find someone who can help."
+>
+> c.) Each wish card on My wishes should show its cost (labeled "Estimated" when it is), its deadline or "No deadline," and the progress tracker (Being checked → On the tree → A neighbor picked your wish → On its way → Delivered) with the current stage highlighted.
+>
+> d.) Check the Safety agent isn't stripping useful, non-identifying details (like what an item is for) when it cleans a wish. It should only remove personal details and keep the wish's meaning.
+>
+> e.) Use American English everywhere, in both spelling and phrasing. Go through every screen, message, button and email-style line, and the agents' system prompts so their replies come out in American English too. Change British spellings (like "colour," "favourite," "neighbour," "behaviour") and British phrasing (like "has got to," "straight away," "have a read," "whilst") to natural American wording. List what you changed so I can review it.
+>
+> f.) On the wish granter's thank-you screen, keep Monty beside the headline whenever there's room. On narrow screens, place him centered above the headline so the stacked layout looks intentional, never pushed onto his own line by wrapping.
+>
+> g.) Update tests, take fresh screenshots of the changed screens, and update harness.md.
+
+**Outcome:** 504 passing, 10 deselected. Two live model calls, $0.0009.
+
+- **(a) and (d) were the same bug seen from two sides.** The prompt said "No
+  reasons and no circumstances — all of it goes", and the agent read that as
+  license to strip the item's *purpose* as well as the household's story, then
+  reported the stripping as a privacy removal. So it both took out too much
+  and told the neighbor the wrong thing about it.
+- **The fix is a closed vocabulary, enforced in code.** `personal_removals()`
+  in `backend/text.py` matches whatever the review returned against ten plain
+  phrases and drops everything else. The prompt names the same ten, and a test
+  asserts every phrase in the code appears in the prompt, so they cannot
+  drift. Applied on the way in *and* on the way out, so a wish reviewed before
+  the rule existed still reads properly.
+- **One ordering bug inside that table:** "an email address" contains the word
+  "address", so email and phone have to be matched before the address rule.
+- **Verified live, not just in tests.** Two single reviews, written to disk
+  nowhere: "...for my husband Daniel ... his shifts in the kitchen at Olive
+  Garden. He slipped last week..." published as **"Non-slip work shoes, size
+  11, for kitchen work"**, removing *a name* and *an employer's name*; and the
+  exact wish that had produced "a use-purpose detail" published as **"Pack of
+  highlighters for studying"** reporting **nothing** removed.
+- **(c) surfaced a class-name collision.** The tracker was `.steps`, which the
+  landing page's three "How it works" cards already own, so it silently
+  inherited a three-column grid and laid five stages across the card. Renamed
+  `.progress`.
+- **The server labels the whole track**, so a rent wish reads "Payment on the
+  way" and "Paid" without the page knowing anything about rent — and a held
+  wish gets no tracker, because "Not on the tree yet" is off the track rather
+  than early on it.
+- **(b) is shown unconditionally now.** It used to appear only when a wish
+  happened to be on the tree; an intro line that comes and goes is not an
+  intro line.
+
+### (e) — every American English change, for review
+
+**What people read on a screen**
+
+| File | Was | Now |
+|---|---|---|
+| `GrantConfirm.tsx` | "tick the box to say you can" | "check the box to say you can" |
+| `GrantConfirm.tsx` | "Tick the box above first" | "Check the box above first" |
+| `MyWishesPage.tsx` | "with where it has got to" | "with where it stands" |
+| `WishReview.tsx` | "Have a read, change anything" | "Take a look, change anything" |
+| `price_guide_review.py` | "write the real price you found, or a tick" | "...or a check mark" |
+
+**The agents' prompts** — all three gained a **How you write** section asking
+for American English in spelling and phrasing, so their replies come out the
+same way. `matchmaker_agent.md` also had "the same postcode" → "the same zip
+code".
+
+**Comments, docstrings and test names** (not read by a user, but "everywhere"
+was the instruction)
+
+| File | Was | Now |
+|---|---|---|
+| `backend/accounts.py` | "push people towards" | "push people toward" |
+| `backend/family_api.py` | "where each one has got to" | "where each one stands" |
+| `backend/family_api.py` | "labelled for this wish" | "labeled for this wish" |
+| `backend/agents/intake.py` | "quite different to" | "quite different from" |
+| `backend/agents/matchmaker.py` | "an exact postcode match" | "an exact zip code match" |
+| `frontend/src/useBodyClass.ts` | "a centred element" | "a centered element" |
+| `frontend/src/dates.ts` | "we do not recognise" | "we do not recognize" |
+| `CategoryIcon.tsx` | "colour and shape" | "color and shape" |
+| `LandingBits.tsx` | "the column is centred" | "the column is centered" |
+| `LandingBits.tsx` | "ought to feel" | "should feel" |
+| `Skeleton.tsx` | "eleven grey rectangles" | "eleven gray rectangles" |
+| `styles.css` | "focusable, and labelled" | "focusable, and labeled" |
+| `styles.css` | "the edge of a centred column" | "...a centered column" |
+| `styles.css` | "until the box is ticked" | "until the box is checked" |
+| `styles.css` | "Where a wish has got to" | "Where a wish stands" |
+| `MyWishes.tsx` | "Where this wish has got to" | "Where this wish stands" |
+| `tests/test_safety_live.py` | "each defence spent" ×2 | "each defense spent" |
+| `tests/test_donor.py` | `..._not_their_postcode`, `same_postcode` | `..._not_their_exact_zip`, `same_zip` |
+| `README.md` | "each defence spent" | "each defense spent" |
+| `README.md` | "has to be ticked" | "has to be checked" |
+
+**Deliberately left alone:** `output/harness.md` and this file. They are the
+record of what happened, and rewriting a log to match a later decision is not
+a spelling fix.
+
+A test now holds the line: twenty-eight British spellings and phrasings,
+checked against every `.tsx`, `.ts`, `.py`, the stylesheet and the three
+prompts — which are checked only up to their **How you write** heading,
+because that section names the British forms in order to forbid them.
+
+**Still outstanding, by agreement:** the live safety suite and the token
+measurements. All three prompt versions changed this round, so §19–20 figures
+are further out of date.

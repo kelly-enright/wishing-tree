@@ -91,7 +91,7 @@ export default function WishReview({
     <div className="review">
       <p className="review__intro">
         This is exactly what a neighbor will see — no names, no address, nothing
-        that points back to you. Have a read, change anything that isn't right, and
+        that points back to you. Take a look, change anything that isn't right, and
         post when you're happy.
       </p>
 

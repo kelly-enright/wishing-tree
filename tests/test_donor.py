@@ -323,14 +323,14 @@ def test_a_donor_can_see_what_they_claimed(client):
     assert any(row["wish"]["id"] == wish["id"] for row in body["pledges"])
 
 
-def test_a_donor_zip_means_their_region_not_their_postcode(client):
+def test_a_donor_zip_means_their_region_not_their_exact_zip(client):
     """Donations all pass through one hub, so a donor can grant anywhere in
     the region. Matching zip-for-zip returned almost nothing."""
     region = config.region_for_zip("06511")
     with db.connect(config.DB_PATH) as conn:
         across_region = db.list_open_wishes(conn, zip_codes=region.zip_codes)
-        same_postcode = db.list_open_wishes(conn, zip_code="06511")
-    assert len(across_region) > len(same_postcode)
+        same_zip = db.list_open_wishes(conn, zip_code="06511")
+    assert len(across_region) > len(same_zip)
 
 
 def test_the_service_area_is_new_haven_city_only(client):

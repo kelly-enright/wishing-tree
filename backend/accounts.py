@@ -68,7 +68,7 @@ def verify_password(password: str, stored: str) -> bool:
 def check_password_strength(password: str) -> None:
     """Length, and nothing else.
 
-    No "one capital, one symbol" rule. Those push people towards Passw0rd!
+    No "one capital, one symbol" rule. Those push people toward Passw0rd!
     and away from the long ordinary phrases that are actually hard to guess,
     which is why NIST stopped recommending them.
     """

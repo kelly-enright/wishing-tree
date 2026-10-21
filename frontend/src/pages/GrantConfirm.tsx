@@ -144,7 +144,7 @@ export default function GrantConfirm({
 
       {!agreed && (
         <p className="confirm__nudge">
-          One last thing before you can grant this: tick the box to say you can
+          One last thing before you can grant this: check the box to say you can
           make it. Until you do, the wish stays on the tree for another neighbor.
         </p>
       )}
@@ -167,7 +167,7 @@ export default function GrantConfirm({
         <button
           className="btn btn--gold" type="button" onClick={confirm}
           disabled={!ready || busy}
-          title={agreed ? undefined : 'Tick the box above first'}
+          title={agreed ? undefined : 'Check the box above first'}
         >
           {busy ? 'Granting…' : "I'll grant this wish"}
         </button>

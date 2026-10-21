@@ -4,7 +4,7 @@ import { useEffect } from 'react'
  * Adds a class to `<body>` for as long as a page is open.
  *
  * The landing and About pages want a warm glow spanning the whole window.
- * Painting it on the page element does not work: that element is a centred
+ * Painting it on the page element does not work: that element is a centered
  * column, so the glow stops at its edge and leaves a visible rectangle. And
  * drawing it as an absolutely positioned child wide enough to look like
  * light makes the page scroll sideways.

@@ -519,6 +519,16 @@ export type WishProgress = {
   direct_payment: boolean
   direct_payment_note: string | null
   removed_before_posting: string[]
+  /** The five stages with the current one marked. Null when a wish is held,
+      because "Not on the tree yet" is off the track rather than early on it. */
+  track: TrackStep[] | null
+}
+
+export type TrackStep = {
+  key: string
+  label: string
+  done: boolean
+  now: boolean
 }
 
 export function getMyWishes(alias: string): Promise<{

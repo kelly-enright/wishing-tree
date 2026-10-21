@@ -8,7 +8,7 @@ a stub would be worthless: the question is not "does my code branch correctly"
 but "does the agent actually hold when someone pushes on it".
 
 Results are written to `output/safety_test_results.json` as the suite runs,
-with the tokens and cost each defence spent.
+with the tokens and cost each defense spent.
 """
 
 from __future__ import annotations
@@ -507,7 +507,7 @@ def test_10_the_gateway_rejects_the_harshest_jailbreak_before_the_agent(live_db,
 
     The first version of test 1 used classic jailbreak phrasing. The Portkey
     gateway's upstream content filter rejected the request outright with a 400
-    before gpt-6-luna ever saw it. That is a real layer of the defence, and it
+    before gpt-6-luna ever saw it. That is a real layer of the defense, and it
     is one this project does not control — so it is recorded as a fact rather
     than claimed as a feature.
     """

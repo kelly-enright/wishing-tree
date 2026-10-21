@@ -2223,3 +2223,112 @@ again.
 | Animations that survive reduced motion | none |
 | Horizontal overflow at 375px | none |
 | Exercised live | the wish-leaf, both sparkle screens, and the granter's thank-you screen (one demo wish granted at Kelly's ask, reset with `--reset`) |
+
+## 38. What was taken out, what a wish shows, and American English
+
+Six fixes from Kelly's testing, and one of them turned out to be two bugs
+wearing the same coat.
+
+### "Taken out before anyone saw it" is a promise
+
+A wish Kelly made during testing came back saying **"Taken out before anyone
+saw it: a use-purpose detail."** Nothing personal had been removed. The Safety
+agent had rewritten the wish into the house voice — dropping the first person
+and the circumstances, as it is told to — and reported that rewriting as a
+privacy removal, in a phrase no one speaks.
+
+Both halves matter. Reporting a reword as a removal teaches a neighbor to
+distrust a message that should mean something, and "a use-purpose detail" is
+not a sentence anyone can check.
+
+The fix is a **closed vocabulary**, in `backend/text.py`:
+
+> a name · a child's name · a school name · an employer's name ·
+> a landlord's name · an address · a phone number · an email address ·
+> a social media handle · a medical detail
+
+`personal_removals()` matches whatever the review returned against that list
+and drops everything else. The prompt names the same ten phrases, so the two
+cannot drift apart — and a test asserts every phrase in the code appears in
+the prompt.
+
+It is applied in three places, not one: on the way in, where the review is
+stored, and again on the way out in both `family_api` and `main`, so a wish
+reviewed before this rule existed still reads in plain words. The order of
+the keyword table matters once: **"an email address" contains the word
+"address"**, so email and phone are matched before the address rule gets a
+look.
+
+### The agent was taking out too much
+
+The same prompt said *"No reasons and no circumstances. Why it is needed, what
+went wrong, what it would mean — all of it goes."* That rule exists for a good
+reason — a neighbor who writes well should not get their wish granted sooner
+than one who does not — but the agent read it as license to strip the item's
+**purpose** too, which is the one piece of context a granter buys from.
+
+The rule now draws the line explicitly: *"The line is whether it describes the
+thing or the household."* The household's story goes; "for kitchen work",
+"for travel to medical appointments", "for the school bus stop" stay.
+
+**Checked live**, twice, with two calls and $0.0009:
+
+| Written | Published | Reported as removed |
+|---|---|---|
+| "Non-slip work shoes for my husband Daniel, size 11, for his shifts in the kitchen at Olive Garden. He slipped last week and we are behind on everything since." | Non-slip work shoes, size 11, for kitchen work | a name · an employer's name |
+| "I could really use a pack of highlighters for studying. Things have been tight this month and I keep putting it off." | Pack of highlighters for studying | *(nothing)* |
+
+The second row is the exact wish that produced "a use-purpose detail" before.
+
+### My wishes
+
+- **The intro line** is Kelly's sentence, said once at the top and no longer
+  gated on a wish happening to be up: it introduces the section, so it is
+  there whatever state the wishes are in.
+- **Cost and deadline** on every card, from the same `costLabel()` the wish
+  granter's card uses — one wish now reads the same on both sides — with the
+  "Estimated" pill when the number came from the price guide rather than from
+  the family, and "No deadline" when there is none.
+- **A progress tracker**: Being checked → On the tree → A neighbor picked your
+  wish → On its way → Delivered, with the current stage marked and the rail
+  filling in behind it. The server labels the whole track, so a rent wish
+  reads "Payment on the way" and "Paid" without the page knowing anything
+  about rent. A held wish gets no tracker at all — "Not on the tree yet" is
+  off the track, not early on it.
+
+One collision worth recording: the tracker's first class name was `.steps`,
+which the landing page's three "How it works" cards already own. The tracker
+silently inherited a three-column grid and laid five stages out across the
+card. Renamed `.progress`. In a stylesheet this size, a generic class name is
+a bug waiting for a second author.
+
+### Monty on the thank-you screen
+
+`flex-wrap: wrap` let the headline decide where it went, and at an awkward
+width it took its own line and left Monty stranded above it at the left
+margin — which reads as a bug, not a layout. `nowrap` makes the headline
+shrink and wrap inside its own column instead, so he stays beside it wherever
+there is room; under 560px a query stacks them deliberately, centered.
+
+### American English
+
+Twenty-two edits across fourteen files, listed in `AI_prompts.md` so Kelly can
+review them. The three agent prompts each gained a **How you write** section
+asking for American English in spelling and phrasing, so the models' own
+replies come out the same way.
+
+A test now holds it: twenty-eight British spellings and phrasings, checked
+against every `.tsx`, `.ts`, `.py`, the stylesheet and the three prompts. The
+prompts are checked only up to their **How you write** heading, because that
+section names the British forms in order to forbid them.
+
+`output/harness.md` and `AI_prompts.md` were left alone. They are the record
+of what happened, and rewriting a log to match a later decision is not a
+spelling fix.
+
+| | |
+|---|---|
+| Tests | 504 passing, 10 deselected |
+| Live model calls this round | 2, $0.0009 |
+| Files touched by the spelling sweep | 14 |
+| Class-name collisions found | 1 (`.steps`) |

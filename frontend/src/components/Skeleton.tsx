@@ -6,7 +6,7 @@
  * does not jump when the real thing lands.
  *
  * `aria-hidden` throughout, with the live region left to say "Loading…" once,
- * because a screen reader has no use for eleven grey rectangles.
+ * because a screen reader has no use for eleven gray rectangles.
  */
 
 export function SkeletonCard() {

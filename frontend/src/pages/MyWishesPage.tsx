@@ -67,7 +67,7 @@ export default function MyWishesPage() {
         <div className="emptywishes">
           <MontySays mood="calm">
             <strong>No wishes yet.</strong><br />
-            When you make a wish, it'll show up here with where it has got to.
+            When you make a wish, it'll show up here with where it stands.
           </MontySays>
           <Link className="btn btn--primary" to="/family/new">
             <Plus size={16} aria-hidden="true" />

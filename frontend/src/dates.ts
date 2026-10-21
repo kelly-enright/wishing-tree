@@ -55,7 +55,7 @@ export function shortDay(iso: string | null | undefined): string {
  */
 export function hours(windowLabel: string | null | undefined): string {
   if (!windowLabel) return ''
-  // Strip the leading weekday only — a label we do not recognise is left
+  // Strip the leading weekday only — a label we do not recognize is left
   // whole, so "by arrangement" does not come back as "arrangement".
   const times = windowLabel.replace(
     /^(?:Sun|Mon|Tues?|Wed(?:nes)?|Thur?s?|Fri|Sat(?:ur)?)(?:day)?\s+/i, '')
