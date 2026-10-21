@@ -17,3 +17,6 @@ frontend/node_modules/
 # The database is rebuilt from backend/seed.py; it is not source.
 # data/price_guide.json IS source and is committed.
 data/*.db
+
+# Built from report/source.html by report/build.py. The source and the crops
+# are committed; the 1.4 MB result is not, except as the deliverable itself.
