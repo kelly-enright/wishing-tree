@@ -280,6 +280,25 @@ compared as text. No real person's details appear anywhere in this repository.
 
 ---
 
+## The write-ups
+
+Two self-contained files at the repository root. Both open by double-clicking,
+on any machine, with no network — every screenshot, both fonts and (for the
+deck) reveal.js itself are inlined.
+
+| File | What it is |
+|---|---|
+| `report.html` | The report. 13 printed pages on letter paper. |
+| `slides.html` | The deck. Ten slides — arrows to move, **F** for fullscreen, **Esc** for the overview. |
+
+Neither is edited by hand. Both are built from sources in `report/`:
+
+```bash
+./.venv/bin/python report/build.py
+```
+
+---
+
 ## The deployed demo
 
 One Render Web Service: FastAPI serves the API and the built frontend, same as

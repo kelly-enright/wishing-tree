@@ -7,9 +7,9 @@ encoding.
 
     ./.venv/bin/python report/build.py
 
-The one thing not inlined is reveal.js itself, which the slides load from a
-CDN. The deck therefore needs a connection to present, even though every
-image in it travels with the file.
+reveal.js is inlined too, from `report/vendor/`, so the deck presents with
+no network at all. A deck you email is no use if it needs a CDN to turn a
+page.
 
 Screenshots are capped at 1000px wide before encoding: they are shown about
 6.5 inches across on letter paper, so anything wider is bytes nobody sees.
@@ -34,6 +34,7 @@ BUILDS = [
 CROPS = ROOT / "report" / "crops"
 SHOTS = ROOT / "screenshots"
 FONTS = ROOT / "frontend" / "dist" / "fonts"
+VENDOR = ROOT / "report" / "vendor"
 
 MAX_WIDTH = 1000
 
@@ -41,6 +42,17 @@ MAX_WIDTH = 1000
 def font(name: str) -> str:
     data = (FONTS / name).read_bytes()
     return "data:font/woff2;base64," + base64.b64encode(data).decode()
+
+
+def vendored(name: str) -> str:
+    """A third-party file, inlined as text rather than a data URI.
+
+    `</script>` inside a string literal would close the tag it is sitting in,
+    so it is split. The minified source does not contain one today; this is
+    here so a future version cannot quietly break the file.
+    """
+    text = (VENDOR / name).read_text(encoding="utf-8")
+    return text.replace("</script>", "<\\/script>")
 
 
 def image(name: str) -> str:
@@ -74,9 +86,13 @@ def build(source: Path, out: Path) -> None:
     def swap(match: re.Match) -> str:
         kind, name = match.group(1), match.group(2)
         used.append(f"{kind}:{name}")
-        return font(name) if kind == "FONT" else image(name)
+        if kind == "FONT":
+            return font(name)
+        if kind == "VENDOR":
+            return vendored(name)
+        return image(name)
 
-    html = re.sub(r"\{\{(FONT|IMG):([^}]+)\}\}", swap, html)
+    html = re.sub(r"\{\{(FONT|IMG|VENDOR):([^}]+)\}\}", swap, html)
 
     left = re.findall(r"\{\{[^}]+\}\}", html)
     assert not left, f"{source.name}: unreplaced tokens {sorted(set(left))}"
