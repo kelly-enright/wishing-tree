@@ -135,6 +135,14 @@ export type Activity = {
     daily_remaining: number
     session_cap: number
   }
+  /** How long each finished intake took. Admin only. */
+  intakes?: {
+    session_id: string
+    family_alias: string
+    turns: number
+    duration_seconds: number
+    approved_at: string | null
+  }[]
 }
 
 export function getActivity(token: string): Promise<Activity> {

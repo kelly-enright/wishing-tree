@@ -1178,7 +1178,7 @@ Agents arrive in later problems; these are the ones already standing.
 
 ## 25. Tests
 
-`./.venv/bin/python -m pytest` — **416 passing**, in under two seconds, every agent stubbed.
+`./.venv/bin/python -m pytest` — **423 passing**, in under two seconds, every agent stubbed.
 
 `./.venv/bin/python -m pytest -m live` — **10 more** against the real model, excluded by default because they spend tokens. Every agent is stubbed, so the suite is free to run.
 
@@ -1955,3 +1955,71 @@ the drawing is the content.
 | Tests | 416 passing, 10 deselected |
 | Overflow at 390, 760, 1024 | none |
 | Animations that loop | none |
+
+## 35. Calm where it matters, and where the numbers live
+
+The rest of the last round, after the message that carried it was cut off.
+
+### The neighbor's own pages stay still
+
+No Monty, no drifting leaves, no added motion on Make a wish or My wishes.
+Someone asking for help on a hard day should not have a dog bounding about
+beside their list.
+
+That resolved an ambiguity in the previous instruction. "When a wish is
+marked delivered and its leaf turns gold" had put Monty on the *neighbor's*
+list — but the leaf turning gold happens on the tree, and the person who made
+it happen is the wish granter. He plays on their "Wishes you've granted" card
+instead, which is both the right audience and the quiet page preserved.
+
+Monty now appears in exactly three places: beside the portrait on About, on
+the thank-you screen, and on a granted wish that has arrived. A test asserts
+that set, and a second asserts the neighbor's pages carry none of it.
+
+### Where the numbers live
+
+Token counts, costs and the intake's duration are the project's own
+measurements, not something a neighbor needs beside their wishes.
+
+- **"This intake took N seconds" is admin-only.** A new `intake_durations()`
+  query feeds an "Intake conversations" list on the activity page —
+  `Neighbor A12 · 2 messages · 22s`. It is gone from the neighbor's screen.
+- **"Show AI details" stays on both roles' screens, collapsed.** Kelly
+  reversed this mid-round so a grader can open it and see what their own
+  session cost. Nothing is open by default, and no page passes `open`.
+- A test asserts no public endpoint carries a token field, matched precisely
+  enough that a wish's own `estimated_cost_usd` — which is the point of the
+  card — does not look like one.
+
+### How we use AI
+
+Kelly's words, on the How it works page, unchanged:
+
+> AI helps turn what you share into a clear wish, checks every wish for
+> personal details before anyone sees it, and suggests wishes that fit a wish
+> granter's budget. People, not AI, coordinate every drop-off and delivery.
+
+Naming the part the AI does *not* do is the half that matters.
+
+### Motion, counted rather than listed
+
+The app has 13 keyframe animations. Rather than name each one in a test,
+the check counts them and asserts the global rule covers everything:
+`animation-duration: 0.001ms !important` on `*, *::before, *::after`, plus
+`display: none` on the three decorative layers. A fourteenth animation added
+later is covered by the same rule, and the test will not quietly stop
+checking.
+
+### Verified live
+
+One real intake through the new prompt — "A floor lamp for the living room,
+ours broke" — came back as a flexible **household** wish at $28–$75, labeled
+an estimate. Three model calls, 22 seconds, $0.00132, and the duration landed
+on the admin page where it now belongs.
+
+| | |
+|---|---|
+| Tests | 423 passing, 10 deselected |
+| Monty appears | three places, none of them a neighbor's own page |
+| Token numbers | both roles, collapsed; admin, open |
+| Animations that survive reduced motion | none |

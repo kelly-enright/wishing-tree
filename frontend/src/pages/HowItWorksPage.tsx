@@ -45,6 +45,18 @@ export default function HowItWorksPage() {
         <Link className="btn btn--gold" to="/donor/signup">Grant a wish</Link>
       </section>
 
+      {/* Kelly's words, unchanged. Saying plainly what the AI does — and
+          naming the part it does not do — is the point of the section. */}
+      <section className="howpage">
+        <h2 className="howpage__side">How we use AI</h2>
+        <p className="page__blurb">
+          AI helps turn what you share into a clear wish, checks every wish for
+          personal details before anyone sees it, and suggests wishes that fit a
+          wish granter's budget. People, not AI, coordinate every drop-off and
+          delivery.
+        </p>
+      </section>
+
       {health && (
         <section className="howpage">
           <h2 className="howpage__side">Where and when</h2>

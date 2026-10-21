@@ -338,6 +338,7 @@ def coordinator_activity(limit: int = 200) -> dict:
         calls = db.list_agent_calls(conn)
         reviews = {r["request_id"]: r for r in db.list_safety_reviews(conn) if r}
         daily = budget_module.tokens_today(conn)
+        intakes = db.intake_durations(conn)
 
     rows = []
     for call in calls[-limit:]:
@@ -377,6 +378,8 @@ def coordinator_activity(limit: int = 200) -> dict:
     return {
         "calls": rows,
         "totals": totals,
+        # How long each intake took, start to approval. Admin only.
+        "intakes": intakes,
         "budget": {
             "daily_tokens": daily,
             "daily_cap": config.DAILY_TOKEN_BUDGET,

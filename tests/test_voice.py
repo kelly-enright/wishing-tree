@@ -1012,11 +1012,22 @@ def test_monty_arrives_once_a_visit_and_then_stops():
 def test_monty_plays_in_leaves_in_the_three_places_asked_for():
     pages = FRONTEND / "src" / "pages"
     using = {p.name for p in pages.glob("*.tsx") if "<MontyInLeaves" in p.read_text()}
-    assert using == {"About.tsx", "Donor.tsx", "MyWishes.tsx"}
+    assert using == {"About.tsx", "Donor.tsx", "MyGranted.tsx"}
 
-    # On the neighbor's list it marks a wish that has arrived, and nothing else.
-    wishes = (pages / "MyWishes.tsx").read_text()
-    assert "row.stage === 'delivered' && (" in wishes
+    # On the granter's side it marks a wish that arrived — the leaf turning
+    # gold is their doing, and the neighbor's own pages stay still.
+    granted = (pages / "MyGranted.tsx").read_text()
+    assert "row.status === 'delivered' && (\n        <MontyInLeaves" in granted
+
+
+def test_the_neighbors_own_pages_stay_calm():
+    """No added motion where somebody is asking for help."""
+    pages = FRONTEND / "src" / "pages"
+    for name in ("MyWishes.tsx", "MyWishesPage.tsx", "Intake.tsx"):
+        source = (pages / name).read_text()
+        assert "MontyInLeaves" not in source, name
+        assert "MontyArrives" not in source, name
+        assert "DriftingLeaves" not in source, name
 
 
 def test_no_monty_animation_loops():
@@ -1037,3 +1048,96 @@ def test_monty_holds_still_for_anyone_who_asked_for_stillness():
     reduced = reduced_motion_rules()
     assert ".arrive { display: none; }" in reduced
     assert ".pile { display: none; }" in reduced
+
+
+# --------------------------------------------------------------------------
+# Where the numbers live
+# --------------------------------------------------------------------------
+
+def test_a_session_can_see_its_own_token_usage(client):
+    """Collapsed by default on both sides, so a grader can open it and see
+    what their own session cost without it sitting on a neighbor's screen."""
+    panel = (FRONTEND / "src" / "components" / "TokenPanel.tsx").read_text()
+    assert "open = false" in panel
+    assert "Show AI details" in panel
+
+    for name in ("Intake.tsx", "Donor.tsx"):
+        source = (FRONTEND / "src" / "pages" / name).read_text()
+        assert "<TokenPanel usage={usage} />" in source, name
+        # Collapsed: no page passes `open`.
+        assert "<TokenPanel usage={usage} open" not in source, name
+
+
+def test_the_intake_duration_is_an_admin_number(client):
+    """A stopwatch beside somebody asking for a winter coat was the wrong
+    note. It is on the activity page now, and nowhere a neighbor reads."""
+    intake = (FRONTEND / "src" / "pages" / "Intake.tsx").read_text()
+    assert "seconds={result?.seconds}" not in intake
+    assert "This intake took" not in intake
+
+    activity = (FRONTEND / "src" / "pages" / "AgentActivity.tsx").read_text()
+    assert "Intake conversations" in activity
+    assert "duration_seconds" in activity
+
+
+def test_the_activity_endpoint_reports_how_long_each_intake_took(client):
+    token = client.post("/api/coordinator/unlock",
+                        json={"passcode": config.COORDINATOR_PASSCODE}).json()["token"]
+    body = client.get("/api/coordinator/activity",
+                      headers={"X-Coordinator-Token": token}).json()
+    assert "intakes" in body
+    for run in body["intakes"]:
+        assert run["duration_seconds"] is not None
+        assert {"session_id", "family_alias", "turns"} <= set(run)
+
+
+def test_token_numbers_never_reach_a_public_endpoint(client):
+    """`estimated_cost_usd` on a wish is what the item costs, which is the
+    point of the card. These are the token fields, matched so that a wish's
+    own price does not look like one."""
+    for path in PUBLIC_PATHS:
+        body = client.get(path).text.lower()
+        for field in ("input_tokens", "output_tokens", "cache_write_tokens",
+                      "cached_input_tokens", "prices_are_placeholders"):
+            assert field not in body, f"{path} exposes {field}"
+        assert not re.search(r"(?<![a-z_])cost_usd", body), f"{path} exposes a token cost"
+
+
+# --------------------------------------------------------------------------
+# How we use AI
+# --------------------------------------------------------------------------
+
+def test_the_how_it_works_page_says_what_the_ai_does():
+    source = (FRONTEND / "src" / "pages" / "HowItWorksPage.tsx").read_text()
+    flat = re.sub(r"\s+", " ", source)
+    assert "How we use AI" in flat
+    for phrase in (
+        "AI helps turn what you share into a clear wish",
+        "checks every wish for personal details before anyone sees it",
+        "suggests wishes that fit a wish granter's budget",
+        "People, not AI, coordinate every drop-off and delivery.",
+    ):
+        assert phrase in flat, phrase
+
+
+# --------------------------------------------------------------------------
+# Motion, all of it
+# --------------------------------------------------------------------------
+
+def test_every_animation_in_the_app_is_switched_off_by_the_setting():
+    """Counted rather than listed: a new `@keyframes` added later is covered
+    by the same rule, and this test will not quietly stop checking."""
+    names = set(re.findall(r"@keyframes\s+([\w-]+)", CSS))
+    assert len(names) >= 12, "expected the app to have a good deal of motion"
+
+    reduced = reduced_motion_rules()
+    # One rule covers every animation there is or ever will be.
+    assert "animation-duration: 0.001ms !important" in reduced
+    assert "animation-iteration-count: 1 !important" in reduced
+    assert "transition-duration: 0.001ms !important" in reduced
+    assert "*, *::before, *::after" in reduced
+
+    # And the decorative layers are removed outright rather than frozen.
+    for gone in (".drift { display: none; }", ".arrive { display: none; }",
+                 ".pile { display: none; }"):
+        assert gone in reduced, gone

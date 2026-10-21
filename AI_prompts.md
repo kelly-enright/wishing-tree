@@ -1140,3 +1140,40 @@ which the message cut off mid-sentence.
 - **The header was never at the top.** Both page containers had 44–72px of
   padding above the pinned bar, so it floated down the page until you
   scrolled past it.
+
+### Prompt 3 (the rest of the cut-off message)
+
+> g.) Keep the neighbor's own pages (Make a wish, My wishes) calm, with no added motion.
+> h.) Remove the "Show AI details" toggle and token panel from neighbor and wish granter screens. Keep token usage and costs only in the admin views (Agent activity and the run sheet). Move "This intake took N seconds" to admin only as well.
+> i.) Add a short "How we use AI" section to the How it works page: "AI helps turn what you share into a clear wish, checks every wish for personal details before anyone sees it, and suggests wishes that fit a wish granter's budget. People, not AI, coordinate every drop-off and delivery."
+> j.) All motion turns off with the reduced-motion setting. Update tests, take fresh screenshots, and update harness.md.
+>
+> After this, the design is frozen.
+
+### Prompt 4 (mid-round reversal)
+
+> Change of plan: keep the 'Show AI details' toggle on neighbor and wish granter screens, collapsed by default, so graders can see token usage for their own session. Keep the admin views as they are.
+
+**Outcome:** 423 passing.
+
+- **(g) settled an ambiguity in (f).** "When a wish is marked delivered and
+  its leaf turns gold" had put Monty on the neighbor's list — but the leaf
+  turns gold on the *tree*, and the person who made that happen is the
+  granter. He moved to their "Wishes you've granted" card, which is both the
+  right audience and leaves the neighbor's pages quiet.
+- **The reversal was cheap because the work was committed.** Restoring the
+  panel was `git checkout HEAD --` on two files, then removing the one prop
+  that (h) had genuinely retired — the intake's duration, which stays on the
+  admin page.
+- **The motion test counts rather than lists.** Thirteen keyframe animations,
+  all covered by one global rule, so a fourteenth added later is covered too
+  and the test cannot quietly stop checking.
+- **A precise match matters in the token-leak test.** `estimated_cost_usd` on
+  a wish card is what the item costs and is the point of the card; a loose
+  substring check flagged it as a token cost.
+- **Verified with a real intake.** "A floor lamp for the living room, ours
+  broke" → a flexible household wish at $28–$75, estimate labeled. Three
+  calls, 22 seconds, $0.00132, and the duration appeared on the admin page.
+
+**Still outstanding, by agreement:** the live safety suite and the token
+measurements. The design is frozen as of this commit.

@@ -30,7 +30,7 @@ export default function AgentActivity({ token }: { token: string }) {
     )
   }
 
-  const { totals, budget } = data
+  const { totals, budget, intakes } = data
   const allInput = totals.input_tokens + totals.cached_input_tokens + (totals.cache_write_tokens ?? 0)
   const cachedShare = allInput > 0 ? Math.round((totals.cached_input_tokens / allInput) * 100) : 0
 
@@ -55,6 +55,26 @@ export default function AgentActivity({ token }: { token: string }) {
           </strong>
         </div>
       </div>
+      {/* How long each conversation ran, start to approval. This used to sit
+          on the neighbor's own screen, which put a stopwatch beside somebody
+          asking for help. It is an operational number, so it lives here. */}
+      {intakes && intakes.length > 0 && (
+        <div className="intakes">
+          <h3 className="intakes__title">Intake conversations</h3>
+          <ul className="intakes__list">
+            {intakes.slice(0, 8).map((run) => (
+              <li key={run.session_id}>
+                <span className="intakes__who">{run.family_alias}</span>
+                <span className="intakes__turns">
+                  {run.turns} message{run.turns === 1 ? '' : 's'}
+                </span>
+                <strong>{Math.round(run.duration_seconds)}s</strong>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <p className="activity__note">
         {cachedShare}% of input tokens served from cache. No contact details are
         recorded on this page.

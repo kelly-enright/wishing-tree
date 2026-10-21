@@ -793,3 +793,21 @@ def granted_ever(conn: sqlite3.Connection) -> int:
         (PledgeStatus.DELIVERED.value,),
     ).fetchone()
     return int(row["n"])
+
+
+def intake_durations(conn: sqlite3.Connection, limit: int = 30) -> list[dict]:
+    """How long each finished intake took, newest first.
+
+    Shown on the admin's activity page and nowhere else. A neighbor has no
+    use for how many seconds their own conversation ran, and putting a
+    stopwatch beside somebody asking for a winter coat was the wrong note.
+    """
+    rows = conn.execute(
+        """SELECT session_id, family_alias, turns, duration_seconds, approved_at
+             FROM intake_sessions
+            WHERE duration_seconds IS NOT NULL
+            ORDER BY approved_at DESC
+            LIMIT ?""",
+        (limit,),
+    )
+    return [dict(r) for r in rows]

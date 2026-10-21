@@ -327,7 +327,7 @@ export default function Intake() {
           )}
         </div>
 
-        <TokenPanel usage={usage} seconds={result?.seconds} />
+        <TokenPanel usage={usage} />
       </div>
     </main>
   )
