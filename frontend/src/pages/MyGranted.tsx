@@ -6,7 +6,7 @@ import { MontySays } from '../components/Monty'
 import { ItemLink, MapLink } from '../components/ItemLink'
 import { longDay, when } from '../dates'
 import { useToast } from '../components/Toast'
-import { MontyInLeaves } from '../components/MontyPlays'
+import { MontySparkles } from '../components/MontySparkles'
 import { SkeletonRows } from '../components/Skeleton'
 
 /**
@@ -209,7 +209,7 @@ function Card({
       )}
 
       {row.status === 'delivered' && (
-        <MontyInLeaves size={56} replay={row.pledge_id} />
+        <MontySparkles size={56} replay={row.pledge_id} />
       )}
 
       {row.status === 'delivered' && (

@@ -1243,3 +1243,53 @@ measurements. The design is frozen as of this commit.
 
 **Still outstanding, by agreement:** the live safety suite and the token
 measurements. The design is frozen as of this commit.
+
+## Problem 21 — Two Small Celebrations
+
+### Prompt 1
+
+> The Monty-in-leaves animations look random, so let's simplify:
+>
+> a.) Remove Monty's running entrance and the leaf pile from the landing page. Replace it with a simple "wish" moment: when the page loads, a small glowing leaf drifts up from the bottom of the hero, floats gently to the tree, and settles onto a branch with a soft sparkle. About 2–3 seconds, once per visit.
+>
+> b.) In the other three places (About page, the wish granter's thank-you screen, and the delivered-wish card), replace Monty playing in leaves with Monty's still face and a small sparkle burst around him for about a second.
+>
+> c.) Keep everything else as it is. Off under reduced motion. Update tests and screenshots.
+
+**Outcome:** 431 passing, 10 deselected.
+
+- **"Random" was the right diagnosis.** The leaf animations had no cause —
+  nothing on the page made the dog appear, so he read as decoration that had
+  wandered in. Both replacements stand for something: a wish joining the tree
+  is the whole product in one gesture, and the sparkle marks a moment where
+  somebody did a good thing.
+- **The wish-leaf is positioned inside `.hero__tree`, not inside the hero.**
+  "Settles onto a branch" is then measured against the tree, so it lands in
+  the same place at every width. The 430px it climbs is the measured distance
+  from that branch down to the bottom of the hero: 442px at 1024 and 437px at
+  375, which is why one number serves both.
+- **One judgment call, stated.** The brief does not say whether the leaf stays
+  on the branch. It fades — every leaf on this tree is somebody's real wish,
+  and a decorative one left in the canopy would be a wish nobody made. It also
+  makes "nothing left behind" trivially true: the component returns `null`
+  once it is over.
+- **Monty himself no longer moves at all,** which is the real content of (b).
+  A face that bounces competes with the sentence beside it, and the sentence
+  is what the moment is for.
+- **Reduced motion got simpler.** The previous round needed an exception,
+  because the arrival's resting state *was* the picture asked for. Neither of
+  these does: the wish-leaf is never drawn, and the sparkle dots rest at
+  `opacity: 0`. Confirmed in the browser rather than only in a test.
+- **The removal was the larger half of the change.** `MontyPlays.tsx`,
+  `MontyBody.tsx` and about 140 lines of CSS went, and a test now asserts that
+  none of those names survive. The full-body corgi from the previous round is
+  in the history at `e2ebc25` if it is ever wanted again.
+
+**Verified in the browser:** the wish-leaf rising, settling and leaving nothing
+behind; the sparkle burst on About and on three delivered-wish cards; nothing
+overflowing at 375px. **Not exercised live:** the granter's thank-you screen,
+which needs a wish actually granted and would have changed the demo data Kelly
+is testing against.
+
+**Still outstanding, by agreement:** the live safety suite and the token
+measurements.

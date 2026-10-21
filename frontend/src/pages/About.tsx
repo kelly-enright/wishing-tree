@@ -3,7 +3,7 @@ import KellyAndMonty from '../components/KellyAndMonty'
 import TopBar, { roleLinks } from '../components/TopBar'
 import Footer from '../components/Footer'
 import { DriftingLeaves } from '../components/LandingBits'
-import { MontyInLeaves } from '../components/MontyPlays'
+import { MontySparkles } from '../components/MontySparkles'
 import usePageTitle from '../usePageTitle'
 import useBodyClass from '../useBodyClass'
 import { useSession } from '../session'
@@ -42,7 +42,7 @@ export default function About() {
         <h1 className="page__title">Hi, I'm Kelly.</h1>
         <div className="about__who">
           <KellyAndMonty />
-          <MontyInLeaves size={54} />
+          <MontySparkles size={54} />
           <p className="about__para">
             I'm Kelly, an MBA student at Yale School of Management. Before business
             school, I spent nearly a decade building and running operations at a global

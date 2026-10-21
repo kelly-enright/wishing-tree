@@ -13,7 +13,7 @@ import WishCard from '../components/WishCard'
 import {
   CategoryRange, CountUp, DriftingLeaves, Hills, Reveal, ThreeSteps,
 } from '../components/LandingBits'
-import { MontyArrives } from '../components/MontyPlays'
+import WishLands from '../components/WishLands'
 import Footer from '../components/Footer'
 import { ServiceNotice } from '../components/ServiceArea'
 import { homePath, setMe, useSession } from '../session'
@@ -133,6 +133,7 @@ export default function Landing() {
 
         {tree && tree.wishes.length > 0 && (
           <div className="hero__tree">
+            <WishLands />
             <WishTree
               hills={<Hills />}
               wishes={tree.wishes}
@@ -147,8 +148,6 @@ export default function Landing() {
             />
           </div>
         )}
-
-        <MontyArrives />
 
         <div className="hero__monty">
           <Monty size={96} />

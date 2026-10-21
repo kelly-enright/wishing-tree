@@ -706,7 +706,7 @@ def test_the_signed_out_header_puts_the_two_ways_in_on_the_right():
 def test_every_piece_of_landing_motion_can_be_switched_off():
     reduced = reduced_motion_rules()
     for piece in (".tree--swaying .leaf", ".drift__leaf", ".reveal",
-                  ".arrival--go", ".pile__leaf"):
+                  ".sparkles--go"):
         assert piece in reduced, piece
     assert ".drift { display: none; }" in reduced
 
@@ -843,9 +843,9 @@ def test_text_stays_readable_on_every_background_it_sits_on(bg):
 
 def test_the_hill_tones_are_used_for_shapes_and_never_behind_words():
     """They are below AA for muted text, which is fine while nothing is
-    written on them. These are the only three places they are used, and all
-    three are drawings: the ground under the tree and the leaf pile."""
-    allowed = {".hills", "pile__mound", "fill=\"var(--hill-sage"}
+    written on them. The only place they are used now is the ground under
+    the tree, which is a drawing."""
+    allowed = {".hills", "fill=\"var(--hill-sage"}
     for token in DECORATION_ONLY:
         users = []
         for path in [FRONTEND / "src" / "styles.css"]:
@@ -1022,50 +1022,76 @@ def test_the_pinned_header_starts_at_the_top_of_the_page():
 
 
 # --------------------------------------------------------------------------
-# Monty, moving
+# Two small celebrations
 # --------------------------------------------------------------------------
 
-MONTY = FRONTEND / "src" / "components" / "MontyPlays.tsx"
+WISH = FRONTEND / "src" / "components" / "WishLands.tsx"
+SPARKLES = FRONTEND / "src" / "components" / "MontySparkles.tsx"
 
 
-def test_monty_arrives_once_a_visit_and_then_stops():
-    source = MONTY.read_text()
-    assert "sessionStorage.getItem('wishingtree.greeted')" in source
-    assert "setPlaying(false)" in source
-    # Four to five seconds, as asked.
-    assert "setTimeout(() => setPlaying(false), 4800)" in source
-    assert "animation: arrive 4.6s" in CSS
+def test_a_wish_joins_the_tree_once_a_visit():
+    source = WISH.read_text()
+    assert "sessionStorage.getItem('wishingtree.wished')" in source
+    # Two to three seconds, as asked, and the component outlives the
+    # animation by a tenth of a second so nothing is cut off mid-fade.
+    assert "setTimeout(() => setPlaying(false), 3100)" in source
+    assert "animation: wish-rise 3s" in CSS
+    assert "animation: wish-spark 3s" in CSS
 
 
-def test_the_arrival_leaves_nothing_floating():
-    """His resting position *is* where he ends up — sitting in the pile with
-    the leaves drawn in front — and the animation travels him in from off the
-    left. So a second visit, or reduced motion, shows the finished picture
-    rather than a stray head at the top of the page."""
-    rule = CSS[CSS.index(".arrival__dog {"):]
-    rule = rule[:rule.index("}")]
-    assert "left: 24%" in rule and "bottom" in rule
-    # The journey lives in the keyframes, not in the resting style.
-    arrive = CSS[CSS.index("@keyframes arrive"):]
-    assert "translateX(-46vw)" in arrive[:200]
-    assert arrive[arrive.index("100%"):arrive.index("100%") + 60].count("translateY(0)") == 1
+def test_the_wish_leaf_rises_to_a_branch_and_leaves_nothing_behind():
+    """It climbs from the foot of the hero to the canopy, sparkles, and
+    fades. The fade is the point: every leaf on this tree is somebody's real
+    wish, and a decorative one left in the canopy would be a wish nobody
+    made."""
+    rise = CSS[CSS.index("@keyframes wish-rise"):]
+    rise = rise[:rise.index("\n}")]
+    assert "430px" in rise                      # the foot of the hero
+    assert rise.rstrip().rsplit("\n", 1)[-1].count("opacity: 0") == 1
 
-    # And the leaves are in front of him, which is what makes him peek out.
-    pile = CSS[CSS.index(".arrival .pile {"):]
-    assert "z-index: 2" in pile[:pile.index("}")]
-    dog = CSS[CSS.index(".arrival__dog {"):]
-    assert "z-index: 1" in dog[:dog.index("}")]
+    # And it is measured against the tree, so the branch is the same branch
+    # at every width.
+    assert "<WishLands />" in (FRONTEND / "src" / "pages" / "Landing.tsx").read_text()
+    land = CSS[CSS.index(".wishland {"):]
+    land = land[:land.index("}")]
+    assert "position: absolute" in land
+
+    # Nothing is drawn at all once it is over.
+    assert "if (!playing) return null" in WISH.read_text()
 
 
-def test_monty_plays_in_leaves_in_the_three_places_asked_for():
+def test_the_wish_leaf_is_painted_over_the_canopy_and_not_under_it():
+    """`.leaf--on` reaches z-index 4. A wish arriving behind a leaf is a
+    smudge, not an arrival."""
+    land = CSS[CSS.index(".wishland {"):]
+    land = land[:land.index("}")]
+    z = int(re.search(r"z-index:\s*(\d+)", land).group(1))
+    assert z > 4
+
+
+def test_monty_sparkles_in_the_three_places_asked_for():
     pages = FRONTEND / "src" / "pages"
-    using = {p.name for p in pages.glob("*.tsx") if "<MontyInLeaves" in p.read_text()}
+    using = {p.name for p in pages.glob("*.tsx") if "<MontySparkles" in p.read_text()}
     assert using == {"About.tsx", "Donor.tsx", "MyGranted.tsx"}
 
     # On the granter's side it marks a wish that arrived — the leaf turning
     # gold is their doing, and the neighbor's own pages stay still.
     granted = (pages / "MyGranted.tsx").read_text()
-    assert "row.status === 'delivered' && (\n        <MontyInLeaves" in granted
+    assert "row.status === 'delivered' && (\n        <MontySparkles" in granted
+
+
+def test_montys_face_does_not_move_only_the_sparkles_do():
+    """The drawing is the content and the sparkle is the decoration. A face
+    that bounces competes with the sentence beside it, and the sentence is
+    what the moment is for."""
+    source = SPARKLES.read_text()
+    assert "<Monty size={size} />" in source
+    # No animation reaches the drawing itself — only the dots around it.
+    assert ".sparkles--go .sparkles__dot { animation: twinkle 1s" in CSS
+    assert ".sparkles--go .monty" not in CSS
+    assert ".sparkles--go .sparkles {" not in CSS
+    # About a second.
+    assert "setTimeout(() => setPlaying(false), 1200)" in source
 
 
 def test_the_neighbors_own_pages_stay_calm():
@@ -1073,36 +1099,49 @@ def test_the_neighbors_own_pages_stay_calm():
     pages = FRONTEND / "src" / "pages"
     for name in ("MyWishes.tsx", "MyWishesPage.tsx", "Intake.tsx"):
         source = (pages / name).read_text()
-        assert "MontyInLeaves" not in source, name
-        assert "MontyArrives" not in source, name
+        assert "MontySparkles" not in source, name
+        assert "WishLands" not in source, name
         assert "DriftingLeaves" not in source, name
 
 
-def test_no_monty_animation_loops():
-    source = MONTY.read_text()
-    assert "infinite" not in source
-    for block in ("@keyframes arrive", "@keyframes step",
-                  "@keyframes burst", "@keyframes romp", "@keyframes puff"):
+def test_neither_celebration_loops():
+    for block in ("@keyframes wish-rise", "@keyframes wish-spark",
+                  "@keyframes twinkle"):
         assert block in CSS
-    # Each holds its last frame rather than snapping back, and none repeats
-    # — except the leg cycle, which runs a counted six swings and stops.
-    assert "animation: arrive 4.6s ease-out both" in CSS
-    assert "animation: step 0.35s ease-in-out 6 both" in CSS
-    assert "animation: romp 2.6s ease-in-out both" in CSS
+    for source in (WISH.read_text(), SPARKLES.read_text()):
+        assert "infinite" not in source
+    # Each holds its last frame rather than snapping back, and none repeats.
+    assert "animation: wish-rise 3s cubic-bezier(0.33, 0, 0.3, 1) both" in CSS
+    assert "animation: wish-spark 3s ease-out both" in CSS
+    assert "animation: twinkle 1s ease-out both" in CSS
 
 
-def test_monty_holds_still_for_anyone_who_asked_for_stillness():
-    """Not hidden — still. The arrival is *not* display:none under reduced
-    motion, because its resting state is the picture that was asked for:
-    Monty peeking out of a finished pile. Only the journey goes."""
-    source = MONTY.read_text()
-    assert "function wantsStillness" in source
-    assert source.count("wantsStillness()") >= 2
+def test_both_celebrations_stop_for_anyone_who_asked_for_stillness():
+    """Neither leaves anything to hide: the wish-leaf is never drawn at all,
+    and the sparkle dots rest at opacity 0, so stopping the animation leaves
+    Monty's face on its own."""
+    assert "function wantsStillness" in SPARKLES.read_text()
+    wish = WISH.read_text()
+    assert "prefers-reduced-motion: reduce" in wish
+    assert "return false" in wish
 
     reduced = reduced_motion_rules()
-    assert ".arrival--go .arrival__dog" in reduced
-    assert ".arrival--go .pile__leaf" in reduced
-    assert ".arrival { display: none; }" not in reduced
+    assert ".sparkles--go .sparkles__dot { animation: none; }" in reduced
+
+    dot = CSS[CSS.index(".sparkles__dot {"):]
+    assert "opacity: 0" in dot[:dot.index("}")]
+
+
+def test_the_dog_who_ran_through_the_leaves_is_gone():
+    """Removed rather than left in place unused: the entrance, the leaf pile
+    and the full-body drawing were one feature, and a stylesheet that still
+    carries its CSS is a stylesheet nobody can read."""
+    for dead in (".arrival", ".pile", ".plays", "dog__leg",
+                 "@keyframes arrive", "@keyframes burst", "@keyframes romp"):
+        assert dead not in CSS, dead
+    components = FRONTEND / "src" / "components"
+    assert not (components / "MontyBody.tsx").exists()
+    assert not (components / "MontyPlays.tsx").exists()
 
 
 # --------------------------------------------------------------------------
@@ -1192,91 +1231,10 @@ def test_every_animation_in_the_app_is_switched_off_by_the_setting():
     assert "transition-duration: 0.001ms !important" in reduced
     assert "*, *::before, *::after" in reduced
 
-    # The drifting leaves are removed outright; Monty and his pile are left
-    # in place and simply stop, because the still picture is the point.
+    # The drifting leaves are removed outright; the sparkles are left in
+    # place and simply stop, because they rest invisible anyway.
     assert ".drift { display: none; }" in reduced
-    assert ".arrival--go .dog__leg" in reduced
-
-
-# --------------------------------------------------------------------------
-# Monty, whole
-# --------------------------------------------------------------------------
-
-BODY = FRONTEND / "src" / "components" / "MontyBody.tsx"
-
-
-def test_the_full_body_monty_is_a_pembroke():
-    """The four things that make the silhouette read as a corgi rather than
-    as a generic dog: long low body, stubby legs, outsized ears, no tail."""
-    source = BODY.read_text()
-    assert "dog__leg--front" in source and "dog__leg--back" in source
-    assert "dog__leg--frontfar" in source and "dog__leg--backfar" in source
-    assert 'viewBox="0 0 180 120"' in source          # wider than tall
-    # A Pembroke has no tail, and the drawing says so where the rump is.
-    assert "no tail at all" in source
-
-
-def test_he_is_drawn_in_the_same_palette_as_his_face():
-    """Hand-picked hexes creeping in is how two drawings of one dog end up
-    different colours."""
-    face = (FRONTEND / "src" / "components" / "Monty.tsx").read_text()
-    body = BODY.read_text()
-    for shade in ("#D5713F", "#FBF6EE", "#2B2B2B", "#F0C3A8", "#E08E8E"):
-        assert shade in face and shade in body, shade
-
-
-def test_the_white_markings_stay_inside_the_dog():
-    """White that spills past the red silhouette stops reading as markings and
-    starts reading as a shape of its own: with nothing drawn behind it, the
-    chest was a ball of fluff hung off the front of him. The fix is a red
-    chest between the head and the body, and white that fits inside it."""
-    import math
-
-    body = BODY.read_text()
-    red = [
-        (float(x), float(y), float(r))
-        for x, y, r in re.findall(
-            r'<circle cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)" fill="#D5713F"', body
-        )
-    ]
-    assert len(red) == 3, "rump, head and chest"
-
-    underside = body[body.index("The white underside"):body.index("blaze and muzzle")]
-    marks = [
-        tuple(float(v) for v in e)
-        for e in re.findall(
-            r'<ellipse cx="([\d.]+)" cy="([\d.]+)" rx="([\d.]+)" ry="([\d.]+)"', underside
-        )
-    ]
-    cx, cy, rx, ry = max(marks, key=lambda m: m[0])    # the chest, furthest forward
-    assert any(
-        math.hypot(cx - x, cy - y) + max(rx, ry) <= r + 1 for x, y, r in red
-    ), "the chest marking has no red behind it"
-
-
-def test_the_leaves_sit_at_his_feet_and_not_over_his_back():
-    """The shared `.pile` rule carries `inset: 0`, so the arrival's own rule
-    has to undo the `top` as well as set the `bottom`. With both ends pinned
-    and a height given the box is over-constrained, the browser keeps the top,
-    and the leaves end up across his shoulders with his legs hanging below."""
-    pile = CSS[CSS.index(".arrival .pile {"):]
-    pile = pile[:pile.index("}")]
-    assert "top: auto" in pile
-    assert "bottom: 0" in pile
-
-    # And the span around the drawing keeps no descender space under it, or
-    # the pile is placed against a box taller than anything you can see.
-    dog = CSS[CSS.index(".arrival__dog {"):]
-    assert "line-height: 0" in dog[:dog.index("}")]
-
-
-def test_the_legs_can_swing_in_pairs():
-    body = BODY.read_text()
-    assert body.count("dog__leg") == 4 * 2            # class plus modifier
-    assert ".dog__leg { transform-origin" in CSS
-    # Opposite phase, or he paddles rather than trots.
-    assert ".arrival--go .dog__leg--front," in CSS
-    assert "animation-delay: -0.175s" in CSS
+    assert ".sparkles--go .sparkles__dot" in reduced
 
 
 # --------------------------------------------------------------------------

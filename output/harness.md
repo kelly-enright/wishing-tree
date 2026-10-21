@@ -2135,3 +2135,91 @@ the strip, dog 98–212px against a mound at 105–223px.
 | Passes to get the drawing right | five |
 | Animations that survive reduced motion | none; the arrival stills to its finished picture |
 | Horizontal overflow at 375px | none |
+
+## 37. Two small celebrations instead of a dog in a leaf pile
+
+Kelly's note after looking at the last round: *"The Monty-in-leaves animations
+look random."* She was right, and the reason is worth writing down.
+
+The leaf animations had no **cause**. A dog bounding through a pile is a
+charming thing, but nothing on the page made it happen — it simply occurred,
+at the foot of the hero, next to a tally of granted wishes. Motion that does
+not stand for anything reads as decoration that wandered in. Both replacements
+mean something:
+
+- **A wish joining the tree**, on the landing page. That is the whole product
+  in one gesture.
+- **Monty pleased**, at the three moments where somebody did a good thing.
+
+### The wish
+
+One small glowing leaf rises from the foot of the hero, drifts up to the
+canopy, settles on a branch with a soft sparkle, and fades. Three seconds,
+once a visit, remembered in `sessionStorage` under `wishingtree.wished`.
+
+Three decisions worth the name:
+
+- **It is positioned inside `.hero__tree`, not inside the hero.** "Settles
+  onto a branch" is then measured against the tree itself, so it lands in the
+  same place at every width. The 430px it climbs is the measured distance from
+  that branch down to the bottom of the hero — 442px at 1024, 437px at 375,
+  which is why one number works for both.
+- **It fades at the end.** Every leaf on this tree is somebody's real wish. A
+  decorative one left sitting in the canopy would be a wish nobody made. The
+  fade is also the simplest possible version of "nothing is left behind": the
+  component returns `null` once it is over, so there is nothing in the DOM at
+  all.
+- **z-index 5, above the canopy.** `.leaf--on` reaches 4, and a wish arriving
+  *behind* a leaf is a smudge rather than an arrival. A test asserts the
+  comparison rather than the number.
+
+The leaf and the sparkle share one 3s duration and differ only in their
+keyframes, so the sparkle cannot fire early or late the way a second animation
+with its own timing would. Same lesson as the arrival it replaces.
+
+### Monty, pleased
+
+The face, still, with seven gold dots going out around it over about a second.
+About, the thank-you screen, and a delivered wish — the same three places as
+before.
+
+**Monty himself does not move.** That is the point of the change: a face that
+bounces competes with the sentence next to it, and the sentence is what the
+moment is for. The drawing is the content; the sparkle is the decoration.
+
+Each dot carries its own `--out-x/--out-y` and its own delay, so the burst
+scatters rather than pulsing in unison. The centring uses the independent
+`translate` property rather than a transform, so it survives the `transform`
+the animation drives — the two compose, where two transforms would not.
+
+### Reduced motion got simpler
+
+The previous round needed an exception: the arrival was *stilled* rather than
+hidden, because its resting state was the picture that had been asked for.
+Neither of these needs that. The wish-leaf is never drawn at all — the
+component returns nothing when motion is not wanted, rather than drawing
+something to hide — and the sparkle dots rest at `opacity: 0`, so stopping the
+animation leaves Monty's face on its own. Verified in the browser: with the
+animation killed, a dot computes to `opacity: 0` and the face is still there.
+
+### What was removed
+
+The entrance, the leaf pile and the full-body drawing were one feature, so all
+of it went: `MontyPlays.tsx`, `MontyBody.tsx`, and about 140 lines of CSS
+(`.arrival`, `.pile`, `.plays`, `.dog__leg`, and the `arrive`, `step`,
+`burst`, `romp` and `puff` keyframes). A test asserts none of those names
+survive, because a stylesheet that still carries the CSS for a deleted feature
+is a stylesheet nobody can read. The `.track .sparkles` rule went too — it
+positioned Monty on a *neighbor's* tracking card, and neighbors' pages carry
+no Monty at all now.
+
+The full-body corgi is in the history at commit `e2ebc25` if it is ever wanted
+again.
+
+| | |
+|---|---|
+| Tests | 431 passing, 10 deselected |
+| Lines of CSS removed | ~140 |
+| Animations that survive reduced motion | none |
+| Horizontal overflow at 375px | none |
+| Not exercised live | the granter's thank-you screen, which needs a wish granted and would have changed the demo data |
