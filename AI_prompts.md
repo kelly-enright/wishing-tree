@@ -1286,10 +1286,9 @@ measurements. The design is frozen as of this commit.
   in the history at `e2ebc25` if it is ever wanted again.
 
 **Verified in the browser:** the wish-leaf rising, settling and leaving nothing
-behind; the sparkle burst on About and on three delivered-wish cards; nothing
-overflowing at 375px. **Not exercised live:** the granter's thank-you screen,
-which needs a wish actually granted and would have changed the demo data Kelly
-is testing against.
+behind; the sparkle burst on About, on three delivered-wish cards, and — after
+Kelly asked for it — on the granter's thank-you screen, by granting one demo
+wish ("Pack of highlighters") as Granter D02. Nothing overflows at 375px.
 
 **Still outstanding, by agreement:** the live safety suite and the token
 measurements.

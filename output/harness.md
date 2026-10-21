@@ -2222,4 +2222,4 @@ again.
 | Lines of CSS removed | ~140 |
 | Animations that survive reduced motion | none |
 | Horizontal overflow at 375px | none |
-| Not exercised live | the granter's thank-you screen, which needs a wish granted and would have changed the demo data |
+| Exercised live | the wish-leaf, both sparkle screens, and the granter's thank-you screen (one demo wish granted at Kelly's ask, reset with `--reset`) |
