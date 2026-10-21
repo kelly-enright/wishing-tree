@@ -11,6 +11,19 @@ granter help each other without ever exchanging personal details.
 
 MGT 409 (AI Foundations for Managers) final project — Kelly Enright.
 
+## Try it live
+
+**https://wishing-tree-demo.onrender.com**
+
+It is on a free host, so the first visit after a quiet spell takes **about a
+minute to wake up** — the page will sit there and then load normally. The demo
+data is rebuilt every time the service restarts, so anything you add may
+disappear; treat it as a sandbox, and please use made-up details.
+
+**Running it locally is the reliable way**, and it is what the rest of this
+README covers. It starts in about ten seconds and nothing resets underneath
+you.
+
 ---
 
 ## The three roles
@@ -264,3 +277,40 @@ made-up product paths. The app never fetches a product link — links are
 compared as text. No real person's details appear anywhere in this repository.
 
 `.env` is excluded by `.gitignore` and no key has ever been committed.
+
+---
+
+## The deployed demo
+
+One Render Web Service: FastAPI serves the API and the built frontend, same as
+locally. Nothing about the local setup changes — every difference is an
+environment variable, all of them off unless the host sets them.
+
+| Setting | Value |
+|---|---|
+| Build command | `pip install -r requirements.txt` |
+| Start command | `uvicorn backend.main:app --host 0.0.0.0 --port $PORT` |
+| Instance type | Free |
+
+Environment variables, set in Render's dashboard and nowhere else:
+
+| Variable | Why |
+|---|---|
+| `PORTKEY_API_KEY` | the model key — never in the repo |
+| `PYTHON_VERSION` | `3.12.7`, so the host does not pick its own |
+| `WISHINGTREE_DEMO_BANNER` | `1` — draws the "use made-up details" banner |
+| `WISHINGTREE_RESEED` | `1` — rebuild the demo data on every start |
+| `WISHINGTREE_HTTPS` | `1` — session cookies marked secure |
+| `WISHINGTREE_PASSCODE` | a different admin passcode from the local one, because the local one is written in this file |
+
+**What the reseed means for testers.** The free tier's disk does not survive a
+restart, and the service restarts whenever it has been idle or redeployed. So
+the database is rebuilt from `backend/seed.py` every time it starts: the same
+15 neighbors, 8 wish granters and 61 wishes, every time. A wish you make or a
+wish you grant is real while the service is awake and gone after it sleeps.
+That is the honest behavior rather than a surprise — the data was going to
+reset either way, so it resets predictably.
+
+**The token caps still apply.** 20,000 per intake session and 500,000 a day,
+the same as locally, checked on the server before every model call. Neither is
+readable from the environment, so a host cannot loosen them.

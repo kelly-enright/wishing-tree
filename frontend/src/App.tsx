@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom'
+import DemoBanner from './components/DemoBanner'
 import About from './pages/About'
 import Coordinator from './pages/Coordinator'
 import Donor from './pages/Donor'
@@ -19,23 +20,27 @@ import SignUpFamily from './pages/SignUpFamily'
  */
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Landing />} />
-      <Route path="/about" element={<About />} />
-      <Route path="/how-it-works" element={<HowItWorksPage />} />
-      <Route path="/login" element={<LogIn />} />
-      <Route path="/choose" element={<ChooseSide />} />
-      <Route path="/forgot" element={<Forgot />} />
-      <Route path="/family/signup" element={<SignUpFamily />} />
-      <Route path="/family" element={<MyWishesPage />} />
-      <Route path="/family/new" element={<Intake />} />
-      <Route path="/donor/signup" element={<SignUpDonor />} />
-      <Route path="/donor" element={<Donor />} />
-      <Route path="/coordinator" element={<Coordinator />} />
-      <Route
-        path="*"
-        element={<Placeholder title="Page not found" blurb="That page does not exist." />}
-      />
-    </Routes>
+    <>
+      {/* Above the routes, so it is on every page — including the 404. */}
+      <DemoBanner />
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/how-it-works" element={<HowItWorksPage />} />
+        <Route path="/login" element={<LogIn />} />
+        <Route path="/choose" element={<ChooseSide />} />
+        <Route path="/forgot" element={<Forgot />} />
+        <Route path="/family/signup" element={<SignUpFamily />} />
+        <Route path="/family" element={<MyWishesPage />} />
+        <Route path="/family/new" element={<Intake />} />
+        <Route path="/donor/signup" element={<SignUpDonor />} />
+        <Route path="/donor" element={<Donor />} />
+        <Route path="/coordinator" element={<Coordinator />} />
+        <Route
+          path="*"
+          element={<Placeholder title="Page not found" blurb="That page does not exist." />}
+        />
+      </Routes>
+    </>
   )
 }

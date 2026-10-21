@@ -211,7 +211,10 @@ def is_allowed_retailer(url: str | None) -> bool:
 # in anything a family reads — "a coordinator will email you" is warmer, and
 # truer, than "an admin will email you".
 
-COORDINATOR_PASSCODE = "wishingtree-demo"
+# Env-driven so the public demo can use a different one. The default is what
+# the README documents for a local run; the deployed site sets its own, because
+# a passcode published in a public README is not a passcode on a public URL.
+COORDINATOR_PASSCODE = os.getenv("WISHINGTREE_PASSCODE", "wishingtree-demo")
 
 # The one password every seeded demo account shares. Real accounts choose
 # their own; this exists so "Continue as…" can log in properly rather than
@@ -228,6 +231,29 @@ BCRYPT_ROUNDS = int(os.getenv("WISHINGTREE_BCRYPT_ROUNDS", "12"))
 # where the app is served over http and a secure cookie would never arrive.
 # Set WISHINGTREE_HTTPS=1 when this is deployed anywhere real.
 COOKIE_SECURE = os.getenv("WISHINGTREE_HTTPS", "").strip() in {"1", "true", "yes"}
+
+# --------------------------------------------------------------------------
+# Running as a public demo
+# --------------------------------------------------------------------------
+#
+# Both of these are off unless something sets them, so a local run is exactly
+# the local run it has always been. The deployed site turns them on.
+
+# Draw the "please use made-up details" banner on every page. A live demo has
+# no way of knowing who is typing into it, and a stranger who assumes this is
+# a real service could put a real address into a public database.
+DEMO_BANNER = os.getenv("WISHINGTREE_DEMO_BANNER", "").strip() in {"1", "true", "yes"}
+
+DEMO_BANNER_TEXT = (
+    "This is a demo of Wishing Tree. Please use made-up details, not real "
+    "personal information."
+)
+
+# Rebuild the database from the seed on every start, rather than only when it
+# is missing. For a free host whose disk is ephemeral this is the honest
+# behavior: the data resets anyway, so reset it predictably and say so.
+RESEED_ON_START = os.getenv("WISHINGTREE_RESEED", "").strip() in {"1", "true", "yes"}
+
 
 # --------------------------------------------------------------------------
 # Limits — app behavior

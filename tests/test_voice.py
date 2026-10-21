@@ -1643,3 +1643,87 @@ def test_the_rent_line_says_who_gets_paid():
 def test_both_presentations_stop_for_anyone_who_asked_for_stillness():
     reduced = reduced_motion_rules()
     assert ".wishpanel, .sheetwrap__scrim, .wishsheet { animation: none; }" in reduced
+
+
+# --------------------------------------------------------------------------
+# Running as a public demo
+# --------------------------------------------------------------------------
+
+def test_a_local_run_is_exactly_the_local_run_it_always_was(client):
+    """Everything the deployed site turns on is off unless something sets it.
+    A grader on their own machine must see what they saw before."""
+    assert config.DEMO_BANNER is False
+    assert config.RESEED_ON_START is False
+    assert config.COORDINATOR_PASSCODE == "wishingtree-demo"
+
+    body = client.get("/api/site").json()
+    assert body == {"demo": False, "banner": None}
+
+
+def test_the_demo_banner_is_a_value_not_a_second_build():
+    """One `frontend/dist` serves both a local run and the deployed site. A
+    flag baked into the build would mean two builds and a way to ship the
+    wrong one."""
+    banner = (FRONTEND / "src" / "components" / "DemoBanner.tsx").read_text()
+    assert "getSite()" in banner
+    assert "if (!text) return null" in banner
+    # Drawn above the routes, so it reaches every page including the 404.
+    app = (FRONTEND / "src" / "App.tsx").read_text()
+    assert app.index("<DemoBanner />") < app.index("<Routes>")
+
+
+def test_the_banner_says_what_it_has_to_say():
+    assert config.DEMO_BANNER_TEXT == (
+        "This is a demo of Wishing Tree. Please use made-up details, not "
+        "real personal information."
+    )
+
+
+def test_the_three_live_switches_read_the_environment(monkeypatch):
+    """Each one off by default, on when the host sets it, and never anywhere
+    in the repository."""
+    import importlib
+
+    for name, attr, expected in (
+        ("WISHINGTREE_DEMO_BANNER", "DEMO_BANNER", True),
+        ("WISHINGTREE_RESEED", "RESEED_ON_START", True),
+        ("WISHINGTREE_HTTPS", "COOKIE_SECURE", True),
+    ):
+        monkeypatch.setenv(name, "1")
+        reloaded = importlib.reload(config)
+        assert getattr(reloaded, attr) is expected, name
+        monkeypatch.delenv(name)
+
+    monkeypatch.setenv("WISHINGTREE_PASSCODE", "something-else")
+    reloaded = importlib.reload(config)
+    assert reloaded.COORDINATOR_PASSCODE == "something-else"
+    monkeypatch.delenv("WISHINGTREE_PASSCODE")
+    importlib.reload(config)
+    assert config.COORDINATOR_PASSCODE == "wishingtree-demo"
+
+
+def test_the_deployed_demo_rebuilds_its_data_on_every_start():
+    """A free host's disk does not survive a restart, so the data resets
+    whether we ask it to or not. Resetting it deliberately means a tester
+    always finds the same tree rather than whatever was left behind."""
+    source = (BACKEND / "main.py").read_text()
+    assert "if config.RESEED_ON_START:" in source
+    assert "seed.reset(config.DB_PATH)" in source
+    # And a local run still only seeds an empty database.
+    assert "seed.seed_if_empty()" in source
+
+
+def test_the_caps_are_not_relaxed_for_the_deployed_site():
+    """A public URL is the one place a runaway loop costs real money."""
+    source = (BACKEND / "config.py").read_text()
+    for setting in ("MAX_TOKENS_PER_INTAKE_SESSION", "DAILY_TOKEN_BUDGET"):
+        line = next(l for l in source.splitlines() if l.startswith(setting))
+        assert "getenv" not in line, f"{setting} must not be loosenable by the host"
+
+
+def test_no_live_secret_is_in_the_repository():
+    """The passcode the deployed site uses is set in the host's dashboard.
+    What is in here is the local default and nothing else."""
+    for path in (BACKEND / "config.py", Path(__file__).resolve().parent.parent / "README.md"):
+        body = path.read_text()
+        assert "WISHINGTREE_PASSCODE=" not in body, path.name

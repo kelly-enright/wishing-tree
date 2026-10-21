@@ -45,8 +45,15 @@ STARTUP: dict[str, object] = {}
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     config.require_api_key()          # stops here with a clear message if absent
-    db.init_db()
-    STARTUP["counts"] = seed.seed_if_empty()
+    if config.RESEED_ON_START:
+        # The deployed demo. Its disk does not survive a restart, so the data
+        # resets whether we ask it to or not — rebuilding it deliberately means
+        # a tester always finds the same tree rather than whatever was left.
+        STARTUP["counts"] = seed.reset(config.DB_PATH)
+        STARTUP["reseeded"] = True
+    else:
+        db.init_db()
+        STARTUP["counts"] = seed.seed_if_empty()
     yield
 
 
@@ -61,6 +68,20 @@ app.include_router(coordinator_router)
 # --------------------------------------------------------------------------
 # API
 # --------------------------------------------------------------------------
+
+@app.get("/api/site")
+def site() -> dict:
+    """What the whole app needs to know about where it is running.
+
+    One small call, made once when the app loads, rather than a flag baked
+    into the build — the same `frontend/dist` then serves a local run and the
+    public demo, and the difference is a value rather than a second build.
+    """
+    return {
+        "demo": config.DEMO_BANNER,
+        "banner": config.DEMO_BANNER_TEXT if config.DEMO_BANNER else None,
+    }
+
 
 @app.get("/api/health")
 def health() -> dict:

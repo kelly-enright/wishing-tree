@@ -698,3 +698,16 @@ export type Health = {
 export function getHealth() {
   return request<Health>('/api/health', undefined, 'We could not reach the server.')
 }
+
+
+// ------------------------------------------------------------------- the site
+
+export type Site = {
+  /** True only where the app is deployed as a public demo. */
+  demo: boolean
+  banner: string | null
+}
+
+export function getSite(): Promise<Site> {
+  return request('/api/site', undefined, 'We could not read the site settings.')
+}

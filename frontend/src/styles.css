@@ -2188,6 +2188,29 @@ textarea.field__input { resize: vertical; font: inherit; }
 /* ===================================================================== nav */
 /* Pinned, slim, and quiet. It has to stay out of the way of a long tree while
    still being the thing you reach for without looking. */
+/* The deployed demo's banner, drawn above everything on every page.
+
+   A plain block rather than a sticky one: the top bar below it already
+   sticks, and two sticky strips competing for `top: 0` is how a header ends
+   up covering the thing it was meant to sit under. It scrolls away, which is
+   the right weight for a notice you read once. */
+.demobar {
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  padding: 9px 16px;
+  background: var(--gold-pale);
+  color: var(--ink);
+  border-bottom: 1px solid rgba(199, 142, 51, 0.4);
+  font-size: 0.87rem;
+  line-height: 1.45;
+  text-align: center;
+}
+.demobar svg { flex: none; color: var(--gold-deep); }
+
+@media (max-width: 560px) {
+  .demobar { padding: 8px 12px; font-size: 0.8rem; align-items: flex-start; }
+  .demobar svg { margin-top: 2px; }
+}
+
 .topbar {
   /* The bar is rendered inside each page's <main>, which may be narrow. This
      pulls it back out to the full width of the window so the links never get
