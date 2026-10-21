@@ -202,7 +202,10 @@ def test_approval_publishes_through_the_safety_review(client, monkeypatch):
     assert body["published"] == 1
     assert body["held"] == 0
     assert body["duration_seconds"] >= 0
-    assert body["outcomes"][0]["note_to_family"]
+    # An approved wish carries no explanation at all: the agent's note stays
+    # in the activity log, and there is nothing for the neighbor to act on.
+    assert body["outcomes"][0]["held_reason"] is None
+    assert "note_to_family" not in body["outcomes"][0]
 
     new_id = body["outcomes"][0]["request_id"]
     with db.connect(config.DB_PATH) as conn:
@@ -225,7 +228,10 @@ def test_a_rejected_wish_stays_hidden_and_the_family_is_told_why(client, monkeyp
     }).json()
 
     assert body["published"] == 0 and body["held"] == 1
-    assert "coordinator" in body["outcomes"][0]["note_to_family"].lower()
+    # Our sentence for this reason, never the agent's own wording.
+    held = body["outcomes"][0]["held_reason"]
+    assert "coordinator" in held.lower()
+    assert body["outcomes"][0].get("note_to_family") is None
 
     new_id = body["outcomes"][0]["request_id"]
     with db.connect(config.DB_PATH) as conn:

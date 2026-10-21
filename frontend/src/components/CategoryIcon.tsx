@@ -1,5 +1,5 @@
 import {
-  Apple, Gift, House, Pencil, Shirt, SprayCan, Star,
+  Apple, Gift, House, Lamp, Pencil, Shirt, SprayCan, Star,
 } from 'lucide-react'
 import type { Category } from '../api'
 
@@ -14,6 +14,7 @@ const ICONS = {
   essentials: SprayCan,
   clothing: Shirt,
   school_supplies: Pencil,
+  household: Lamp,
   gifts: Gift,
   food: Apple,
   other: Star,

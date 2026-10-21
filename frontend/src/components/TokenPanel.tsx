@@ -13,8 +13,8 @@ import type { Usage } from '../api'
  * gone, because what the agents cost is worth being able to see.
  */
 export default function TokenPanel({
-  usage, open = false,
-}: { usage: Usage | null; open?: boolean }) {
+  usage, open = false, seconds,
+}: { usage: Usage | null; open?: boolean; seconds?: number }) {
   const [shown, setShown] = useState(open)
   if (!usage) return null
 
@@ -58,6 +58,9 @@ export default function TokenPanel({
       </dl>
       <p className="tokens__note">
         {cachedShare}% of input was served from cache · {usage.model}
+        {/* How long it took is a fact about the system, not about the wish.
+            It belongs here and on the admin's activity page. */}
+        {seconds !== undefined && <><br />{Math.round(seconds)}s from first message to approval</>}
       </p>
       </>
       )}

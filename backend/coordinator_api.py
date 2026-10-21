@@ -86,6 +86,7 @@ def run_sheet(week_of: str | None = None) -> dict:
                     "pledge_id": pledge.id,
                     "donor_alias": pledge.donor_alias,
                     # Coordinator-only, and only here.
+                    "donor_name": donor.first_name if donor else None,
                     "donor_address": donor.contact_address if donor else None,
                     "donor_email": donor.contact_email if donor else None,
                     "donor_phone": donor.contact_phone if donor else None,
@@ -107,6 +108,7 @@ def run_sheet(week_of: str | None = None) -> dict:
                 group = delivery_groups.setdefault(key, {
                     "family_alias": wish.family_alias,
                     # Coordinator-only, and only here.
+                    "family_name": family.first_name if family else None,
                     "family_address": family.contact_address if family else None,
                     "family_email": family.contact_email if family else None,
                     "family_phone": family.contact_phone if family else None,

@@ -2,7 +2,7 @@
 
 export type Category =
   | 'rent_utilities' | 'essentials' | 'clothing'
-  | 'school_supplies' | 'gifts' | 'food' | 'other'
+  | 'school_supplies' | 'household' | 'gifts' | 'food' | 'other'
 
 export type Preference = 'specific' | 'flexible' | 'either'
 
@@ -13,6 +13,7 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   essentials: 'Essentials (hygiene, diapers)',
   clothing: 'Clothing',
   school_supplies: 'School supplies',
+  household: 'Household',
   gifts: 'Gifts',
   food: 'Food',
   other: 'Other',
@@ -70,6 +71,7 @@ export function signUpFamily(form: {
   contact_address: string
   contact_email: string
   contact_phone: string | null
+  first_name: string | null
   password: string
 }) {
   return post<{ role: 'family'; alias: string; zip: string }>('/api/families', form)
@@ -80,6 +82,7 @@ export function signUpDonor(form: {
   contact_address: string
   contact_email: string
   contact_phone: string | null
+  first_name: string | null
   password: string
   budget_usd: number
   preferred_categories: Category[]
@@ -215,7 +218,11 @@ export type WishOutcome = {
   removed: string[]
   flags: { kind: string; reason: string }[]
   enforced: string[]
-  note_to_family: string
+  /** Why it was held, in our words. Null when it went up. The agent's own
+   *  note never leaves the server — it lives in the activity log. */
+  held_reason: string | null
+  /** The wish as it now appears on the tree. Null for a held wish. */
+  card: WishCard | null
 }
 
 export type IntakeApproval = {
@@ -612,6 +619,9 @@ export type RoleOption = { role: 'family' | 'donor'; alias: string; zip: string 
 export type Me = {
   signed_in: boolean
   email?: string
+  /** Their own first name, if they gave one. The only response in the app
+   *  that carries it, and only ever to its owner. */
+  first_name?: string | null
   role?: 'family' | 'donor' | null
   alias?: string | null
   zip?: string | null

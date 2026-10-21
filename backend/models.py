@@ -31,9 +31,10 @@ class Category(str, Enum):
     ESSENTIALS = "essentials"          # hygiene, diapers
     CLOTHING = "clothing"
     SCHOOL_SUPPLIES = "school_supplies"
+    HOUSEHOLD = "household"            # lamps, bedding, a shower chair
     GIFTS = "gifts"
     FOOD = "food"
-    OTHER = "other"
+    OTHER = "other"                    # only when nothing above fits
 
 
 class Occasion(str, Enum):
@@ -177,6 +178,12 @@ class Family(BaseModel):
     contact_email: str
     contact_phone: str | None = None
 
+    # Optional, and private in a particular way: the person sees their own
+    # name, and so does the coordinator on the run sheet. Nobody else does,
+    # and no agent ever does — `public_view()` is built from named fields, so
+    # this cannot leak into a wish card, and the agents are handed cards.
+    first_name: str | None = None
+
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     @field_validator("zip")
@@ -210,6 +217,10 @@ class Donor(BaseModel):
     contact_address: str
     contact_email: str
     contact_phone: str | None = None
+
+    # Optional, and seen only by this person and the coordinator. Never by a
+    # neighbor whose wish they grant, and never by an agent.
+    first_name: str | None = None
 
     budget_usd: float = Field(ge=0, description="what this donor can spend per wish")
     preferred_categories: list[Category] = Field(default_factory=list)
@@ -476,6 +487,7 @@ class FamilySignUp(BaseModel):
     contact_address: str = Field(min_length=4)
     contact_email: str = Field(min_length=5)
     contact_phone: str | None = None
+    first_name: str | None = None
     # Carried in, hashed, and dropped. Nothing reads it back out: the
     # response is built from `public_view()`, which knows nothing of it.
     password: str = Field(min_length=1, repr=False)
@@ -493,6 +505,7 @@ class DonorSignUp(BaseModel):
     contact_address: str = Field(min_length=4)
     contact_email: str = Field(min_length=5)
     contact_phone: str | None = None
+    first_name: str | None = None
     password: str = Field(min_length=1, repr=False)
     budget_usd: float = Field(ge=0)
     preferred_categories: list[Category] = Field(default_factory=list)

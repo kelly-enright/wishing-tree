@@ -3,6 +3,7 @@ import About from './pages/About'
 import Coordinator from './pages/Coordinator'
 import Donor from './pages/Donor'
 import Intake from './pages/Intake'
+import MyWishesPage from './pages/MyWishesPage'
 import Landing from './pages/Landing'
 import LogIn from './pages/LogIn'
 import ChooseSide from './pages/ChooseSide'
@@ -26,7 +27,8 @@ export default function App() {
       <Route path="/choose" element={<ChooseSide />} />
       <Route path="/forgot" element={<Forgot />} />
       <Route path="/family/signup" element={<SignUpFamily />} />
-      <Route path="/family" element={<Intake />} />
+      <Route path="/family" element={<MyWishesPage />} />
+      <Route path="/family/new" element={<Intake />} />
       <Route path="/donor/signup" element={<SignUpDonor />} />
       <Route path="/donor" element={<Donor />} />
       <Route path="/coordinator" element={<Coordinator />} />

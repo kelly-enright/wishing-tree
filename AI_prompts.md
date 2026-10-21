@@ -926,3 +926,69 @@ existed.
 
 **Still outstanding, by agreement:** the live safety suite and the token
 measurements, to be re-run together once the design is frozen.
+
+## Problem 16 — Making a Wish and Granting a Wish
+
+> *Kelly numbered this "Problem 13"; logged here in working order.*
+
+### Prompt 1 (sent twice — the first copy was cut off mid-sentence)
+
+> Problem 13: "Making a wish and granting a wish"
+>
+> Fixes from my own testing. Keep everything else that works.
+>
+> Making a wish:
+> a.) Separate the two pages. "My wishes" shows only the neighbor's posted wishes with their progress trackers, plus a "Make a new wish" button (and a friendly empty state when there are none). "Make a wish" shows only the chat. New neighbors land on "Make a wish"; returning neighbors land on "My wishes." The highlighted tab must always match the page, and the "Make a wish" tab must work from every page.
+> b.) [the new chat greeting, verbatim]
+> c.) Add tap-to-start suggestion buttons above the text box: "Clothes or a coat," "School supplies," "Help with a bill," "A birthday gift," "Something for the home."
+> d.) Only show "messages left in this chat" when 5 or fewer remain.
+> e.) Keep the cursor in the text box after sending and after each reply arrives, so people can keep typing without clicking back in. On phones, keep the keyboard open.
+> f.) [the eight category definitions, verbatim, including Household as a new category with its own leaf color, icon and filter chip]
+> g.) [five cost rules: ask for the price on a linked store page, then the price guide, then the agent's own estimate; never post without a cost; expand the price guide]
+> h.) The "Checked for privacy" badge only appears after the Safety agent has actually reviewed a wish, never on the preview.
+> i.) After posting, show a confirmation: "Your wish is on the tree!" with the posted wish card, its progress tracker showing the current stage, one line on what happens next, and two buttons: "Make another wish" and "See all my wishes."
+> j.) Never show agent notes to neighbors. Move "This intake took N seconds" into "Show AI details" and the admin view.
+> k.) Spacing: consistent gaps between all stacked boxes, and comfortable side margins at every screen width. Remove the stray dot after the last item in the wish card's details line.
+>
+> Granting a wish:
+> l.) Cards in "Coming up" show exactly what to bring: the item, sizes, preferences, color or brand, whether a substitute is fine, the cost, and the "View item" link for specific items.
+> m.) The "Wishes you've granted" section always appears, collapsed, with an empty state when there are none.
+> n.) A small count badge on the "Wishes I'm granting" tab when the wish granter has wishes coming up.
+> o.) Add to the drop-off instructions: "Feel free to include a handwritten card. We'll pass it along with your gift."
+> p.) Fix the Matchmaker prompt so its reasoning never says "waiting 0 days." Only mention waiting time when a wish has waited at least a week.
+>
+> Accounts:
+> q.) Names: add an optional "First name (only you and our coordinator see this)" field to sign-up. Show it only to the person themselves and to the admin on the run sheet. The name is never sent to any agent. Extend the privacy tests.
+> r.) Rename the seeded demo emails to match our wording, and keep the demo password the same.
+>
+> s.) Update tests, take fresh screenshots of every changed screen on desktop and phone, and update harness.md.
+
+**Two questions asked first.** On (j), Kelly chose to drop the agent's prose
+but **keep** the "Taken out before anyone saw it" line — our sentence, and
+how somebody learns their child's name never reached the tree — and asked for
+**a fixed line per reason** on a held wish, so the neighbor knows what to
+change. For Household she chose **slate blue**, the one blue on a tree of
+greens.
+
+**Outcome:** 378 passing, 26 of them new.
+
+- **(e) was not about focus, it was about `disabled`.** The chat input was
+  disabled while the agent thought, and a disabled field loses focus the
+  instant it is disabled — which is what closes the keyboard on a phone.
+  `readOnly` keeps focus and still refuses a second message. Restoring focus
+  in `finally` means it comes back after a failed send too, which is exactly
+  when somebody wants to type again.
+- **The lap blanket stayed a Gift.** It is bedding by material and a birthday
+  present by purpose, and Kelly's own definition puts what a thing is *for*
+  first. There is a test for the distinction, because it is the kind of thing
+  a later re-sort would quietly undo.
+- **A real intake confirmed the new category and cost rules.** "We need a
+  lamp for the living room, ours broke" came back as a flexible **household**
+  wish at $20–$60, labeled Estimated — one live model call, about $0.0002.
+- **The page had a band of background above the pinned bar**, because the bar
+  is full-bleed inside a page that had 64px of top padding. Pages start flush
+  now and the first block takes its space from `.topbar + *`.
+
+**Still outstanding, by agreement:** the live safety suite and the token
+measurements. Both prompts changed again this problem, so those numbers have
+drifted further — Intake is now `61bc2f0fd4ce` and Matchmaker `68ec7fde1ab1`.

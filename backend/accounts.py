@@ -219,6 +219,9 @@ class Session:
     email: str
     role: str | None
     alias: str | None
+    # Their own first name, if they gave one. Read from whichever side they
+    # are currently on, so it follows them across a switch.
+    first_name: str | None = None
 
 
 def start_session(conn: sqlite3.Connection, email: str,
@@ -247,7 +250,18 @@ def read_session(conn: sqlite3.Connection, token: str | None) -> Session | None:
     if datetime.fromisoformat(row["expires_at"]) < datetime.now(timezone.utc):
         end_session(conn, token)
         return None
-    return Session(row["email"], row["role"], row["alias"])
+    return Session(row["email"], row["role"], row["alias"],
+                   first_name=_first_name(conn, row["role"], row["alias"]))
+
+
+def _first_name(conn: sqlite3.Connection, role: str | None,
+                alias: str | None) -> str | None:
+    if not role or not alias:
+        return None
+    table = "families" if role == "family" else "donors"
+    row = conn.execute(
+        f"SELECT first_name FROM {table} WHERE alias = ?", (alias,)).fetchone()
+    return row["first_name"] if row else None
 
 
 def choose_side(conn: sqlite3.Connection, token: str, role: Role) -> None:

@@ -24,6 +24,7 @@ export default function SignUpDonor() {
   const [address, setAddress] = useState('')
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
+  const [firstName, setFirstName] = useState('')
   const [budget, setBudget] = useState('75')
   const [categories, setCategories] = useState<Category[]>([])
   const [preference, setPreference] = useState<Preference>('either')
@@ -50,6 +51,7 @@ export default function SignUpDonor() {
         contact_email: email.trim(),
         contact_phone: phone.trim() || null,
         password,
+        first_name: firstName.trim() || null,
         budget_usd: Number(budget) || 0,
         preferred_categories: categories,
         preference,
@@ -101,6 +103,19 @@ export default function SignUpDonor() {
             onChange={(e) => setPhone(formatPhone(e.target.value))}
           />
           <span className="field__hint">Only used on drop-off day.</span>
+        </label>
+
+        <label className="field">
+          <span className="field__label">First name <em>(optional)</em></span>
+          <input
+            className="field__input" value={firstName} disabled={covered !== true}
+            placeholder="Theo" maxLength={40} autoComplete="given-name"
+            onChange={(e) => setFirstName(e.target.value)}
+          />
+          <span className="field__hint">
+            Only you and our coordinator see this. The neighbor whose wish you
+            grant only ever sees your alias.
+          </span>
         </label>
 
         <PasswordField

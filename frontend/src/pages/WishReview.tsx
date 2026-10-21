@@ -81,6 +81,11 @@ export default function WishReview({
   }
 
   const count = wishes.length
+  // A wish has a cost if it carries a single figure or a range.
+  const missingCost = wishes.filter(
+    (w) => w.estimated_cost_usd == null
+      && (w.budget_min_usd == null || w.budget_max_usd == null),
+  )
 
   return (
     <div className="review">
@@ -101,7 +106,7 @@ export default function WishReview({
               </button>
             </header>
 
-            <WishCard wish={asCard(wish, index, alias)} />
+            <WishCard wish={asCard(wish, index, alias)} checked={false} />
 
             {wish.category === 'rent_utilities' && (
               <p className="preview__rent">
@@ -244,8 +249,24 @@ export default function WishReview({
 
       {error && <p className="form__error" role="alert">{error}</p>}
 
+      {/* A wish with no cost cannot be granted: a neighbor reading the tree
+          has no idea what they are taking on, so it would sit there. Better
+          to ask for a number here, where it takes a second, than to post
+          something nobody can act on. */}
+      {missingCost.length > 0 && (
+        <p className="review__needs" role="alert">
+          {missingCost.length === 1
+            ? 'One wish still needs a cost — a rough estimate is fine, and a neighbor can see what they are taking on.'
+            : `${missingCost.length} wishes still need a cost — a rough estimate is fine for each.`}
+        </p>
+      )}
+
       <div className="review__actions">
-        <button className="btn btn--gold" type="button" onClick={onApprove} disabled={busy}>
+        <button
+          className="btn btn--gold" type="button" onClick={onApprove}
+          disabled={busy || missingCost.length > 0}
+          title={missingCost.length > 0 ? 'Add a cost to every wish first' : undefined}
+        >
           {busy
             ? 'Posting…'
             : count === 1 ? 'Looks right, post my wish' : `Post my ${count} wishes`}

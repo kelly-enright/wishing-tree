@@ -23,6 +23,7 @@ CATEGORY_TITLES = {
     "clothing": "Clothing",
     "essentials": "Essentials (hygiene, diapers)",
     "school_supplies": "School supplies",
+    "household": "Household",
     "food": "Food",
     "rent_utilities": "Rent & utilities",
     "gifts": "Gifts",

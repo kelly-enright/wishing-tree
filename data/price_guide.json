@@ -1,23 +1,41 @@
 {
   "note": "Typical New Haven-area costs used by the Intake agent's estimate_cost tool. Invented reference figures for the MVP, not scraped prices. Amounts in USD.",
-  "updated": "2026-10-20",
+  "updated": "2026-10-21",
   "items": [
     {
       "category": "clothing",
-      "item": "children's winter coat",
-      "typical_usd": 45,
+      "item": "socks and underwear, multipack",
+      "typical_usd": 20,
       "range_usd": [
-        30,
-        70
+        12,
+        35
       ]
     },
     {
       "category": "clothing",
-      "item": "adult winter coat",
-      "typical_usd": 70,
+      "item": "winter hat, gloves and scarf set",
+      "typical_usd": 25,
       "range_usd": [
-        45,
-        110
+        15,
+        40
+      ]
+    },
+    {
+      "category": "clothing",
+      "item": "children's rain boots",
+      "typical_usd": 28,
+      "range_usd": [
+        18,
+        45
+      ]
+    },
+    {
+      "category": "clothing",
+      "item": "school uniform polo, pack of three",
+      "typical_usd": 30,
+      "range_usd": [
+        20,
+        48
       ]
     },
     {
@@ -26,6 +44,24 @@
       "typical_usd": 35,
       "range_usd": [
         25,
+        55
+      ]
+    },
+    {
+      "category": "clothing",
+      "item": "children's sneakers, school",
+      "typical_usd": 35,
+      "range_usd": [
+        22,
+        55
+      ]
+    },
+    {
+      "category": "clothing",
+      "item": "adult jeans",
+      "typical_usd": 35,
+      "range_usd": [
+        22,
         55
       ]
     },
@@ -40,20 +76,47 @@
     },
     {
       "category": "clothing",
-      "item": "interview blazer",
-      "typical_usd": 55,
-      "range_usd": [
-        35,
-        90
-      ]
-    },
-    {
-      "category": "clothing",
       "item": "dress shirt and tie",
       "typical_usd": 40,
       "range_usd": [
         25,
         65
+      ]
+    },
+    {
+      "category": "clothing",
+      "item": "infant clothing bundle",
+      "typical_usd": 40,
+      "range_usd": [
+        25,
+        65
+      ]
+    },
+    {
+      "category": "clothing",
+      "item": "snow boots, child",
+      "typical_usd": 40,
+      "range_usd": [
+        25,
+        65
+      ]
+    },
+    {
+      "category": "clothing",
+      "item": "children's winter coat",
+      "typical_usd": 45,
+      "range_usd": [
+        30,
+        70
+      ]
+    },
+    {
+      "category": "clothing",
+      "item": "warm layers, per child",
+      "typical_usd": 45,
+      "range_usd": [
+        30,
+        75
       ]
     },
     {
@@ -67,20 +130,38 @@
     },
     {
       "category": "clothing",
-      "item": "warm layers, per child",
-      "typical_usd": 45,
+      "item": "dress shoes, adult",
+      "typical_usd": 50,
       "range_usd": [
         30,
-        75
+        85
       ]
     },
     {
-      "category": "essentials",
-      "item": "diapers, one month",
+      "category": "clothing",
+      "item": "interview blazer",
       "typical_usd": 55,
       "range_usd": [
-        40,
-        80
+        35,
+        90
+      ]
+    },
+    {
+      "category": "clothing",
+      "item": "adult winter coat",
+      "typical_usd": 70,
+      "range_usd": [
+        45,
+        110
+      ]
+    },
+    {
+      "category": "clothing",
+      "item": "adult work boots, steel toe",
+      "typical_usd": 75,
+      "range_usd": [
+        50,
+        120
       ]
     },
     {
@@ -94,20 +175,11 @@
     },
     {
       "category": "essentials",
-      "item": "formula, one month",
-      "typical_usd": 120,
+      "item": "period products, one month",
+      "typical_usd": 20,
       "range_usd": [
-        90,
-        170
-      ]
-    },
-    {
-      "category": "essentials",
-      "item": "hygiene basics bundle",
-      "typical_usd": 35,
-      "range_usd": [
-        20,
-        55
+        12,
+        32
       ]
     },
     {
@@ -121,6 +193,24 @@
     },
     {
       "category": "essentials",
+      "item": "towels set",
+      "typical_usd": 30,
+      "range_usd": [
+        18,
+        45
+      ]
+    },
+    {
+      "category": "essentials",
+      "item": "hygiene basics bundle",
+      "typical_usd": 35,
+      "range_usd": [
+        20,
+        55
+      ]
+    },
+    {
+      "category": "essentials",
       "item": "bedding set",
       "typical_usd": 50,
       "range_usd": [
@@ -130,11 +220,398 @@
     },
     {
       "category": "essentials",
-      "item": "towels set",
+      "item": "diapers, one month",
+      "typical_usd": 55,
+      "range_usd": [
+        40,
+        80
+      ]
+    },
+    {
+      "category": "essentials",
+      "item": "formula, one month",
+      "typical_usd": 120,
+      "range_usd": [
+        90,
+        170
+      ]
+    },
+    {
+      "category": "essentials",
+      "item": "baby formula, one month",
+      "typical_usd": 150,
+      "range_usd": [
+        100,
+        220
+      ]
+    },
+    {
+      "category": "food",
+      "item": "birthday cake and dinner",
+      "typical_usd": 35,
+      "range_usd": [
+        22,
+        55
+      ]
+    },
+    {
+      "category": "food",
+      "item": "grocery gift card, one week, small household",
+      "typical_usd": 60,
+      "range_usd": [
+        40,
+        90
+      ]
+    },
+    {
+      "category": "food",
+      "item": "prepared freezer meals, one week",
+      "typical_usd": 70,
+      "range_usd": [
+        45,
+        110
+      ]
+    },
+    {
+      "category": "food",
+      "item": "grocery gift card, one week, large household",
+      "typical_usd": 110,
+      "range_usd": [
+        80,
+        160
+      ]
+    },
+    {
+      "category": "food",
+      "item": "grocery gift card, household of four",
+      "typical_usd": 120,
+      "range_usd": [
+        80,
+        180
+      ]
+    },
+    {
+      "category": "gifts",
+      "item": "art or craft set",
+      "typical_usd": 25,
+      "range_usd": [
+        15,
+        40
+      ]
+    },
+    {
+      "category": "gifts",
+      "item": "book set for a child",
+      "typical_usd": 25,
+      "range_usd": [
+        15,
+        40
+      ]
+    },
+    {
+      "category": "gifts",
+      "item": "toy or game",
+      "typical_usd": 28,
+      "range_usd": [
+        15,
+        45
+      ]
+    },
+    {
+      "category": "gifts",
+      "item": "children's holiday gift",
       "typical_usd": 30,
       "range_usd": [
         18,
+        50
+      ]
+    },
+    {
+      "category": "gifts",
+      "item": "birthday gift, child",
+      "typical_usd": 30,
+      "range_usd": [
+        18,
+        50
+      ]
+    },
+    {
+      "category": "household",
+      "item": "reacher grabber tool",
+      "typical_usd": 20,
+      "range_usd": [
+        12,
+        32
+      ]
+    },
+    {
+      "category": "household",
+      "item": "grab bar, bathroom",
+      "typical_usd": 25,
+      "range_usd": [
+        15,
+        40
+      ]
+    },
+    {
+      "category": "household",
+      "item": "box fan",
+      "typical_usd": 25,
+      "range_usd": [
+        15,
+        40
+      ]
+    },
+    {
+      "category": "household",
+      "item": "small fire extinguisher",
+      "typical_usd": 30,
+      "range_usd": [
+        20,
         45
+      ]
+    },
+    {
+      "category": "household",
+      "item": "twin sheet set",
+      "typical_usd": 30,
+      "range_usd": [
+        18,
+        50
+      ]
+    },
+    {
+      "category": "household",
+      "item": "bath towel set",
+      "typical_usd": 30,
+      "range_usd": [
+        18,
+        50
+      ]
+    },
+    {
+      "category": "household",
+      "item": "table lamp",
+      "typical_usd": 30,
+      "range_usd": [
+        18,
+        50
+      ]
+    },
+    {
+      "category": "household",
+      "item": "smoke detector, pack of two",
+      "typical_usd": 35,
+      "range_usd": [
+        22,
+        55
+      ]
+    },
+    {
+      "category": "household",
+      "item": "laundry basket and drying rack",
+      "typical_usd": 35,
+      "range_usd": [
+        20,
+        55
+      ]
+    },
+    {
+      "category": "household",
+      "item": "full or queen sheet set",
+      "typical_usd": 40,
+      "range_usd": [
+        25,
+        65
+      ]
+    },
+    {
+      "category": "household",
+      "item": "floor lamp",
+      "typical_usd": 45,
+      "range_usd": [
+        28,
+        75
+      ]
+    },
+    {
+      "category": "household",
+      "item": "dishes and cutlery for four",
+      "typical_usd": 45,
+      "range_usd": [
+        28,
+        75
+      ]
+    },
+    {
+      "category": "household",
+      "item": "space heater",
+      "typical_usd": 45,
+      "range_usd": [
+        30,
+        75
+      ]
+    },
+    {
+      "category": "household",
+      "item": "comforter or duvet",
+      "typical_usd": 55,
+      "range_usd": [
+        35,
+        90
+      ]
+    },
+    {
+      "category": "household",
+      "item": "shower chair",
+      "typical_usd": 60,
+      "range_usd": [
+        40,
+        95
+      ]
+    },
+    {
+      "category": "household",
+      "item": "pots and pans set",
+      "typical_usd": 60,
+      "range_usd": [
+        35,
+        100
+      ]
+    },
+    {
+      "category": "household",
+      "item": "crib mattress",
+      "typical_usd": 70,
+      "range_usd": [
+        45,
+        110
+      ]
+    },
+    {
+      "category": "household",
+      "item": "vacuum cleaner",
+      "typical_usd": 80,
+      "range_usd": [
+        50,
+        130
+      ]
+    },
+    {
+      "category": "household",
+      "item": "microwave",
+      "typical_usd": 90,
+      "range_usd": [
+        60,
+        140
+      ]
+    },
+    {
+      "category": "household",
+      "item": "kitchen table and chairs, small",
+      "typical_usd": 140,
+      "range_usd": [
+        90,
+        220
+      ]
+    },
+    {
+      "category": "other",
+      "item": "monthly bus pass",
+      "typical_usd": 35,
+      "range_usd": [
+        25,
+        50
+      ]
+    },
+    {
+      "category": "other",
+      "item": "smoke detector and extinguisher",
+      "typical_usd": 50,
+      "range_usd": [
+        30,
+        80
+      ]
+    },
+    {
+      "category": "other",
+      "item": "mobility or bathing aid",
+      "typical_usd": 60,
+      "range_usd": [
+        35,
+        110
+      ]
+    },
+    {
+      "category": "other",
+      "item": "gas card for medical travel",
+      "typical_usd": 75,
+      "range_usd": [
+        50,
+        120
+      ]
+    },
+    {
+      "category": "other",
+      "item": "first apartment basics",
+      "typical_usd": 180,
+      "range_usd": [
+        120,
+        300
+      ]
+    },
+    {
+      "category": "rent_utilities",
+      "item": "water bill, one quarter",
+      "typical_usd": 110,
+      "range_usd": [
+        70,
+        170
+      ]
+    },
+    {
+      "category": "rent_utilities",
+      "item": "gas bill, one month",
+      "typical_usd": 130,
+      "range_usd": [
+        70,
+        220
+      ]
+    },
+    {
+      "category": "rent_utilities",
+      "item": "electric bill, one month",
+      "typical_usd": 150,
+      "range_usd": [
+        90,
+        250
+      ]
+    },
+    {
+      "category": "rent_utilities",
+      "item": "partial rent, one month",
+      "typical_usd": 500,
+      "range_usd": [
+        300,
+        900
+      ]
+    },
+    {
+      "category": "school_supplies",
+      "item": "notebooks and folders",
+      "typical_usd": 20,
+      "range_usd": [
+        12,
+        32
+      ]
+    },
+    {
+      "category": "school_supplies",
+      "item": "scientific calculator",
+      "typical_usd": 20,
+      "range_usd": [
+        12,
+        32
       ]
     },
     {
@@ -157,15 +634,6 @@
     },
     {
       "category": "school_supplies",
-      "item": "middle school supply list",
-      "typical_usd": 45,
-      "range_usd": [
-        30,
-        70
-      ]
-    },
-    {
-      "category": "school_supplies",
       "item": "graphing calculator",
       "typical_usd": 40,
       "range_usd": [
@@ -175,164 +643,11 @@
     },
     {
       "category": "school_supplies",
-      "item": "notebooks and folders",
-      "typical_usd": 20,
-      "range_usd": [
-        12,
-        32
-      ]
-    },
-    {
-      "category": "food",
-      "item": "grocery gift card, one week, small household",
-      "typical_usd": 60,
-      "range_usd": [
-        40,
-        90
-      ]
-    },
-    {
-      "category": "food",
-      "item": "grocery gift card, one week, large household",
-      "typical_usd": 110,
-      "range_usd": [
-        80,
-        160
-      ]
-    },
-    {
-      "category": "food",
-      "item": "prepared freezer meals, one week",
-      "typical_usd": 70,
-      "range_usd": [
-        45,
-        110
-      ]
-    },
-    {
-      "category": "food",
-      "item": "birthday cake and dinner",
-      "typical_usd": 35,
-      "range_usd": [
-        22,
-        55
-      ]
-    },
-    {
-      "category": "rent_utilities",
-      "item": "electric bill, one month",
-      "typical_usd": 150,
-      "range_usd": [
-        90,
-        250
-      ]
-    },
-    {
-      "category": "rent_utilities",
-      "item": "gas bill, one month",
-      "typical_usd": 130,
-      "range_usd": [
-        70,
-        220
-      ]
-    },
-    {
-      "category": "rent_utilities",
-      "item": "water bill, one quarter",
-      "typical_usd": 110,
-      "range_usd": [
-        70,
-        170
-      ]
-    },
-    {
-      "category": "rent_utilities",
-      "item": "partial rent, one month",
-      "typical_usd": 500,
-      "range_usd": [
-        300,
-        900
-      ]
-    },
-    {
-      "category": "gifts",
-      "item": "children's holiday gift",
-      "typical_usd": 30,
-      "range_usd": [
-        18,
-        50
-      ]
-    },
-    {
-      "category": "gifts",
-      "item": "birthday gift, child",
-      "typical_usd": 30,
-      "range_usd": [
-        18,
-        50
-      ]
-    },
-    {
-      "category": "gifts",
-      "item": "toy or game",
-      "typical_usd": 28,
-      "range_usd": [
-        15,
-        45
-      ]
-    },
-    {
-      "category": "gifts",
-      "item": "art or craft set",
-      "typical_usd": 25,
-      "range_usd": [
-        15,
-        40
-      ]
-    },
-    {
-      "category": "other",
-      "item": "gas card for medical travel",
-      "typical_usd": 75,
-      "range_usd": [
-        50,
-        120
-      ]
-    },
-    {
-      "category": "other",
-      "item": "monthly bus pass",
-      "typical_usd": 35,
-      "range_usd": [
-        25,
-        50
-      ]
-    },
-    {
-      "category": "other",
-      "item": "first apartment basics",
-      "typical_usd": 180,
-      "range_usd": [
-        120,
-        300
-      ]
-    },
-    {
-      "category": "other",
-      "item": "mobility or bathing aid",
-      "typical_usd": 60,
-      "range_usd": [
-        35,
-        110
-      ]
-    },
-    {
-      "category": "other",
-      "item": "smoke detector and extinguisher",
-      "typical_usd": 50,
+      "item": "middle school supply list",
+      "typical_usd": 45,
       "range_usd": [
         30,
-        80
+        70
       ]
     }
   ]

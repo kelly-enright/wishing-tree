@@ -497,3 +497,85 @@ def test_the_demo_list_still_carries_no_email(client):
 
 def test_an_unknown_demo_alias_is_refused(client):
     assert client.post("/api/auth/demo", json={"alias": "Neighbor Z99"}).status_code == 404
+
+
+# --------------------------------------------------------------------------
+# A first name is the most identifying thing anyone gives us
+# --------------------------------------------------------------------------
+
+NAMED = {**NEW_ACCOUNT, "first_name": "Marisol", "contact_email": "marisol@example.com"}
+
+
+def test_a_name_reaches_no_public_endpoint(client):
+    client.post("/api/families", json=NAMED)
+    sign_out(client)
+
+    for path in PUBLIC + ["/api/wishes?category=clothing"]:
+        assert NAMED["first_name"] not in client.get(path).text, path
+
+
+def test_no_seeded_name_is_anywhere_public(client):
+    """The seed gives a few people names. None may surface."""
+    with db.connect(config.DB_PATH) as conn:
+        names = [r["first_name"] for r in conn.execute(
+            "SELECT first_name FROM families WHERE first_name IS NOT NULL")]
+        names += [r["first_name"] for r in conn.execute(
+            "SELECT first_name FROM donors WHERE first_name IS NOT NULL")]
+    assert names, "the seed should carry some names to make this test mean something"
+
+    sign_in(client, "Granter D01")
+    for path in ("/api/wishes", "/api/accounts", "/api/stats",
+                 "/api/donors/Granter D01/granted"):
+        body = client.get(path).text
+        for name in names:
+            assert name not in body, f"{path} shows {name!r}"
+
+
+def test_a_wish_card_never_carries_a_name(client):
+    """The card is what a granter sees and what every agent is handed."""
+    with db.connect(config.DB_PATH) as conn:
+        named = conn.execute(
+            "SELECT alias, first_name FROM families WHERE first_name IS NOT NULL"
+        ).fetchone()
+        wishes = db.list_open_wishes(conn)
+
+    cards = [w.public_card() for w in wishes if w.family_alias == named["alias"]]
+    assert cards, "the named neighbor should have an open wish to check"
+    for card in cards:
+        assert named["first_name"] not in str(card)
+        assert "first_name" not in card
+
+
+def test_a_person_sees_their_own_name_and_nobody_elses(client):
+    client.post("/api/families", json=NAMED)
+    me = client.get("/api/auth/me").json()
+    assert me["first_name"] == "Marisol"
+
+    sign_in(client, "Granter D01")
+    theirs = client.get("/api/auth/me").json()
+    assert theirs["first_name"] != "Marisol"
+
+
+def test_the_admin_run_sheet_shows_names(client):
+    """The one screen where staff may see one, so delivery day is human."""
+    wish = client.get("/api/wishes").json()["wishes"]
+    sign_in(client, "Granter D01")
+    first = next(w for w in wish)
+    client.post("/api/grant", json={
+        "donor_alias": "Granter D01", "request_id": first["id"]})
+
+    sheet = client.get("/api/coordinator/run-sheet", headers=admin(client)).json()
+    assert "donor_name" in sheet["dropoffs"][0]
+    names = [row.get("donor_name") for row in sheet["dropoffs"]]
+    assert any(names), "at least one seeded granter has a name"
+
+
+def test_a_name_is_never_sent_to_an_agent(client):
+    """Agents are handed `public_card()` shapes and an alias. Neither can
+    carry a name, which is what makes this structural rather than a promise."""
+    from backend.agents.intake import IntakeDeps
+
+    fields = set(IntakeDeps.__dataclass_fields__)
+    assert "first_name" not in fields
+    for field in fields:
+        assert "name" not in field or field in {"family_alias"}, field

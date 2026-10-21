@@ -75,7 +75,7 @@ def test_a_family_public_view_drops_the_contact_details():
     family = Family(
         alias="Neighbor A04", zip="06511",
         contact_address="118 Larkspur St, New Haven, CT 06511",
-        contact_email="familya04@example.com",
+        contact_email="neighbora04@example.com",
         contact_phone="(203) 555-0104",
     )
     public = family.public_view()

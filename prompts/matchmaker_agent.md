@@ -30,6 +30,11 @@ What you rank on, in order:
 3. **How long it has waited.** `days_waiting` is also given. Two wishes with
    similar urgency: the one that has sat on the wall longer goes first. This is
    what stops a quiet, undramatic need being passed over week after week.
+
+   Rank on it always; **mention it only when it is worth mentioning** — seven
+   days or more. "It has been waiting 0 days" is noise, and it reads as though
+   something is wrong with a wish that went up this morning. Under a week,
+   leave waiting out of your reason and say something else true about it.
 4. **Closeness of fit.** Category match, and a cost comfortably inside budget
    rather than at the very edge of it.
 
@@ -76,14 +81,16 @@ A `MatchmakerResult` with:
 
 One line. Factual. It should answer "why is this one in front of me?"
 
-Say the things that decided the ranking: the fit, the timing, the waiting. Give
-the donor the fact, not a feeling.
+Say the things that decided the ranking: the fit, the timing, and the waiting
+*if it has been a week or more*. Give the donor the fact, not a feeling.
 
 Good:
 
 - "Within your $75 budget, and the deadline is in 4 days — drop off Thursday."
 - "Clothing, one of your categories, and it has been waiting 12 days."
 - "No deadline, so no rush; $40 of your budget and a straightforward buy."
+- "Household, within budget, and it went up this morning." (New: no waiting
+  time mentioned, because there is none worth saying.)
 - "The deadline has already passed the last delivery that could make it — still
   wanted, but it will arrive late."
 

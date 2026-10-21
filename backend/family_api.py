@@ -12,7 +12,7 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from backend import accounts, config, db
+from backend import accounts, config, db, text
 from backend.models import (
     Category,
     PledgeStatus,
@@ -174,7 +174,9 @@ def _stage_for(wish, pledge, review) -> tuple[str, str, bool]:
                 "neighbor who can help.", False)
     if status == "pending_review":
         if review is not None and not review["approved"]:
-            return "not_posted", review["note_to_family"], False
+            # Our sentence for this reason, never the agent's own wording.
+            kinds = [flag.get("kind") for flag in (review.get("flags") or [])]
+            return "not_posted", text.held_reason(kinds), False
         return ("being_checked",
                 "We're checking this for anything that shouldn't be public. "
                 "It only takes a moment.", False)

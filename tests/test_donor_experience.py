@@ -4,6 +4,10 @@ from datetime import date, timedelta
 
 import pytest
 
+from pathlib import Path
+
+FRONTEND_PAGES = Path(__file__).resolve().parent.parent / "frontend" / "src" / "pages"
+
 from helpers import grant_as, sign_in
 from fastapi.testclient import TestClient
 
@@ -514,3 +518,41 @@ def test_the_hub_address_is_linked_to_a_map(client):
     body = _granted_rows(client)
     assert body["hub"]["maps_url"].startswith("https://www.google.com/maps/")
     assert "New+Haven" in body["hub"]["maps_url"]
+
+
+# --------------------------------------------------------------------------
+# What a granter needs in their hand, standing in a shop
+# --------------------------------------------------------------------------
+
+def test_coming_up_carries_everything_needed_to_shop(client):
+    wish = _first_open(client)
+    client.post("/api/grant", json={
+        "donor_alias": "Granter D01", "request_id": wish["id"]})
+
+    row = next(r for r in _granted_rows(client)["coming_up"])
+    card = row["wish"]
+    for field in ("item_description", "size", "color", "brand",
+                  "size_preferences", "open_to_substitute", "product_link",
+                  "estimated_cost_usd", "budget_min_usd", "budget_max_usd"):
+        assert field in card, field
+
+
+def test_the_section_for_finished_wishes_is_always_there(client):
+    """Even empty. A section that vanishes reads as something broken."""
+    page = (FRONTEND_PAGES / "MyGranted.tsx").read_text()
+    assert "{done.length > 0 && (" not in page
+    assert "Wishes you've granted will show up here." in page
+
+
+def test_the_handwritten_card_note_is_where_a_granter_will_see_it():
+    granted = (FRONTEND_PAGES / "MyGranted.tsx").read_text()
+    donor = (FRONTEND_PAGES / "Donor.tsx").read_text()
+    note = "Feel free to include a handwritten card."
+    assert note in granted            # on each Coming up card
+    assert note in donor              # and on the confirmation screen
+
+
+def test_the_granting_tab_counts_only_what_is_still_to_do():
+    donor = (FRONTEND_PAGES / "Donor.tsx").read_text()
+    assert "count: comingUp || undefined" in donor
+    assert "data.coming_up.length" in donor

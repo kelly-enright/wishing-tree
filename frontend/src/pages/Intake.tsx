@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   approveIntake, sendIntakeMessage, startIntake,
   type DraftWish, type Usage, type WishOutcome,
@@ -6,28 +6,29 @@ import {
 } from '../api'
 import HowItWorks from '../components/HowItWorks'
 import Collapsible from '../components/Collapsible'
-import TopBar from '../components/TopBar'
-import { Info, ListChecks, Sparkles } from 'lucide-react'
-
-/** The neighbor's two halves live on one page, so the links scroll rather
- *  than switch. Smooth unless the reader has asked for less motion. */
-function scrollTo(id: string) {
-  const target = document.getElementById(id)
-  if (!target) return
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' })
-}
+import TopBar, { neighborLinks } from '../components/TopBar'
+import WishCard from '../components/WishCard'
+import { Link } from 'react-router-dom'
 import Monty from '../components/Monty'
 import Thinking from '../components/Thinking'
 import TokenPanel from '../components/TokenPanel'
 import { useSession } from '../session'
 import NeedsSignIn, { PageLoading } from '../components/NeedsSignIn'
 import { signOut, switchSide } from '../auth'
-import MyWishes from './MyWishes'
 import WishReview from './WishReview'
 import usePageTitle from '../usePageTitle'
 
 type Bubble = { who: 'family' | 'agent'; text: string }
+
+/** Ideas, for the blank-page moment. Tapping one fills the box rather than
+ *  sending it, so somebody can add the detail that makes it their wish. */
+const STARTERS = [
+  'Clothes or a coat',
+  'School supplies',
+  'Help with a bill',
+  'A birthday gift',
+  'Something for the home',
+]
 
 export default function Intake() {
   usePageTitle('Make a wish')
@@ -45,8 +46,10 @@ export default function Intake() {
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<{ published: number; held: number; seconds: number; outcomes: WishOutcome[] } | null>(null)
   const transcript = useRef<HTMLDivElement>(null)
+  const box = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
+  /** Open a chat. Called on arrival, and again for a second wish. */
+  const begin = useCallback(() => {
     if (!session) return
     startIntake(session.alias)
       .then((start) => {
@@ -57,9 +60,10 @@ export default function Intake() {
         if (start.usage) setUsage(start.usage)
       })
       .catch((err) => setError(userMessage(err, 'We could not start a new chat just now. Please try again.')))
-    // one intake per visit
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [session?.alias])
+
+  useEffect(() => { begin() }, [begin])
 
   useEffect(() => {
     transcript.current?.scrollTo({ top: transcript.current.scrollHeight, behavior: 'smooth' })
@@ -95,8 +99,27 @@ export default function Intake() {
     } catch (err) {
       setError(userMessage(err, 'That message did not get through. Please try again.'))
     } finally {
+      // Back in the box, both after sending and once the reply lands. On a
+      // phone this is what keeps the keyboard up: the field never loses
+      // focus, so the browser never has a reason to close it. It has to
+      // happen in `finally`, because a failed send is exactly the moment
+      // somebody wants to type again.
       setBusy(false)
+      box.current?.focus()
     }
+  }
+
+  /** Start a second wish from the confirmation, with nothing carried over. */
+  function startAgain() {
+    setBubbles([])
+    setDrafts([])
+    setResult(null)
+    setInput('')
+    setError(null)
+    setStopped(false)
+    setSessionId(null)
+    setPhase('chat')
+    begin()
   }
 
   async function approve() {
@@ -124,23 +147,12 @@ export default function Intake() {
   return (
     <main className="page page--wide">
       <TopBar
-        links={[
-          { label: 'My wishes', short: 'Wishes',
-            icon: <ListChecks size={17} aria-hidden="true" />,
-            onClick: () => scrollTo('mywishes'), active: true },
-          { label: 'Make a wish', short: 'Ask',
-            icon: <Sparkles size={17} aria-hidden="true" />,
-            onClick: () => scrollTo('makeawish') },
-          { label: 'About', short: 'About',
-            icon: <Info size={17} aria-hidden="true" />, to: '/about' },
-        ]}
+        links={neighborLinks('new')}
         alias={session.alias} me={me}
         onSwitch={signOut} onSwitchSide={switchSide}
       />
 
-      <MyWishes alias={session.alias} />
-
-      <div className="intake" id="makeawish">
+      <div className="intake">
         <div className="intake__main">
           {phase === 'chat' && (
             <>
@@ -183,9 +195,29 @@ export default function Intake() {
               {error && <p className="form__error" role="alert">{error}</p>}
 
               {!atCap && !stopped && (
+                <>
+                {bubbles.length <= 1 && (
+                  <div className="starters" role="group" aria-label="Ideas to start with">
+                    {STARTERS.map((starter) => (
+                      <button
+                        key={starter} type="button" className="chip"
+                        onClick={() => { setInput(starter); box.current?.focus() }}
+                      >
+                        {starter}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <form className="composer" onSubmit={send}>
+                  {/* `readOnly`, not `disabled`: a disabled field loses
+                      focus the moment it is disabled, and on a phone that
+                      closes the keyboard mid-sentence. This one stays
+                      focused while the agent is thinking, and simply will
+                      not accept a second message until the reply lands. */}
                   <input
-                    className="field__input" value={input} disabled={busy}
+                    ref={box}
+                    className="field__input" value={input} readOnly={busy}
                     placeholder="Tell us what would help…" maxLength={2000}
                     onChange={(e) => setInput(e.target.value)}
                   />
@@ -193,6 +225,7 @@ export default function Intake() {
                     Send
                   </button>
                 </form>
+                </>
               )}
 
               <div className="intake__footer">
@@ -201,7 +234,10 @@ export default function Intake() {
                     This chat has stopped. Anything already drafted is safe.
                   </span>
                 )}
-                {turnsLeft !== null && !atCap && !stopped && (
+                {/* Counting down from twenty tells someone their help is
+                    rationed before it ever is. Five is close enough to be
+                    worth knowing. */}
+                {turnsLeft !== null && turnsLeft <= 5 && !atCap && !stopped && (
                   <span>{turnsLeft} message{turnsLeft === 1 ? '' : 's'} left in this chat</span>
                 )}
                 {drafts.length > 0 && (
@@ -236,19 +272,18 @@ export default function Intake() {
           {phase === 'done' && result && (
             <>
               <h1 className="page__title">
-                {result.held === 0 ? 'On the tree' : 'Here’s what happened'}
+                {result.published > 0
+                  ? result.published === 1
+                    ? 'Your wish is on the tree!'
+                    : 'Your wishes are on the tree!'
+                  : 'Thanks — we have your wish'}
               </h1>
-              <p className="page__blurb">
-                {result.published > 0 && (
-                  <>{result.published} wish{result.published === 1 ? '' : 'es'} went through the
-                  privacy and safety check and {result.published === 1 ? 'is' : 'are'} now visible
-                  to neighbors. </>
-                )}
-                {result.held > 0 && (
-                  <>{result.held} {result.held === 1 ? 'wish is' : 'wishes are'} being held for a
-                  coordinator to look at. {result.held === 1 ? 'It is' : 'They are'} not public.</>
-                )}
-              </p>
+
+              {result.published > 0 && (
+                <p className="page__blurb">
+                  We'll email you when a neighbor picks your wish.
+                </p>
+              )}
 
               <ul className="outcomes">
                 {result.outcomes.map((outcome) => (
@@ -256,30 +291,43 @@ export default function Intake() {
                     key={outcome.request_id}
                     className={`outcome outcome--${outcome.published ? 'published' : 'held'}`}
                   >
-                    <span className="outcome__status">
-                      {outcome.published ? 'On the tree' : 'Held'}
+                    <span className={`track__stage track__stage--${
+                      outcome.published ? 'on_the_tree' : 'not_posted'}`}>
+                      {outcome.published ? 'On the tree' : 'Not on the tree yet'}
                     </span>
-                    <p className="outcome__desc">{outcome.description}</p>
-                    <p className="outcome__note">{outcome.note_to_family}</p>
+                    {outcome.card
+                      ? <WishCard wish={outcome.card} />
+                      : <p className="outcome__desc">{outcome.description}</p>}
+
+                    {/* Our sentence, naming the reason and what to change.
+                        The agent's own wording stays in Agent activity. */}
+                    {!outcome.published && outcome.held_reason && (
+                      <p className="outcome__note">{outcome.held_reason}</p>
+                    )}
+
                     {outcome.removed.length > 0 && (
                       <p className="outcome__removed">
-                        Taken out before anyone sees it: {outcome.removed.join(', ')}.
+                        Taken out before anyone saw it: {outcome.removed.join(', ')}.
                       </p>
                     )}
                   </li>
                 ))}
               </ul>
 
-              <HowItWorks />
-
-              <p className="page__tag">
-                This intake took {Math.round(result.seconds)} seconds from first message to approval.
-              </p>
+              <div className="review__actions">
+                <button
+                  type="button" className="btn btn--primary"
+                  onClick={startAgain}
+                >
+                  Make another wish
+                </button>
+                <Link className="btn btn--light" to="/family">See all my wishes</Link>
+              </div>
             </>
           )}
         </div>
 
-        <TokenPanel usage={usage} />
+        <TokenPanel usage={usage} seconds={result?.seconds} />
       </div>
     </main>
   )

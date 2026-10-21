@@ -364,8 +364,13 @@ a { color: var(--evergreen); }
 .page {
   max-width: 680px;
   margin: 0 auto;
-  padding: 64px 24px 80px;
+  /* The bar is full-bleed and pinned, so the page's own top padding would
+     otherwise show as a band of background above it. Pages start flush and
+     the first real block gets its space from `.topbar + *` below. */
+  padding: 0 24px 80px;
 }
+
+.topbar + * { margin-top: 28px !important; }
 
 .page__back {
   display: inline-block;
@@ -1898,8 +1903,10 @@ textarea.field__input { resize: vertical; font: inherit; }
   font-size: 12.5px; color: var(--ink-soft);
 }
 .card__meta .card__cat { display: inline-flex; align-items: center; gap: 4px; }
-.card__meta > span:not(:last-child)::after {
-  content: '·'; margin-left: 12px; color: var(--line);
+/* A separator between items, never trailing after the last one. The rule
+   has to exclude the icon span too, which is why it counts from the end. */
+.card__meta > span + span::before {
+  content: '·'; margin-right: 12px; color: var(--line);
 }
 
 .card__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
@@ -2385,3 +2392,69 @@ textarea.field__input { resize: vertical; font: inherit; }
   color: var(--evergreen-deep);
 }
 .resetcode__how { margin: 6px 0 0; font-size: 12.5px; color: var(--ink-soft); }
+
+/* My wishes: the title and the one action that belongs beside it. */
+.wisheshead {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap; margin-bottom: 4px;
+}
+.wisheshead .page__title { margin: 0; }
+.wisheshead .btn { display: inline-flex; align-items: center; gap: 7px; }
+
+/* Ideas above the box, for the blank-page moment. */
+.starters {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;
+}
+.starters .chip { font-size: 13px; }
+
+/* A field that is waiting on a reply, rather than switched off. */
+.composer .field__input[readonly] { background: var(--cream-deep); cursor: wait; }
+
+.review__needs {
+  margin: 0 0 12px; padding: 11px 14px; border-radius: var(--radius);
+  background: var(--gold-pale); border: 1px solid var(--gold);
+  color: var(--evergreen-deep); font-size: 13.5px;
+}
+
+/* A count beside a nav label: how many things are waiting on you. */
+.navcount {
+  display: inline-grid; place-items: center; min-width: 18px; height: 18px;
+  padding: 0 5px; margin-left: 2px; border-radius: var(--radius-pill);
+  background: var(--gold); color: var(--ink);
+  font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.topbar__link--on .navcount { background: var(--gold-deep); color: var(--white); }
+
+/* What to bring, laid out so it can be read one-handed in a shop. */
+.bring {
+  display: grid; grid-template-columns: auto 1fr; gap: 3px 14px;
+  margin: 10px 0 0; padding: 10px 12px;
+  border-radius: var(--radius-sm); background: var(--cream-deep);
+  font-size: 13px;
+}
+.bring > div { display: contents; }
+.bring dt { color: var(--ink-soft); }
+.bring dd { margin: 0; color: var(--ink); font-weight: 600; }
+
+.gcard__card { color: var(--ink-soft); font-size: 12.5px; }
+
+.granted__empty {
+  margin: 4px 0 0; padding: 14px; border-radius: var(--radius);
+  background: var(--cream-deep); color: var(--ink-soft); font-size: 13.5px;
+}
+
+/* ------------------------------------------------------- consistent spacing */
+/* Stacked boxes were set individually and had drifted: 12px here, 20 there,
+   nothing at all between two of them. One gap, one side margin. */
+.page > * + *, .landing > * + * { margin-top: 16px; }
+.page > .topbar, .landing > .topbar { margin-top: 0; }
+
+.page, .landing {
+  padding-left: max(24px, env(safe-area-inset-left));
+  padding-right: max(24px, env(safe-area-inset-right));
+}
+
+@media (max-width: 560px) {
+  .page, .landing { padding-left: 16px; padding-right: 16px; }
+  .bring { grid-template-columns: auto 1fr; font-size: 12.5px; }
+}

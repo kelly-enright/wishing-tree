@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  CATEGORY_LABELS, OCCASION_LABELS, getWishes, requestMatches,
+  CATEGORY_LABELS, OCCASION_LABELS, getGranted, getWishes, requestMatches,
   type Category, type GrantResponse, type Match, type Occasion,
   type RegionInfo, type Usage, type WallFilters, type WishCard as Wish,
   userMessage,
@@ -51,6 +51,7 @@ export default function Donor() {
   // already made. They were one long scroll; they are tabs now.
   const [tab, setTab] = useState<'tree' | 'mine'>('tree')
   const [moreFilters, setMoreFilters] = useState(false)
+  const [comingUp, setComingUp] = useState(0)
   const [gold, setGold] = useState<{ id: number; category: Category }[]>([])
   const [goldDays, setGoldDays] = useState(30)
   const [busy, setBusy] = useState<'wall' | 'match' | number | null>('wall')
@@ -71,6 +72,14 @@ export default function Donor() {
   }
 
   useEffect(() => { loadWall(EMPTY) }, [])
+
+  // The badge on the tab, kept current when a grant or a release changes it.
+  useEffect(() => {
+    if (!session) return
+    getGranted(session.alias)
+      .then((data) => setComingUp(data.coming_up.length))
+      .catch(() => setComingUp(0))
+  }, [session?.alias, granted, tab])
 
   if (loading) return <PageLoading />
   if (!session || session.role !== 'donor') {
@@ -162,6 +171,12 @@ export default function Donor() {
           {!granted.arrives_in_time && (
             <p className="logistics__late">{granted.schedule_note}</p>
           )}
+          {logistics.kind === 'hub_dropoff' && (
+            <p className="logistics__detail">
+              Feel free to include a handwritten card. We'll pass it along with
+              your gift.
+            </p>
+          )}
         </section>
 
         <button
@@ -190,6 +205,8 @@ export default function Donor() {
       label: "Wishes I'm granting", short: 'Granting',
       icon: <HeartHandshake size={17} aria-hidden="true" />,
       onClick: () => setTab('mine'), active: tab === 'mine',
+      // Only what is still to do. Finished wishes are not a to-do list.
+      count: comingUp || undefined,
     },
     {
       label: 'About', short: 'About',

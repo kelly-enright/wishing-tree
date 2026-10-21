@@ -452,3 +452,170 @@ def test_the_footer_is_one_component_used_everywhere():
 def test_the_about_page_can_be_left():
     source = (FRONTEND / "src" / "pages" / "About.tsx").read_text()
     assert "backlink" in source
+
+
+# --------------------------------------------------------------------------
+# Household, and the category definitions the agent works from
+# --------------------------------------------------------------------------
+
+def test_household_exists_everywhere_a_category_has_to(client):
+    """A category that the backend knows and the frontend cannot draw is a
+    wish that renders as a blank leaf."""
+    from backend.models import Category
+    assert Category.HOUSEHOLD.value == "household"
+
+    tree = (FRONTEND / "src" / "components" / "WishTree.tsx").read_text()
+    icons = (FRONTEND / "src" / "components" / "CategoryIcon.tsx").read_text()
+    api = (FRONTEND / "src" / "api.ts").read_text()
+    assert "household: '#5B7C99'" in tree          # its own leaf color
+    assert "household: Lamp" in icons              # its own icon
+    assert "household: 'Household'" in api         # its own filter chip
+
+
+def test_every_category_can_be_drawn(client):
+    """Each value the server can send has a color and an icon on the client."""
+    from backend.models import Category
+    tree = (FRONTEND / "src" / "components" / "WishTree.tsx").read_text()
+    icons = (FRONTEND / "src" / "components" / "CategoryIcon.tsx").read_text()
+    for category in Category:
+        assert f"{category.value}:" in tree, category.value
+        assert f"{category.value}:" in icons, category.value
+
+
+def test_the_seed_puts_home_things_in_household(client):
+    with db.connect(config.DB_PATH) as conn:
+        household = [r.item_description for r in db.list_requests(conn)
+                     if r.category.value == "household"]
+    assert any("Shower chair" in d for d in household)
+    assert any("Sheets, towels" in d for d in household)
+    # A blanket asked for as a birthday present is a gift, not bedding.
+    with db.connect(config.DB_PATH) as conn:
+        blanket = next(r for r in db.list_requests(conn)
+                       if "lap blanket" in r.item_description)
+    assert blanket.category.value == "gifts"
+
+
+def _flat(path) -> str:
+    """Prose with its line wrapping removed, so a phrase that happens to
+    break across two lines still matches."""
+    return re.sub(r"\s+", " ", path.read_text())
+
+
+def test_the_prompt_carries_the_definitions_verbatim():
+    text = _flat(config.PROMPTS_DIR / "intake_agent.md")
+    for phrase in (
+        "Always paid by Wishing Tree directly to the provider",
+        "soap, shampoo, toothpaste, deodorant, period products",
+        "backpacks, notebooks, pens, calculators",
+        "lamps, bedding, towels, kitchenware, small furniture",
+        "home safety or accessibility items such as a shower chair",
+        "only when nothing above fits",
+    ):
+        assert phrase in text, phrase
+
+
+def test_the_prompt_says_a_wish_needs_a_cost():
+    text = _flat(config.PROMPTS_DIR / "intake_agent.md")
+    assert "About how much is it on the store page?" in text
+    assert "Target or" in text and "Walmart" in text
+    assert "Never leave it empty" in text
+
+
+def test_the_price_guide_grew_where_it_was_asked_to():
+    import json
+    guide = json.loads(config.PRICE_GUIDE_PATH.read_text())
+    counts: dict[str, int] = {}
+    for item in guide["items"]:
+        counts[item["category"]] = counts.get(item["category"], 0) + 1
+    assert counts.get("household", 0) >= 15
+    assert counts.get("clothing", 0) >= 15
+    review = (config.OUTPUT_DIR / "price_guide_review.md").read_text()
+    assert "## Household" in review
+    assert f"**{len(guide['items'])} entries**" in review
+
+
+def test_the_matchmaker_is_told_not_to_say_zero_days():
+    text = _flat(config.PROMPTS_DIR / "matchmaker_agent.md")
+    assert "waiting 0 days" in text          # named, in order to forbid it
+    assert "seven days or more" in text
+
+
+# --------------------------------------------------------------------------
+# A neighbor never reads the agent's own words
+# --------------------------------------------------------------------------
+
+def test_a_held_wish_says_what_to_change_in_our_words(client):
+    from backend import text as copy
+    cash = copy.held_reason(["cash_request"])
+    assert "Wishing Tree never does that" in cash
+    assert "rent or utilities" in cash
+
+    # Every flag kind has a line of its own, so none falls through to a
+    # shrug. The default exists for a review that raised nothing at all.
+    from backend.models import SafetyFlagKind
+    for kind in SafetyFlagKind:
+        assert copy.held_reason([kind.value]) != copy.HELD_DEFAULT, kind
+
+
+def test_the_approval_response_carries_no_agent_prose(client):
+    """`note_to_family` is still written and still stored for the activity
+    log. It simply never reaches the person who made the wish."""
+    import inspect
+    from backend import intake_api
+    source = inspect.getsource(intake_api)
+    returns = source[source.index("def _review_and_publish"):]
+    assert '"held_reason"' in returns
+    assert '"note_to_family": review.note_to_family' not in returns
+
+
+# --------------------------------------------------------------------------
+# The two neighbor pages
+# --------------------------------------------------------------------------
+
+def test_my_wishes_and_make_a_wish_are_separate_pages():
+    app = (FRONTEND / "src" / "App.tsx").read_text()
+    assert 'path="/family" element={<MyWishesPage />}' in app
+    assert 'path="/family/new" element={<Intake />}' in app
+
+    wishes = (FRONTEND / "src" / "pages" / "MyWishesPage.tsx").read_text()
+    chat = (FRONTEND / "src" / "pages" / "Intake.tsx").read_text()
+    assert "neighborLinks('wishes')" in wishes
+    assert "neighborLinks('new')" in chat
+    # Neither page renders the other's half.
+    assert "startIntake" not in wishes
+    assert "<MyWishes" not in chat
+
+
+def test_the_chat_greeting_is_the_one_that_was_asked_for():
+    from backend import intake_api
+    assert intake_api.GREETING.startswith("Hi neighbor, I'm so glad you're here.")
+    assert "a coat for a growing kid" in intake_api.GREETING
+    assert "No need to share your address" in intake_api.GREETING
+
+
+def test_the_chat_keeps_the_keyboard_open():
+    """A disabled input loses focus, and a phone closes the keyboard with it."""
+    chat = (FRONTEND / "src" / "pages" / "Intake.tsx").read_text()
+    composer = chat[chat.index('className="composer"'):]
+    composer = composer[:composer.index("</form>")]
+    assert "readOnly={busy}" in composer
+    assert "disabled={busy}" not in composer
+    assert "box.current?.focus()" in chat
+
+
+def test_the_message_counter_waits_until_it_matters():
+    chat = (FRONTEND / "src" / "pages" / "Intake.tsx").read_text()
+    assert "turnsLeft <= 5" in chat
+
+
+def test_the_privacy_badge_is_not_shown_before_the_check_runs():
+    review = (FRONTEND / "src" / "pages" / "WishReview.tsx").read_text()
+    assert "checked={false}" in review
+    card = (FRONTEND / "src" / "components" / "WishCard.tsx").read_text()
+    assert "checked = true" in card
+
+
+def test_a_wish_without_a_cost_cannot_be_posted():
+    review = (FRONTEND / "src" / "pages" / "WishReview.tsx").read_text()
+    assert "missingCost" in review
+    assert "disabled={busy || missingCost.length > 0}" in review

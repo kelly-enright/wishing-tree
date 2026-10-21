@@ -42,12 +42,14 @@ def _set_cookie(response: Response, token: str) -> None:
 def _me(session: accounts.Session, roles: list[accounts.Role]) -> dict:
     """What the browser is told about the person signed in.
 
-    The email is included because it is their own, and the account menu shows
-    it. Nothing else about the account leaves the server — no hash, no
-    session token, no other account's anything.
+    The email and the first name are included because they are their own:
+    this is the one response in the app allowed to carry either. Nothing else
+    about the account leaves the server — no hash, no session token, no other
+    account's anything.
     """
     return {
         "email": session.email,
+        "first_name": session.first_name,
         "role": session.role,
         "alias": session.alias,
         "zip": next((r.zip for r in roles if r.role == session.role), None),

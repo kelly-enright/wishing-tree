@@ -112,8 +112,7 @@ export default function MyGranted({ alias }: { alias: string }) {
         </section>
       )}
 
-      {done.length > 0 && (
-        <section className="granted" aria-label="Wishes you've granted">
+      <section className="granted" aria-label="Wishes you've granted">
           <button
             type="button"
             className={`granted__toggle${showDone ? ' granted__toggle--open' : ''}`}
@@ -125,14 +124,26 @@ export default function MyGranted({ alias }: { alias: string }) {
             <span className="granted__count">{done.length}</span>
           </button>
 
+          {showDone && done.length === 0 && (
+            <p className="granted__empty">Wishes you've granted will show up here.</p>
+          )}
           {showDone && done.map((row) => (
             <Card key={row.pledge_id} row={row} alias={alias}
                   busy={busy === row.pledge_id} onRelease={release} />
           ))}
-        </section>
-      )}
+      </section>
     </>
   )
+}
+
+/** The same cost wording the wish card uses, so the two never disagree. */
+function costOf(wish: GrantedRow['wish']): string {
+  if (wish.budget_min_usd != null && wish.budget_max_usd != null) {
+    return `$${wish.budget_min_usd.toFixed(0)}–$${wish.budget_max_usd.toFixed(0)}`
+  }
+  if (wish.estimated_cost_usd != null) return `$${wish.estimated_cost_usd.toFixed(0)}`
+  if (wish.budget_max_usd != null) return `up to $${wish.budget_max_usd.toFixed(0)}`
+  return '—'
 }
 
 function Card({
@@ -150,12 +161,38 @@ function Card({
 
       <p className="gcard__item">{row.wish.item_description}</p>
 
+      {/* What to bring, for somebody standing in a shop with their phone. */}
+      {row.status === 'pledged' && (
+        <dl className="bring">
+          <div><dt>Cost</dt><dd>{costOf(row.wish)}</dd></div>
+          {row.wish.size && <div><dt>Size</dt><dd>{row.wish.size}</dd></div>}
+          {row.wish.color && <div><dt>Color</dt><dd>{row.wish.color}</dd></div>}
+          {row.wish.brand && <div><dt>Brand</dt><dd>{row.wish.brand}</dd></div>}
+          {row.wish.size_preferences && (
+            <div><dt>Notes</dt><dd>{row.wish.size_preferences}</dd></div>
+          )}
+          <div>
+            <dt>Substitute</dt>
+            <dd>
+              {row.wish.request_type === 'specific' && !row.wish.open_to_substitute
+                ? 'Please bring this exact one'
+                : 'Something similar is fine'}
+            </dd>
+          </div>
+        </dl>
+      )}
+
       {!direct && row.status === 'pledged' && (
         <p className="gcard__when">
           Drop off <strong>{when(row.dropoff_date, row.dropoff_window)}</strong><br />
           <MapLink href={row.hub_maps_url}>
             {row.hub_name}, {row.hub_address}
           </MapLink>
+          <br />
+          <span className="gcard__card">
+            Feel free to include a handwritten card. We'll pass it along with
+            your gift.
+          </span>
         </p>
       )}
 

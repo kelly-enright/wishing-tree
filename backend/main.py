@@ -225,6 +225,7 @@ def create_family(form: FamilySignUp, response: Response) -> dict:
             contact_address=form.contact_address,
             contact_email=email,
             contact_phone=form.contact_phone or None,
+            first_name=(form.first_name or "").strip() or None,
         )
         db.insert_family(family, conn)
         token = _account_and_session(conn, email, form.password, "family", family.alias)
@@ -246,6 +247,7 @@ def create_donor(form: DonorSignUp, response: Response) -> dict:
             contact_address=form.contact_address,
             contact_email=email,
             contact_phone=form.contact_phone or None,
+            first_name=(form.first_name or "").strip() or None,
             budget_usd=form.budget_usd,
             preferred_categories=form.preferred_categories,
             preference=form.preference,

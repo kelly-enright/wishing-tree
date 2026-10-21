@@ -1178,7 +1178,7 @@ Agents arrive in later problems; these are the ones already standing.
 
 ## 25. Tests
 
-`./.venv/bin/python -m pytest` — **352 passing**, in under two seconds, every agent stubbed.
+`./.venv/bin/python -m pytest` — **378 passing**, in under two seconds, every agent stubbed.
 
 `./.venv/bin/python -m pytest -m live` — **10 more** against the real model, excluded by default because they spend tokens. Every agent is stubbed, so the suite is free to run.
 
@@ -1619,3 +1619,99 @@ accounts; the suite only caught it because this work was done in the evening.
 | New dependency | `bcrypt>=4.1.0` |
 | Agent prompts changed | none |
 | Demo password | `neighbor-demo`, for seeded accounts only |
+
+## 31. Making a wish, and granting one
+
+Fixes from Kelly using the app herself, so most of this is small and specific.
+
+### Two pages, not one scroll
+
+"My wishes" and "Make a wish" were halves of a single page, which meant the
+tab highlight could never be honest — you were always on both at once. They
+are separate routes now, `/family` and `/family/new`. Somebody with nothing
+posted is sent to the chat, because an empty list is not what they came for;
+everyone else lands on their wishes.
+
+### The chat
+
+The greeting is Kelly's, word for word. Five tap-to-start chips sit above the
+box for the blank-page moment; tapping one **fills** the box and focuses it
+rather than sending, so a person can add the detail that makes it theirs.
+
+The counter now waits until five messages remain. Counting down from twenty
+tells somebody their help is rationed before it ever is.
+
+The field is **`readOnly` while the agent thinks, not `disabled`**. That is
+the whole of (e): a disabled input loses focus the instant it is disabled,
+and a phone closes the keyboard with it. Focus is restored in `finally`, so
+it comes back after a failure too — which is exactly when someone wants to
+type again.
+
+### Household
+
+A new category, with its own leaf color (**#5B7C99**, the one blue on a tree
+of greens, and nothing like the gold that means granted), its own icon and
+its own chip. Six seeded wishes moved into it. The lap blanket did not: it is
+asked for as a birthday present, and Kelly's own definition puts what a thing
+is *for* above what it is. There is a test for that distinction.
+
+The price guide grew from 37 entries to 72, weighted to household and
+clothing. `output/price_guide_review.md` is regenerated and has a Household
+section. The figures are invented, as that file has always said, with a
+Checked column for Kelly.
+
+### Cost
+
+The prompt now works in order: ask for the price on the store page when there
+is a link (the agent never opens one, so the person looking at it knows
+better than any guess), then the price guide, then its own estimate from
+mainstream-store prices, labeled and editable. And a wish cannot be posted
+without one — the review screen's post button is disabled with a line saying
+which wishes still need a figure. An uncosted wish on the tree is one nobody
+can act on.
+
+### A neighbor never reads the agent's own words
+
+The Safety agent's `note_to_family` is still written and still stored for the
+activity log; it simply no longer reaches the person who made the wish. In
+its place:
+
+- **"Taken out before anyone saw it: a child's name."** Our sentence over a
+  list of kinds, kept because it is how somebody learns their details never
+  reached the tree.
+- **A fixed line per reason** when a wish is held — cash request, scam,
+  prompt injection, policy — each naming what to change. `text.held_reason()`,
+  with a test that every flag kind has a line of its own rather than falling
+  through to a shrug.
+
+"This intake took N seconds" moved into Show AI details, where it is a fact
+about the system rather than about the wish.
+
+### Granting
+
+Coming up cards carry what somebody standing in a shop actually needs: cost,
+size, color, brand, notes, whether a substitute is fine, and the View item
+link. The finished section is always present, collapsed, with an empty state,
+because a section that vanishes reads as a bug. The tab carries a count of
+what is still to do — not of finished wishes, which are not a to-do list. And
+both the confirmation and each card now mention the handwritten card.
+
+### Names
+
+An optional first name, with a particular kind of privacy: the person sees it
+("Hi, Dana", and their initial in the badge), the coordinator sees it on the
+run sheet, and **nobody else ever does**. Not another neighbor, not a wish
+granter, not any agent — `public_card()` is built from named fields, so it
+cannot carry one, and that is structural rather than a promise. Six tests
+hold it, including one that walks every public endpoint looking for the names
+the seed hands out.
+
+Seeded demo emails are `neighbora04@example.com` and `granterd01@example.com`
+now. The password is unchanged.
+
+| | |
+|---|---|
+| Tests | 378 passing, 10 deselected |
+| Price guide | 37 → 72 entries |
+| New category | Household, 7 seeded wishes |
+| Prompts changed | Intake (`61bc2f0fd4ce`), Matchmaker (`68ec7fde1ab1`) |

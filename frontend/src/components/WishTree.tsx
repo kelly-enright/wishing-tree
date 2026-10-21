@@ -29,6 +29,9 @@ const LEAF_COLORS: Record<Category, string> = {
   essentials: '#4A7A6B',
   clothing: '#6B8F5E',
   school_supplies: '#8A9A5B',
+  // The one blue on the tree, so household is unmistakable at leaf size and
+  // nothing like the gold that means a wish has already been granted.
+  household: '#5B7C99',
   gifts: '#C8664A',
   food: '#6E8B3D',
   other: '#55736C',

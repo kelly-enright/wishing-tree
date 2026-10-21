@@ -26,12 +26,15 @@ function cost(wish: Wish): string {
  * simply does not mention it.
  */
 export default function WishCard({
-  wish, reason, onGrant, granting,
+  wish, reason, onGrant, granting, checked = true,
 }: {
   wish: Wish
   reason?: string
   onGrant?: (wish: Wish) => void
   granting?: boolean
+  /** False on the preview, where the Privacy & Safety agent has not run yet
+   *  and the badge would be claiming something that has not happened. */
+  checked?: boolean
 }) {
   const urgent = wish.days_until_deadline != null && wish.days_until_deadline <= 7
 
@@ -97,10 +100,12 @@ export default function WishCard({
       {/* Every wish here has been through the Privacy & Safety agent — that
           is the only route to `open`. Saying so on the card is the quiet
           reassurance that makes a stranger's wish feel safe to read. */}
-      <p className="card__checked" title="A Privacy & Safety agent checked this wish for names, addresses and anything identifying before it went up.">
-        <ShieldCheck size={12} aria-hidden="true" />
-        Checked for privacy
-      </p>
+      {checked && (
+        <p className="card__checked" title="A Privacy & Safety agent checked this wish for names, addresses and anything identifying before it went up.">
+          <ShieldCheck size={12} aria-hidden="true" />
+          Checked for privacy
+        </p>
+      )}
 
       {wish.size && <p className="card__extra">Size: {wish.size}</p>}
       {!wish.size && wish.size_preferences && (

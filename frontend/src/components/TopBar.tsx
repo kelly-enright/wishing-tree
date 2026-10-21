@@ -30,6 +30,8 @@ export type NavLink = {
   to?: string
   onClick?: () => void
   active?: boolean
+  /** A small number beside the label — how many things are waiting. */
+  count?: number
 }
 
 /** What a visitor who is not signed in can get to from anywhere. */
@@ -49,6 +51,21 @@ const SIGNED_OUT: NavLink[] = [
  * screen — About, say, reached from either side. The role's own page passes
  * its own set, where the first two switch tabs instead of navigating.
  */
+/**
+ * The neighbor's links. Two pages, not two halves of one, so the highlight is
+ * decided by which page you are on rather than by where you have scrolled.
+ */
+export function neighborLinks(on: 'wishes' | 'new'): NavLink[] {
+  return [
+    { label: 'My wishes', short: 'Wishes', to: '/family',
+      icon: <ListChecks size={17} aria-hidden="true" />, active: on === 'wishes' },
+    { label: 'Make a wish', short: 'Ask', to: '/family/new',
+      icon: <Sparkles size={17} aria-hidden="true" />, active: on === 'new' },
+    { label: 'About', short: 'About', to: '/about',
+      icon: <Info size={17} aria-hidden="true" /> },
+  ]
+}
+
 export function roleLinks(role: 'family' | 'donor'): NavLink[] {
   const about: NavLink = {
     label: 'About', short: 'About', to: '/about',
@@ -56,10 +73,7 @@ export function roleLinks(role: 'family' | 'donor'): NavLink[] {
   }
   if (role === 'family') {
     return [
-      { label: 'My wishes', short: 'Wishes', to: '/family',
-        icon: <ListChecks size={17} aria-hidden="true" /> },
-      { label: 'Make a wish', short: 'Ask', to: '/family',
-        icon: <Sparkles size={17} aria-hidden="true" /> },
+      ...neighborLinks('wishes').slice(0, 2),
       about,
     ]
   }
@@ -127,6 +141,7 @@ function BarLink({ link, bottom = false }: { link: NavLink; bottom?: boolean }) 
     <>
       {link.icon}
       <span>{bottom ? link.short ?? link.label : link.label}</span>
+      {link.count ? <span className="navcount">{link.count}</span> : null}
     </>
   )
 
@@ -140,10 +155,12 @@ function BarLink({ link, bottom = false }: { link: NavLink; bottom?: boolean }) 
 }
 
 /**
- * The alias, with the part of it that actually distinguishes one person from
- * another. A first initial would read "N" for every neighbor in New Haven,
- * so the badge carries the code — A04, D01 — which is the whole point of an
- * alias.
+ * The alias, and a badge that says something useful.
+ *
+ * Their initial if they gave a name — it is theirs, and only they and the
+ * coordinator ever see it. Otherwise the code from the alias, A04 or D01,
+ * because a first initial taken from "Neighbor A04" would read "N" for every
+ * neighbor in New Haven.
  */
 function AccountMenu({
   alias, me, onSwitch, onSwitchSide,
@@ -155,7 +172,9 @@ function AccountMenu({
 }) {
   const [open, setOpen] = useState(false)
   const box = useRef<HTMLDivElement>(null)
-  const code = alias.split(' ').pop() ?? alias
+  const code = me?.first_name
+    ? me.first_name.trim().charAt(0).toUpperCase()
+    : alias.split(' ').pop() ?? alias
   const other = me?.roles?.find((r) => r.alias !== alias) ?? null
 
   useEffect(() => {

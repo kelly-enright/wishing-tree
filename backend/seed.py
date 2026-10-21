@@ -61,40 +61,50 @@ def previous_weekday(start: date, day: Weekday) -> date:
 # Families — alias, zip, invented street address, fiction-range phone
 # --------------------------------------------------------------------------
 
+# Invented first names for a few of them, so the optional field is visible in
+# a demo. Most are left blank, because most people will leave it blank.
+FIRST_NAMES = {
+    "Neighbor A04": "Dana",
+    "Neighbor A12": "Rosa",
+    "Neighbor A27": "Imani",
+    "Granter D01": "Theo",
+    "Granter D04": "Priya",
+}
+
 FAMILIES: list[tuple[str, str, str, str, str]] = [
     # alias, zip, address, email, phone
     # Every zip is inside the New Haven city service area. Emails use
     # example.com, which is reserved for documentation and reaches nobody.
     ("Neighbor A04", "06511", "118 Larkspur St, Apt 3B, New Haven, CT 06511",
-     "familya04@example.com", "(203) 555-0104"),
+     "neighbora04@example.com", "(203) 555-0104"),
     ("Neighbor A07", "06513", "42 Ridgewillow Ave, New Haven, CT 06513",
-     "familya07@example.com", "(203) 555-0107"),
+     "neighbora07@example.com", "(203) 555-0107"),
     ("Neighbor A12", "06519", "9 Tannery Row, Unit 2, New Haven, CT 06519",
-     "familya12@example.com", "(203) 555-0112"),
+     "neighbora12@example.com", "(203) 555-0112"),
     ("Neighbor A15", "06511", "260 Fernbrook Ln, New Haven, CT 06511",
-     "familya15@example.com", "(203) 555-0115"),
+     "neighbora15@example.com", "(203) 555-0115"),
     ("Neighbor A19", "06515", "77 Hollowmill Rd, New Haven, CT 06515",
-     "familya19@example.com", "(203) 555-0119"),
+     "neighbora19@example.com", "(203) 555-0119"),
     ("Neighbor A23", "06513", "515 Candleberry Dr, New Haven, CT 06513",
-     "familya23@example.com", None),
+     "neighbora23@example.com", None),
     ("Neighbor A27", "06513", "31 Quarry Bend, Apt 1, New Haven, CT 06513",
-     "familya27@example.com", "(203) 555-0127"),
+     "neighbora27@example.com", "(203) 555-0127"),
     ("Neighbor A31", "06519", "804 Saltmeadow Way, New Haven, CT 06519",
-     "familya31@example.com", "(203) 555-0131"),
+     "neighbora31@example.com", "(203) 555-0131"),
     ("Neighbor A34", "06510", "16 Printers Ct, Apt 5, New Haven, CT 06510",
-     "familya34@example.com", "(203) 555-0134"),
+     "neighbora34@example.com", "(203) 555-0134"),
     ("Neighbor A38", "06515", "233 Thistledown Rd, New Haven, CT 06515",
-     "familya38@example.com", "(203) 555-0138"),
+     "neighbora38@example.com", "(203) 555-0138"),
     ("Neighbor A42", "06511", "58 Copperleaf St, Apt 2C, New Haven, CT 06511",
-     "familya42@example.com", None),
+     "neighbora42@example.com", None),
     ("Neighbor A46", "06519", "140 Millpond Walk, New Haven, CT 06519",
-     "familya46@example.com", "(203) 555-0146"),
+     "neighbora46@example.com", "(203) 555-0146"),
     ("Neighbor A51", "06511", "67 Brambleton Ave, New Haven, CT 06511",
-     "familya51@example.com", "(203) 555-0151"),
+     "neighbora51@example.com", "(203) 555-0151"),
     ("Neighbor A55", "06513", "390 Winterbourne Rd, New Haven, CT 06513",
-     "familya55@example.com", "(203) 555-0155"),
+     "neighbora55@example.com", "(203) 555-0155"),
     ("Neighbor A58", "06515", "12 Stonefield Ln, New Haven, CT 06515",
-     "familya58@example.com", "(203) 555-0158"),
+     "neighbora58@example.com", "(203) 555-0158"),
 ]
 
 # --------------------------------------------------------------------------
@@ -103,35 +113,35 @@ FAMILIES: list[tuple[str, str, str, str, str]] = [
 
 DONORS: list[dict] = [
     dict(alias="Granter D01", zip="06511", contact_address="88 Elmcrest Ter, New Haven, CT 06511",
-         contact_email="donord01@example.com", contact_phone="(203) 555-0201", budget_usd=75.0,
+         contact_email="granterd01@example.com", contact_phone="(203) 555-0201", budget_usd=75.0,
          preferred_categories=[Category.CLOTHING, Category.SCHOOL_SUPPLIES],
          preference=DonorPreference.SPECIFIC),
     dict(alias="Granter D02", zip="06511", contact_address="451 Harrowgate Rd, New Haven, CT 06511",
-         contact_email="donord02@example.com", contact_phone="(203) 555-0202", budget_usd=200.0,
+         contact_email="granterd02@example.com", contact_phone="(203) 555-0202", budget_usd=200.0,
          preferred_categories=[Category.RENT_UTILITIES, Category.FOOD],
          preference=DonorPreference.FLEXIBLE),
     dict(alias="Granter D03", zip="06510", contact_address="7 Clocktower Sq, Apt 9, New Haven, CT 06510",
-         contact_email="donord03@example.com", contact_phone="(203) 555-0203", budget_usd=50.0,
+         contact_email="granterd03@example.com", contact_phone="(203) 555-0203", budget_usd=50.0,
          preferred_categories=[Category.ESSENTIALS, Category.FOOD],
          preference=DonorPreference.EITHER),
     dict(alias="Granter D04", zip="06515", contact_address="202 Birchfield Ave, New Haven, CT 06515",
-         contact_email="donord04@example.com", contact_phone="(203) 555-0204", budget_usd=120.0,
+         contact_email="granterd04@example.com", contact_phone="(203) 555-0204", budget_usd=120.0,
          preferred_categories=[Category.GIFTS, Category.CLOTHING],
          preference=DonorPreference.SPECIFIC),
     dict(alias="Granter D05", zip="06520", contact_address="1 Gateway Hall, Box 414, New Haven, CT 06520",
-         contact_email="donord05@example.com", contact_phone=None, budget_usd=40.0,
+         contact_email="granterd05@example.com", contact_phone=None, budget_usd=40.0,
          preferred_categories=[Category.SCHOOL_SUPPLIES],
          preference=DonorPreference.EITHER),
     dict(alias="Granter D06", zip="06515", contact_address="315 Foxglove Dr, New Haven, CT 06515",
-         contact_email="donord06@example.com", contact_phone="(203) 555-0206", budget_usd=350.0,
+         contact_email="granterd06@example.com", contact_phone="(203) 555-0206", budget_usd=350.0,
          preferred_categories=[Category.RENT_UTILITIES, Category.OTHER],
          preference=DonorPreference.FLEXIBLE),
     dict(alias="Granter D07", zip="06513", contact_address="60 Seabright Ct, New Haven, CT 06513",
-         contact_email="donord07@example.com", contact_phone="(203) 555-0207", budget_usd=90.0,
+         contact_email="granterd07@example.com", contact_phone="(203) 555-0207", budget_usd=90.0,
          preferred_categories=[Category.CLOTHING, Category.ESSENTIALS, Category.GIFTS],
          preference=DonorPreference.EITHER),
     dict(alias="Granter D08", zip="06519", contact_address="24 Orchard Gate, New Haven, CT 06519",
-         contact_email="donord08@example.com", contact_phone="(203) 555-0208", budget_usd=500.0,
+         contact_email="granterd08@example.com", contact_phone="(203) 555-0208", budget_usd=500.0,
          preferred_categories=[Category.RENT_UTILITIES, Category.FOOD, Category.OTHER],
          preference=DonorPreference.FLEXIBLE),
 ]
@@ -248,7 +258,7 @@ REQUESTS: list[dict] = [
          prefs="Paid directly to the gas company."),
 
     # --- Family A31: father on disability ---
-    dict(family="Neighbor A31", category=Category.OTHER, type=S, days=29,
+    dict(family="Neighbor A31", category=Category.HOUSEHOLD, type=S, days=29,
          occasion="everyday", status=RequestStatus.OPEN, cost=65.0,
          desc="Shower chair for an adult",
          link="https://www.walgreens.com/store/c/shower-chair-with-back/ID=300411227",
@@ -260,7 +270,7 @@ REQUESTS: list[dict] = [
          prefs=None),
 
     # --- Family A34: after an apartment fire ---
-    dict(family="Neighbor A34", category=Category.ESSENTIALS, type=F, days=2,
+    dict(family="Neighbor A34", category=Category.HOUSEHOLD, type=F, days=2,
          occasion="emergency", status=RequestStatus.DELIVERED, budget=(70.0, 120.0),
          desc="Sheets, towels and basic pots and pans",
          prefs="Two twin beds and one full."),
@@ -268,7 +278,7 @@ REQUESTS: list[dict] = [
          occasion="emergency", status=RequestStatus.OPEN, budget=(100.0, 160.0),
          desc="School clothes for three children",
          prefs="Boys 6, girls 9, girls 13."),
-    dict(family="Neighbor A34", category=Category.OTHER, type=S, days=21,
+    dict(family="Neighbor A34", category=Category.HOUSEHOLD, type=S, days=21,
          occasion="emergency", status=RequestStatus.GRANTED, cost=48.0,
          desc="Smoke detector set and a small fire extinguisher",
          link="https://www.bestbuy.com/site/smoke-detector-2-pack/6501338.p",
@@ -306,7 +316,7 @@ REQUESTS: list[dict] = [
          occasion="emergency", status=RequestStatus.DELIVERED, budget=(50.0, 80.0),
          desc="Prepared meals for an adult, no cooking required",
          prefs="Soft foods."),
-    dict(family="Neighbor A46", category=Category.ESSENTIALS, type=S, days=14,
+    dict(family="Neighbor A46", category=Category.HOUSEHOLD, type=S, days=14,
          occasion="everyday", status=RequestStatus.OPEN, cost=26.0,
          desc="Reacher grabber tool for an adult",
          link="https://www.amazon.com/dp/B07YFG4K2Q",
@@ -344,7 +354,7 @@ REQUESTS: list[dict] = [
          occasion="everyday", status=RequestStatus.OPEN, budget=(90.0, 140.0),
          desc="A few hours of respite care",
          prefs=None),
-    dict(family="Neighbor A58", category=Category.GIFTS, type=S, days=72,
+    dict(family="Neighbor A58", category=Category.HOUSEHOLD, type=S, days=72,
          occasion="holiday", status=RequestStatus.OPEN, cost=32.0,
          desc="Large-button digital photo frame for an older adult",
          link="https://www.amazon.com/dp/B08X9QJ7RT",
@@ -381,7 +391,7 @@ HISTORY: list[dict] = [
          desc="Toddler diapers, size 5, and wipes"),
     dict(ago=23,  category=Category.GIFTS,           cost=29.0, occasion="birthday",
          desc="Art set for a 9-year-old"),
-    dict(ago=27,  category=Category.OTHER,           cost=45.0, occasion="everyday",
+    dict(ago=27,  category=Category.HOUSEHOLD,       cost=45.0, occasion="everyday",
          desc="Laundry card refill for an apartment building"),
 
     # --- older: counted on the landing page, no longer on the tree ---
@@ -405,7 +415,7 @@ HISTORY: list[dict] = [
          desc="Rent help, paid to the landlord"),
     dict(ago=113, category=Category.FOOD,            cost=48.0, occasion="everyday",
          desc="Freezer meals, microwave only"),
-    dict(ago=126, category=Category.ESSENTIALS,      cost=22.0, occasion="everyday",
+    dict(ago=126, category=Category.HOUSEHOLD,       cost=22.0, occasion="everyday",
          desc="Shower chair for an adult"),
     dict(ago=140, category=Category.SCHOOL_SUPPLIES, cost=19.0, occasion="back_to_school",
          desc="Backpack, 17 inch, for a school-age child"),
@@ -466,13 +476,16 @@ def seed(db_path: Path | None = None, today: date | None = None) -> dict[str, in
             db.insert_family(
                 Family(alias=alias, zip=zipc, region_slug=region.slug,
                        contact_address=address, contact_email=email,
-                       contact_phone=phone),
+                       contact_phone=phone,
+                       first_name=FIRST_NAMES.get(alias)),
                 conn,
             )
 
         donor_aliases = []
         for row in DONORS:
-            db.insert_donor(Donor(region_slug=region.slug, **row), conn)
+            db.insert_donor(
+                Donor(region_slug=region.slug,
+                      first_name=FIRST_NAMES.get(row["alias"]), **row), conn)
             donor_aliases.append(row["alias"])
 
         # One account per seeded email, all sharing the demo password. They

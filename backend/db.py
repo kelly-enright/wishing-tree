@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS families (
     contact_address TEXT    NOT NULL,   -- coordinator only
     contact_email   TEXT    NOT NULL,   -- coordinator only
     contact_phone   TEXT,               -- coordinator only, optional
+    first_name      TEXT,               -- optional; the person and admin only
     created_at      TEXT    NOT NULL
 );
 
@@ -46,6 +47,7 @@ CREATE TABLE IF NOT EXISTS donors (
     contact_address      TEXT    NOT NULL,   -- coordinator only
     contact_email        TEXT    NOT NULL,   -- coordinator only
     contact_phone        TEXT,               -- coordinator only, optional
+    first_name           TEXT,               -- optional; the person and admin only
     budget_usd           REAL    NOT NULL,
     preferred_categories TEXT    NOT NULL,   -- comma separated
     preference           TEXT    NOT NULL,
@@ -244,10 +246,12 @@ def _iso(value: datetime | date) -> str:
 def insert_family(family: Family, conn: sqlite3.Connection) -> int:
     cur = conn.execute(
         """INSERT INTO families (alias, zip, region_slug, contact_address,
-                                 contact_email, contact_phone, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                                 contact_email, contact_phone, first_name,
+                                 created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
         (family.alias, family.zip, family.region_slug, family.contact_address,
-         family.contact_email, family.contact_phone, _iso(family.created_at)),
+         family.contact_email, family.contact_phone, family.first_name,
+         _iso(family.created_at)),
     )
     return int(cur.lastrowid)
 
@@ -255,11 +259,12 @@ def insert_family(family: Family, conn: sqlite3.Connection) -> int:
 def insert_donor(donor: Donor, conn: sqlite3.Connection) -> int:
     cur = conn.execute(
         """INSERT INTO donors (alias, zip, region_slug, contact_address,
-                               contact_email, contact_phone,
+                               contact_email, contact_phone, first_name,
                                budget_usd, preferred_categories, preference, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (donor.alias, donor.zip, donor.region_slug, donor.contact_address,
-         donor.contact_email, donor.contact_phone, donor.budget_usd,
+         donor.contact_email, donor.contact_phone, donor.first_name,
+         donor.budget_usd,
          ",".join(c.value for c in donor.preferred_categories),
          donor.preference.value, _iso(donor.created_at)),
     )

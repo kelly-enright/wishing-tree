@@ -36,9 +36,11 @@ from backend.models import (
 router = APIRouter(prefix="/api/intake")
 
 GREETING = (
-    "Hi — I'm here to help you put your wishes together. "
-    "Tell me what would help, in whatever words are easiest. "
-    "You don't need to share your address, phone number or anyone's name here."
+    "Hi neighbor, I'm so glad you're here. What's something that would make "
+    "life a little easier right now? It could be anything: a coat for a "
+    "growing kid, school supplies, help with a bill. Just tell me in your own "
+    "words, and I'll help turn it into a wish. (No need to share your "
+    "address, phone number or anyone's name.)"
 )
 
 LIMIT_MESSAGE = (
@@ -387,7 +389,7 @@ async def _review_and_publish(request: Request, session_id: str) -> dict:
             "removed": [],
             "flags": [],
             "enforced": [],
-            "note_to_family": (
+            "held_reason": (
                 "Our privacy check is busy right now, so this one has to wait. "
                 "Your wish is saved and nothing is lost — it goes up as soon as "
                 "the check is free."
@@ -402,7 +404,7 @@ async def _review_and_publish(request: Request, session_id: str) -> dict:
             "removed": [],
             "flags": [],
             "enforced": [],
-            "note_to_family": (
+            "held_reason": (
                 "We couldn't finish the privacy check on this one just now. "
                 "It's saved, and a coordinator will take a look."
             ),
@@ -427,12 +429,20 @@ async def _review_and_publish(request: Request, session_id: str) -> dict:
         )
         conn.commit()
 
+    # `review.note_to_family` is deliberately *not* here. The agent writes it
+    # and it is kept in the safety_reviews table for the activity log, but a
+    # neighbor reads our words: the list of kinds removed, and — if the wish
+    # was held — a fixed line naming the reason and what to change.
+    kinds = [f.kind.value for f in review.flags]
     return {
         "request_id": request.id,
         "published": review.approved,
         "description": cleaned.item_description,
+        # The card as it now sits on the tree, so the confirmation shows the
+        # real thing rather than a summary of it.
+        "card": cleaned.public_card() if review.approved else None,
         "removed": review.removed,
         "flags": [f.model_dump(mode="json") for f in review.flags],
         "enforced": enforced,
-        "note_to_family": review.note_to_family,
+        "held_reason": None if review.approved else text.held_reason(kinds),
     }

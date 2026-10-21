@@ -17,6 +17,7 @@ export default function SignUpFamily() {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
+  const [firstName, setFirstName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const navigate = useNavigate()
@@ -32,6 +33,7 @@ export default function SignUpFamily() {
         contact_email: email.trim(),
         contact_phone: phone.trim() || null,
         password,
+        first_name: firstName.trim() || null,
       })
       setMe(await getMe())
       navigate('/family')
@@ -74,6 +76,19 @@ export default function SignUpFamily() {
               <span className="field__hint">
                 We'll only use this to coordinate your delivery. It's never shown
                 to anyone.
+              </span>
+            </label>
+
+            <label className="field">
+              <span className="field__label">First name <em>(optional)</em></span>
+              <input
+                className="field__input" value={firstName} disabled={covered !== true}
+                placeholder="Dana" maxLength={40} autoComplete="given-name"
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+              <span className="field__hint">
+                Only you and our coordinator see this. Neighbors only ever see
+                your alias.
               </span>
             </label>
 
