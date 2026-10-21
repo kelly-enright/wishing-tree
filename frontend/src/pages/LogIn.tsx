@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ShieldCheck } from 'lucide-react'
 import { logIn, userMessage } from '../api'
 import { homePath, setMe } from '../session'
@@ -20,6 +20,10 @@ import usePageTitle from '../usePageTitle'
  */
 export default function LogIn() {
   usePageTitle('Log in')
+  // Where to go afterwards. Set when somebody tapped a wish on the landing
+  // page before they had an account: they came for that wish, so that is
+  // where they land, not on a tree of thirty with the job of finding it.
+  const next = new URLSearchParams(useLocation().search).get('next')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -33,7 +37,8 @@ export default function LogIn() {
     try {
       const me = await logIn(email.trim(), password)
       setMe(me)
-      if (me.must_choose) navigate('/choose')
+      if (me.must_choose) navigate(next ? `/choose?next=${encodeURIComponent(next)}` : '/choose')
+      else if (next && me.role === 'donor') navigate(next)
       else navigate(homePath(me.role === 'donor' ? 'donor' : 'family'))
     } catch (err) {
       setError(userMessage(err, 'We could not log you in just now. Please try again.'))
@@ -45,7 +50,10 @@ export default function LogIn() {
     <main className="page page--narrow">
       <TopBar />
       <h1 className="page__title">Log in</h1>
-      <p className="page__blurb">Welcome back.</p>
+      <p className="page__blurb">
+        {next ? "Log in and we'll take you straight back to that wish."
+              : 'Welcome back.'}
+      </p>
 
       <form className="form" onSubmit={submit}>
         <label className="field">
@@ -71,8 +79,13 @@ export default function LogIn() {
       </p>
 
       <p className="loginhelp">
-        New here? <Link to="/family/signup">Make a wish</Link> or{' '}
-        <Link to="/donor/signup">grant a wish</Link>.
+        {next ? (
+          <>New here? <Link to={`/donor/signup?next=${encodeURIComponent(next)}`}>
+            Create an account</Link> and you can grant it.</>
+        ) : (
+          <>New here? <Link to="/family/signup">Make a wish</Link> or{' '}
+          <Link to="/donor/signup">grant a wish</Link>.</>
+        )}
       </p>
 
       <p className="loginhelp loginhelp--staff">

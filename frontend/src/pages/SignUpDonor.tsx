@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { CATEGORY_LABELS, formatPhone, signUpDonor, type Category, type Preference,
   userMessage,
 } from '../api'
@@ -31,6 +31,8 @@ export default function SignUpDonor() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const navigate = useNavigate()
+  // Carried from the landing page when somebody tapped a wish first.
+  const next = new URLSearchParams(useLocation().search).get('next')
 
   function toggle(category: Category) {
     setCategories((current) =>
@@ -57,7 +59,7 @@ export default function SignUpDonor() {
         preference,
       })
       setMe(await getMe())
-      navigate('/donor')
+      navigate(next ?? '/donor')
     } catch (err) {
       setError(userMessage(err, 'We could not create your account just now. Please try again.'))
       setBusy(false)

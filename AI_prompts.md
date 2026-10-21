@@ -992,3 +992,53 @@ greens.
 **Still outstanding, by agreement:** the live safety suite and the token
 measurements. Both prompts changed again this problem, so those numbers have
 drifted further — Intake is now `61bc2f0fd4ce` and Matchmaker `68ec7fde1ab1`.
+
+## Problem 17 — Landing Page and About
+
+> *Kelly numbered this "Problem 14"; logged here in working order.*
+
+### Prompt 1
+
+> Problem 14: "Landing page and About"
+>
+> The first impression. Keep everything else that works, and keep all motion subtle and slow.
+>
+> a.) Change the small labels on the two door cards to "If you could use a hand" and "If you'd like to help."
+> b.) Demo shortcut text: "Continue as an existing neighbor or wish granter, without signing up."
+> c.) Footer rent line: "No cash ever changes hands between neighbors. Wishing Tree pays rent and utilities directly to the landlord or provider."
+> d.) More visuals, using our own components and original illustrations only (no stock photos of people): a live, smaller Wish Tree as the hero with real leaves and gold ones; "How it works" as three illustrated steps; an example wish card; a row of category icons; a larger Monty near the welcome line.
+> e.) Motion: leaves sway with an occasional soft glint on gold, the counter counts up on load, the steps fade in on scroll, Monty perks up on hover, the door cards lift, and a few very faint leaves drift in the background. Nothing bounces or flashes, and all motion turns off with the user's reduced-motion setting.
+> f.) On About, move "Who I am" with the portrait to the top, rename its heading to "Hi, I'm Kelly," and move its last sentence to the very end as a closing line. Don't change any other wording.
+> g.) In the signed-out header, move "Log in" and "Create account" to the right, with "Create account" as a filled button. Highlight the current page's link.
+> h.) Use the friendly date format in the footer too.
+> i.) Update tests, take fresh screenshots of the landing, login and About pages on desktop and phone, and update harness.md.
+
+**Two questions asked first.** On the hero tree, Kelly chose **tappable** —
+but as an invitation rather than a wall: the card opens read-only, and
+"Grant this wish" carries the person through sign-in and **back to that same
+wish** so they can finish. On the example card she chose **a real wish**
+rather than an invented one, which keeps the standing no-invented-data rule
+intact on the page a stranger sees first.
+
+**Outcome:** 391 passing. No agent prompt touched, and nothing on the page
+is invented — the hero and the example are live data.
+
+- **The return-to-wish flow is the substantial part.** `?next=` survives
+  login, the choose-a-side step and granter sign-up; the donor page opens
+  that wish's confirmation on arrival and then strips the id from the URL, so
+  a refresh does not reopen something already dealt with. A wish granted by
+  somebody else in the meantime says so rather than failing.
+- **A bug the phone found.** `.landing > * { position: relative }`, added so
+  the drifting leaves sit behind content, was beating `.tabbar`'s
+  `position: fixed` — the bottom tab bar had moved to just under the header.
+  The rule excludes both bars now.
+- **Two pieces of motion need JavaScript, not just CSS.** The counter and the
+  scroll reveal change what is in the DOM, so a CSS-only reduced-motion rule
+  would leave a counter at zero and content invisible. Both check the
+  preference themselves.
+- **The mid-flow granter screens were showing "Log in" to someone signed in**,
+  left over from when those screens took a bare `<TopBar />`. They carry the
+  account menu now, with no nav links, so nobody wanders off mid-grant.
+
+**Still outstanding, by agreement:** the live safety suite and the token
+measurements.

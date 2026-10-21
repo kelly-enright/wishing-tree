@@ -2458,3 +2458,169 @@ textarea.field__input { resize: vertical; font: inherit; }
   .page, .landing { padding-left: 16px; padding-right: 16px; }
   .bring { grid-template-columns: auto 1fr; font-size: 12.5px; }
 }
+
+/* The signed-out pair on the right: one quiet, one filled. */
+.topbar__right .btn--small {
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+/* On a narrow screen the two of them have to share what is left after the
+   wordmark. "Log in" becomes its icon; "Create account" becomes "Sign up". */
+@media (max-width: 600px) {
+  .topbar__right .topbar__link .full { display: none; }
+  .topbar__right .btn--small .full { display: none; }
+  .topbar__right .btn--small .short { display: inline; }
+}
+.topbar__right .short { display: none; }
+
+/* Kelly opens the page now, so "Why Wishing Tree exists" is a section
+   heading rather than the title, and wants a little air above it. */
+.about__heading--why { margin-top: 34px; }
+
+.about__closing {
+  margin: 30px 0 0; padding: 18px 20px;
+  border-left: 3px solid var(--gold);
+  background: var(--gold-pale); border-radius: var(--radius);
+  color: var(--evergreen-deep); font-size: 1.02rem; line-height: 1.6;
+}
+
+/* ===================================================== the landing page */
+
+.hero__tree { margin: 10px auto 4px; max-width: 420px; }
+
+/* A smaller tree for the hero. The leaves keep their tap targets — this is
+   the real tree, and tapping one is how a visitor meets a wish. */
+.tree--compact .tree__canvas { max-width: 360px; }
+.tree--compact .leaf { width: 36px; height: 36px; }
+.tree--compact .leaf--granted { width: 31px; height: 31px; }
+.tree--compact .tree__legend { font-size: 12.5px; }
+
+/* Leaves breathe. Five rhythms, all slow and all small, so the canopy never
+   moves in unison and nothing ever catches the eye on purpose. */
+.tree--swaying .leaf { animation: sway 7s ease-in-out infinite; }
+.tree--swaying .leaf[data-sway="1"] { animation-duration: 8.5s; animation-delay: -1.2s; }
+.tree--swaying .leaf[data-sway="2"] { animation-duration: 6.4s; animation-delay: -2.6s; }
+.tree--swaying .leaf[data-sway="3"] { animation-duration: 9.2s; animation-delay: -0.7s; }
+.tree--swaying .leaf[data-sway="4"] { animation-duration: 7.8s; animation-delay: -3.4s; }
+
+@keyframes sway {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-2px) rotate(1.4deg); }
+}
+
+/* An occasional glint across a gold leaf — once every twelve seconds, and
+   gone in under one. Any brighter or oftener and it would be a flash. */
+.tree--swaying .leaf--granted::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(115deg, transparent 38%,
+              rgba(255, 255, 255, 0.72) 50%, transparent 62%);
+  opacity: 0; animation: glint 12s ease-in-out infinite;
+}
+.tree--swaying .leaf--granted:nth-of-type(odd)::after { animation-delay: -6s; }
+
+@keyframes glint {
+  0%, 92%, 100% { opacity: 0; }
+  96%           { opacity: 1; }
+}
+
+/* ------------------------------------------------------------- the bands */
+.band { max-width: 760px; margin: 44px auto 0; text-align: center; }
+.band__title {
+  font-family: var(--display); font-size: 1.4rem;
+  color: var(--evergreen-deep); margin: 0 0 6px;
+}
+.band__blurb {
+  margin: 0 auto 16px; max-width: 46ch;
+  color: var(--ink-soft); font-size: 14px; line-height: 1.6;
+}
+.band__card { max-width: 380px; margin: 0 auto; text-align: left; }
+
+/* How it works, as three cards. */
+.steps {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+  margin: 0; padding: 0; list-style: none;
+}
+.steps__card {
+  position: relative; height: 100%; padding: 22px 18px 20px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--white); box-shadow: var(--shadow); text-align: left;
+}
+.steps__icon {
+  display: grid; place-items: center; width: 46px; height: 46px;
+  border-radius: var(--radius-pill);
+  background: var(--evergreen-pale); color: var(--evergreen);
+  margin-bottom: 12px;
+}
+.steps__n {
+  position: absolute; top: 18px; right: 18px;
+  font-family: var(--display); font-size: 1.5rem; color: var(--line);
+}
+.steps__title {
+  margin: 0 0 6px; font-family: var(--display); font-size: 1.05rem;
+  color: var(--evergreen-deep);
+}
+.steps__body { margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--ink-soft); }
+
+@media (max-width: 760px) { .steps { grid-template-columns: 1fr; } }
+
+/* The range of wishes. */
+.range {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 14px 22px;
+  margin: 0; padding: 0; list-style: none;
+}
+.range__item {
+  display: flex; flex-direction: column; align-items: center; gap: 7px;
+  width: 92px; font-size: 12.5px; color: var(--ink-soft); text-align: center;
+}
+.range__icon {
+  display: grid; place-items: center; width: 52px; height: 52px;
+  border-radius: var(--radius-pill);
+  background: var(--evergreen-pale); color: var(--evergreen);
+}
+
+/* --------------------------------------------------- fade in on scroll */
+.reveal {
+  opacity: 0; transform: translateY(10px);
+  transition: opacity 520ms ease, transform 520ms ease;
+}
+.reveal--in { opacity: 1; transform: none; }
+
+/* ---------------------------------------------- leaves in the background */
+.drift {
+  position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+}
+.drift__leaf {
+  position: absolute; width: 22px; height: 22px;
+  border-radius: 56% 12% 56% 12%;
+  background: var(--evergreen); opacity: 0.06;
+  animation: drift 46s linear infinite;
+}
+.drift__leaf--0 { left: 8%;  animation-duration: 52s; animation-delay: -6s; }
+.drift__leaf--1 { left: 27%; animation-duration: 61s; animation-delay: -22s; }
+.drift__leaf--2 { left: 54%; animation-duration: 47s; animation-delay: -35s; }
+.drift__leaf--3 { left: 73%; animation-duration: 66s; animation-delay: -12s; }
+.drift__leaf--4 { left: 89%; animation-duration: 55s; animation-delay: -44s; }
+
+@keyframes drift {
+  from { transform: translateY(-12vh) rotate(0deg); }
+  to   { transform: translateY(112vh) rotate(220deg); }
+}
+
+/* The landing's own content sits above the drift — but not the bars, which
+   are positioned themselves. `position: relative` here was quietly beating
+   the tab bar's `fixed`, which dropped it from the bottom of a phone screen
+   to just under the header. */
+.landing > *:not(.topbar):not(.tabbar) { position: relative; z-index: 1; }
+
+/* Monty perks up when you say hello. */
+.hero__monty .monty { transition: transform 260ms ease; }
+.hero__monty:hover .monty { transform: translateY(-3px) rotate(-3deg); }
+
+/* ------------------------------------------------------ less of all that */
+@media (prefers-reduced-motion: reduce) {
+  .tree--swaying .leaf,
+  .tree--swaying .leaf--granted::after,
+  .drift__leaf { animation: none; }
+  .drift { display: none; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .hero__monty:hover .monty { transform: none; }
+}

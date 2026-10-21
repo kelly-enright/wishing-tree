@@ -20,8 +20,10 @@ export async function signOut(): Promise<void> {
 }
 
 /** Move to the other side of an account that has both. */
-export async function switchSide(role: 'family' | 'donor'): Promise<void> {
+export async function switchSide(
+  role: 'family' | 'donor', next?: string | null,
+): Promise<void> {
   const me = await chooseSide(role)
   setMe(me)
-  window.location.assign(homePath(role))
+  window.location.assign(next || homePath(role))
 }

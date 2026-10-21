@@ -1178,7 +1178,7 @@ Agents arrive in later problems; these are the ones already standing.
 
 ## 25. Tests
 
-`./.venv/bin/python -m pytest` — **378 passing**, in under two seconds, every agent stubbed.
+`./.venv/bin/python -m pytest` — **391 passing**, in under two seconds, every agent stubbed.
 
 `./.venv/bin/python -m pytest -m live` — **10 more** against the real model, excluded by default because they spend tokens. Every agent is stubbed, so the suite is free to run.
 
@@ -1715,3 +1715,80 @@ now. The password is unchanged.
 | Price guide | 37 → 72 entries |
 | New category | Household, 7 seeded wishes |
 | Prompts changed | Intake (`61bc2f0fd4ce`), Matchmaker (`68ec7fde1ab1`) |
+
+## 32. The landing page, and About
+
+### The hero is the real tree
+
+Not a drawing of one. The landing page reads `/api/wishes` — the same
+endpoint a signed-in granter reads, already public — and draws the actual
+tree, with actual leaves in actual colors and the gold ones where they are.
+A visitor sees the thing itself rather than a picture of it.
+
+**Tapping a leaf is an invitation, not a wall.** Kelly's call. The card opens
+read-only with a button that says **"Grant this wish"** rather than "I'll
+grant this wish" — a signed-out visitor is being invited, not making a
+promise they cannot keep. It carries the wish through sign-in in the URL
+(`/login?next=/donor?wish=37`) and hands it back on the other side, so
+somebody who came for one particular wish lands on *that wish*, not on a tree
+of thirty and the job of finding it again. The id is dropped from the URL
+afterwards, so a refresh does not reopen a wish already dealt with.
+
+### The example wish is a real one
+
+"Here's what a wish looks like" shows the **oldest open wish on the tree**.
+Real, so nothing is invented, and the oldest rather than a random one so the
+page does not change under somebody between two loads. It is the same
+`WishCard` component the granter's side uses, with the same "Checked for
+privacy" badge — what a visitor sees is what they get.
+
+### Motion
+
+All of it slow, and all of it switchable off.
+
+| | |
+|---|---|
+| Leaves sway | 7s, five staggered rhythms so the canopy never moves in unison |
+| Gold glint | once every 12s, visible for under one of them |
+| Counter | counts up once on load, eased, 900ms |
+| Steps fade in | on scroll, staggered 140ms, once |
+| Drifting leaves | 46–66s to cross, 6% opacity, `aria-hidden` |
+| Monty | perks up on hover |
+
+The two pieces that change the DOM rather than just how it moves — the
+counter and the scroll reveal — check `prefers-reduced-motion` in JavaScript
+as well, because CSS alone would leave a counter at zero or content hidden.
+
+### A bug the phone found
+
+`.landing > * { position: relative }`, added for the drifting leaves to sit
+behind content, was quietly beating `.tabbar`'s `position: fixed` — which
+dropped the bottom tab bar from the foot of a phone screen to just under the
+header. The rule excludes both bars now.
+
+### About
+
+Kelly opens the page: **"Hi, I'm Kelly."** with the portrait, above "Why
+Wishing Tree exists", which became a section heading. The last sentence of
+her paragraph moved to the very end as a closing line — the same words,
+moved rather than copied, with a test asserting it appears exactly once. No
+other wording on that page changed, and five of her sentences are checked
+verbatim.
+
+### Header
+
+Signed out, "Log in" and "Create account" moved to the right with Create
+account filled, the way almost every site puts it. The current page's link
+lights itself from the route rather than each page being told to, which is
+one fewer thing to forget. On a narrow screen "Log in" becomes its icon and
+"Create account" becomes "Sign up".
+
+The footer now reads the week as the standing arrangement it is: **Drop-off
+Thursdays 4–7 PM at Yale School of Management · Delivery Saturdays 10 AM–1 PM.**
+
+| | |
+|---|---|
+| Tests | 391 passing, 10 deselected |
+| New component | `LandingBits.tsx` — count-up, reveal, steps, range, drift |
+| Agent prompts changed | none |
+| Invented content | none — the hero and the example are live data |

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import {
   ChevronDown, HeartHandshake, HelpCircle, Info, ListChecks, LogIn,
   Repeat, Sparkles, TreePine, UserPlus,
@@ -34,16 +34,13 @@ export type NavLink = {
   count?: number
 }
 
-/** What a visitor who is not signed in can get to from anywhere. */
+/** What a signed-out visitor can read about. Where they *act* sits on the
+ *  right, the way almost every site puts it. */
 const SIGNED_OUT: NavLink[] = [
   { label: 'How it works', short: 'How', to: '/how-it-works',
     icon: <HelpCircle size={17} aria-hidden="true" /> },
   { label: 'About', short: 'About', to: '/about',
     icon: <Info size={17} aria-hidden="true" /> },
-  { label: 'Log in', short: 'Log in', to: '/login',
-    icon: <LogIn size={17} aria-hidden="true" /> },
-  { label: 'Create account', short: 'Sign up', to: '/family/signup',
-    icon: <UserPlus size={17} aria-hidden="true" /> },
 ]
 
 /**
@@ -99,6 +96,9 @@ export default function TopBar({
   // No page is a dead end: with nobody signed in the bar still offers the
   // four ways on, rather than being a logo on its own.
   const shown = links ?? (alias ? [] : SIGNED_OUT)
+  // Which page we are on, so its own link is lit rather than looking like
+  // somewhere else to go.
+  const here = useLocation().pathname
   return (
     <>
       <header className="topbar">
@@ -113,6 +113,27 @@ export default function TopBar({
 
           <div className="topbar__right">
             {trailing}
+
+            {/* Signed out: the two ways in, on the right. "Create account" is
+                the filled one, because it is what a first-time visitor is
+                most likely to want. */}
+            {!alias && !links && (
+              <>
+                <Link
+                  className={`topbar__link${here === '/login' ? ' topbar__link--on' : ''}`}
+                  to="/login"
+                >
+                  <LogIn size={17} aria-hidden="true" />
+                  <span className="full">Log in</span>
+                </Link>
+                <Link className="btn btn--primary btn--small" to="/family/signup">
+                  <UserPlus size={15} aria-hidden="true" />
+                  <span className="full">Create account</span>
+                  <span className="short">Sign up</span>
+                </Link>
+              </>
+            )}
+
             {alias && (
               <AccountMenu
                 alias={alias} me={me} onSwitch={onSwitch} onSwitchSide={onSwitchSide}
@@ -134,9 +155,11 @@ export default function TopBar({
 }
 
 function BarLink({ link, bottom = false }: { link: NavLink; bottom?: boolean }) {
+  const here = useLocation().pathname
+  const active = link.active ?? (link.to ? here === link.to : false)
   const cls = bottom
-    ? `tabbar__link${link.active ? ' tabbar__link--on' : ''}`
-    : `topbar__link${link.active ? ' topbar__link--on' : ''}`
+    ? `tabbar__link${active ? ' tabbar__link--on' : ''}`
+    : `topbar__link${active ? ' topbar__link--on' : ''}`
   const body = (
     <>
       {link.icon}
@@ -148,7 +171,7 @@ function BarLink({ link, bottom = false }: { link: NavLink; bottom?: boolean }) 
   if (link.to) return <Link className={cls} to={link.to}>{body}</Link>
   return (
     <button type="button" className={cls} onClick={link.onClick}
-            aria-current={link.active ? 'page' : undefined}>
+            aria-current={active ? 'page' : undefined}>
       {body}
     </button>
   )

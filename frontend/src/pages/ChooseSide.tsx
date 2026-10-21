@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { HeartHandshake, Sparkles } from 'lucide-react'
 import { useSession } from '../session'
 import { switchSide } from '../auth'
@@ -18,13 +18,14 @@ export default function ChooseSide() {
   usePageTitle('Which side are you here for?')
   const { me, loading } = useSession()
   const navigate = useNavigate()
+  const next = new URLSearchParams(useLocation().search).get('next')
 
   const roles = me?.roles ?? []
 
   useEffect(() => {
     if (loading) return
     if (!me?.signed_in) navigate('/login', { replace: true })
-    else if (roles.length === 1) switchSide(roles[0].role)
+    else if (roles.length === 1) switchSide(roles[0].role, next)
   }, [loading, me, roles, navigate])
 
   if (loading || !me?.signed_in) return <PageLoading />
@@ -44,7 +45,7 @@ export default function ChooseSide() {
         {roles.map((role) => (
           <button
             key={role.role} type="button" className="sides__card"
-            onClick={() => switchSide(role.role)}
+            onClick={() => switchSide(role.role, role.role === 'donor' ? next : null)}
           >
             <span className="sides__icon">
               {role.role === 'family'

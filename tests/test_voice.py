@@ -619,3 +619,147 @@ def test_a_wish_without_a_cost_cannot_be_posted():
     review = (FRONTEND / "src" / "pages" / "WishReview.tsx").read_text()
     assert "missingCost" in review
     assert "disabled={busy || missingCost.length > 0}" in review
+
+
+# --------------------------------------------------------------------------
+# The landing page, and the first impression
+# --------------------------------------------------------------------------
+
+LANDING = FRONTEND / "src" / "pages" / "Landing.tsx"
+BITS = FRONTEND / "src" / "components" / "LandingBits.tsx"
+
+
+def test_the_doors_say_who_they_are_for():
+    source = LANDING.read_text()
+    assert "If you could use a hand" in source
+    assert "If you'd like to help" in source
+    assert "'For neighbors'" not in source
+
+
+def test_the_demo_shortcut_and_the_footer_say_what_was_asked():
+    assert ("Continue as an existing neighbor or wish granter, without signing up."
+            in LANDING.read_text())
+    footer = (FRONTEND / "src" / "components" / "Footer.tsx").read_text()
+    assert "Wishing Tree pays rent and utilities directly to the landlord or provider" \
+        in re.sub(r"\s+", " ", footer)
+
+
+def test_the_footer_reads_the_week_as_a_standing_arrangement():
+    """"Thursdays 4-7 PM", not "Thursday 4:00 PM-7:00 PM"."""
+    footer = (FRONTEND / "src" / "components" / "Footer.tsx").read_text()
+    assert "function recurring" in footer
+    assert "${day}s ${hours(windowLabel)}" in footer
+
+
+def test_the_hero_shows_the_real_tree(client):
+    """Real leaves, real gold, from the same endpoint a granter reads."""
+    source = LANDING.read_text()
+    assert "<WishTree" in source
+    assert "getWishes(EMPTY_FILTERS)" in source
+    assert "swaying" in source and "compact" in source
+    # And that endpoint answers a stranger, which is what makes it possible.
+    body = client.get("/api/wishes").json()
+    assert body["count"] > 0
+
+
+def test_the_example_wish_is_a_real_one_and_a_steady_one():
+    """The oldest open wish: real, so nothing is invented, and the same one
+    between two page loads."""
+    source = LANDING.read_text()
+    assert "days_waiting" in source
+    assert "Here's what a wish looks like" in source
+
+
+def test_a_signed_out_visitor_is_invited_rather_than_blocked():
+    """Tapping a leaf leads somewhere they can finish, carrying the wish."""
+    source = LANDING.read_text()
+    assert 'grantLabel="Grant this wish"' in source      # not "I'll grant"
+    assert "/donor?wish=${wish.id}" in source
+    assert "/login?next=" in source
+
+    login = (FRONTEND / "src" / "pages" / "LogIn.tsx").read_text()
+    assert "get('next')" in login
+    assert "take you straight back to that wish" in login
+
+    donor = (FRONTEND / "src" / "pages" / "Donor.tsx").read_text()
+    assert "get('wish')" in donor
+    assert "setConfirming(found)" in donor
+    # And the id is dropped afterwards, so a refresh does not reopen it.
+    assert "navigate('/donor', { replace: true })" in donor
+
+
+def test_the_signed_out_header_puts_the_two_ways_in_on_the_right():
+    bar = (FRONTEND / "src" / "components" / "TopBar.tsx").read_text()
+    right = bar[bar.index('className="topbar__right"'):]
+    right = right[:right.index("{alias && (")]
+    assert 'to="/login"' in right
+    assert 'btn btn--primary btn--small' in right        # Create account, filled
+    # And the current page's link is lit, without each page being told to.
+    assert "const here = useLocation().pathname" in bar
+    assert "link.active ?? (link.to ? here === link.to : false)" in bar
+
+
+# --------------------------------------------------------------------------
+# Motion, and turning it off
+# --------------------------------------------------------------------------
+
+def test_every_piece_of_landing_motion_can_be_switched_off():
+    css = (FRONTEND / "src" / "styles.css").read_text()
+    reduced = css[css.rindex("@media (prefers-reduced-motion: reduce)"):]
+    for piece in (".tree--swaying .leaf", ".drift__leaf", ".reveal"):
+        assert piece in reduced, piece
+    assert ".drift { display: none; }" in reduced
+
+
+def test_the_count_up_and_the_reveal_respect_the_setting():
+    bits = BITS.read_text()
+    # Both check the preference themselves rather than relying on CSS alone,
+    # because both change what is in the DOM, not just how it moves.
+    assert bits.count("prefers-reduced-motion: reduce") >= 2
+    assert "setShown(to)" not in bits or "useState(to)" in bits
+
+
+def test_nothing_on_the_landing_page_flashes():
+    """Slow is the whole brief. Nothing under two seconds, except the two
+    hover lifts and the fade-in, which are responses to an action."""
+    css = (FRONTEND / "src" / "styles.css").read_text()
+    sway = css[css.index(".tree--swaying .leaf {"):]
+    assert "7s" in sway[:120]
+    glint = css[css.index("@keyframes glint"):]
+    assert "0%, 92%, 100% { opacity: 0; }" in glint      # dark 92% of the time
+    drift = css[css.index(".drift__leaf {"):]
+    assert "46s" in drift[:400] and "opacity: 0.06" in drift[:400]
+
+
+# --------------------------------------------------------------------------
+# About
+# --------------------------------------------------------------------------
+
+def test_kelly_comes_first_on_the_about_page():
+    source = (FRONTEND / "src" / "pages" / "About.tsx").read_text()
+    assert source.index("Hi, I'm Kelly.") < source.index("Why Wishing Tree exists")
+    assert '<h1 className="page__title">Hi, I\'m Kelly.</h1>' in source
+    assert "Who I am" not in source
+
+
+def test_the_closing_line_moved_to_the_end_unchanged():
+    source = (FRONTEND / "src" / "pages" / "About.tsx").read_text()
+    flat = re.sub(r"\s+", " ", source)
+    line = ("Wishing Tree is starting in New Haven, and I'm the first coordinator, "
+            "so if your wish is granted, I may be the one who brings it to your door.")
+    assert line in flat
+    assert flat.count("I'm the first coordinator") == 1      # moved, not copied
+    assert source.index("about__closing") > source.index("How we protect privacy")
+
+
+def test_no_other_about_wording_changed():
+    """The rest of that page is Kelly's, word for word."""
+    flat = re.sub(r"\s+", " ", (FRONTEND / "src" / "pages" / "About.tsx").read_text())
+    for sentence in (
+        "For seven years, I volunteered at a soup kitchen.",
+        "Need doesn't keep a calendar.",
+        "Wishing Tree is that bridge: the giving tree, online and all year round,",
+        "Neighbors are never shown by name or address.",
+        "I'm Kelly, an MBA student at Yale School of Management.",
+    ):
+        assert sentence in flat, sentence

@@ -66,6 +66,7 @@ type Leaf =
 
 export default function WishTree({
   wishes, granted, grantedWindowDays, onGrant, granting, onSeeList,
+  compact = false, grantLabel, swaying = false,
 }: {
   wishes: Wish[]
   granted: { id: number; category: Category }[]
@@ -73,6 +74,12 @@ export default function WishTree({
   onGrant: (wish: Wish) => void
   granting: number | null
   onSeeList: () => void
+  /** Smaller, for the landing hero. */
+  compact?: boolean
+  grantLabel?: string
+  /** Leaves breathe. Only the hero asks for this — on the granter's tree it
+   *  would be movement under something they are trying to read. */
+  swaying?: boolean
 }) {
   const [openId, setOpenId] = useState<number | null>(null)
   const seats = useMemo(canopyPositions, [])
@@ -92,7 +99,7 @@ export default function WishTree({
   const selected = shown.find((w) => w.id === openId) ?? null
 
   return (
-    <div className="tree">
+    <div className={`tree${compact ? ' tree--compact' : ''}${swaying ? ' tree--swaying' : ''}`}>
       <div className="tree__canvas">
         <svg className="tree__art" viewBox="0 0 400 420" aria-hidden="true">
           <ellipse cx="200" cy="398" rx="128" ry="16" fill="var(--evergreen-pale)" />
@@ -131,6 +138,7 @@ export default function WishTree({
                 // lighting up rather than popcorn.
                 style={{ ...style, animationDelay: `${(leaf.seat % 9) * 90}ms` }}
                 className="leaf leaf--granted"
+                data-sway={leaf.seat % 5}
                 title={`Already granted, in the last ${grantedWindowDays} days`}
                 aria-label="A wish already granted"
               >
@@ -145,6 +153,7 @@ export default function WishTree({
             <button
               key={wish.id} type="button" style={{ ...style, background: LEAF_COLORS[wish.category] }}
               className={`leaf leaf--open${openId === wish.id ? ' leaf--on' : ''}${urgent ? ' leaf--soon' : ''}`}
+              data-sway={leaf.seat % 5}
               onClick={() => setOpenId(openId === wish.id ? null : wish.id)}
               aria-pressed={openId === wish.id}
               aria-label={`${wish.item_description} — ${wish.family_alias}`}
@@ -179,6 +188,7 @@ export default function WishTree({
             wish={selected}
             onGrant={onGrant}
             granting={granting === selected.id}
+            grantLabel={grantLabel}
           />
           <button type="button" className="btn btn--light btn--small" onClick={() => setOpenId(null)}>
             Close

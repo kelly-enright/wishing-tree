@@ -26,12 +26,16 @@ function cost(wish: Wish): string {
  * simply does not mention it.
  */
 export default function WishCard({
-  wish, reason, onGrant, granting, checked = true,
+  wish, reason, onGrant, granting, checked = true, grantLabel,
 }: {
   wish: Wish
   reason?: string
   onGrant?: (wish: Wish) => void
   granting?: boolean
+  /** Overrides the button's words. The landing page says "Grant this wish",
+   *  because a signed-out visitor is being invited rather than committing —
+   *  "I'll grant this wish" is a promise they cannot make yet. */
+  grantLabel?: string
   /** False on the preview, where the Privacy & Safety agent has not run yet
    *  and the badge would be claiming something that has not happened. */
   checked?: boolean
@@ -119,7 +123,7 @@ export default function WishCard({
             type="button" className="btn btn--gold card__grant"
             onClick={() => onGrant(wish)} disabled={granting}
           >
-            {granting ? 'Granting…' : "I'll grant this wish"}
+            {granting ? 'Granting…' : grantLabel ?? "I'll grant this wish"}
           </button>
         )}
       </div>

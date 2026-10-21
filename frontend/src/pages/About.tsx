@@ -32,7 +32,21 @@ export default function About() {
         {session ? 'Back to Wishing Tree' : 'Back to the start'}
       </Link>
 
-      <h1 className="page__title">Why Wishing Tree exists</h1>
+      <section className="about__section about__section--who">
+        <h1 className="page__title">Hi, I'm Kelly.</h1>
+        <div className="about__who">
+          <KellyAndMonty />
+          <p className="about__para">
+            I'm Kelly, an MBA student at Yale School of Management. Before business
+            school, I spent nearly a decade building and running operations at a global
+            research company and an early-stage startup. Wishing Tree brings those skills
+            to something I've cared about for years: making it easier for neighbors to
+            help each other.
+          </p>
+        </div>
+      </section>
+
+      <h2 className="about__heading about__heading--why">Why Wishing Tree exists</h2>
 
       <p className="about__para">
         For seven years, I volunteered at a soup kitchen. Every winter I organized
@@ -74,21 +88,12 @@ export default function About() {
         </p>
       </section>
 
-      <section className="about__section about__section--who">
-        <h2 className="about__heading">Who I am</h2>
-        <div className="about__who">
-          <KellyAndMonty />
-          <p className="about__para">
-            I'm Kelly, an MBA student at Yale School of Management. Before business
-            school, I spent nearly a decade building and running operations at a global
-            research company and an early-stage startup. Wishing Tree brings those skills
-            to something I've cared about for years: making it easier for neighbors to
-            help each other. Wishing Tree is starting in New Haven, and I'm the first
-            coordinator, so if your wish is granted, I may be the one who brings it to
-            your door.
-          </p>
-        </div>
-      </section>
+
+
+      <p className="about__closing">
+        Wishing Tree is starting in New Haven, and I'm the first coordinator, so
+        if your wish is granted, I may be the one who brings it to your door.
+      </p>
 
       <Footer />
     </main>

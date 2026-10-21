@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   CATEGORY_LABELS, OCCASION_LABELS, getGranted, getWishes, requestMatches,
   type Category, type GrantResponse, type Match, type Occasion,
@@ -38,6 +39,8 @@ export default function Donor() {
   usePageTitle('The Wish Tree')
   const { session, me, loading } = useSession()
   const toast = useToast()
+  const location = useLocation()
+  const navigate = useNavigate()
   const [filters, setFilters] = useState<WallFilters>(EMPTY)
   const [wishes, setWishes] = useState<Wish[]>([])
   const [region, setRegion] = useState<RegionInfo | null>(null)
@@ -72,6 +75,23 @@ export default function Donor() {
   }
 
   useEffect(() => { loadWall(EMPTY) }, [])
+
+  /**
+   * Arriving with `?wish=` — somebody who tapped that leaf on the landing
+   * page before they had an account. Open its confirmation as soon as the
+   * tree has loaded, so they finish the thing they came to do.
+   *
+   * The id is dropped from the URL afterwards, so a refresh or a back button
+   * does not reopen a wish they have already dealt with.
+   */
+  useEffect(() => {
+    const wanted = Number(new URLSearchParams(location.search).get('wish'))
+    if (!wanted || wishes.length === 0) return
+    const found = wishes.find((w) => w.id === wanted)
+    if (found) setConfirming(found)
+    else setNote("That wish has been granted by someone else. Here's the rest of the tree.")
+    navigate('/donor', { replace: true })
+  }, [wishes, location.search, navigate])
 
   // The badge on the tab, kept current when a grant or a release changes it.
   useEffect(() => {
@@ -124,7 +144,10 @@ export default function Donor() {
   if (confirming) {
     return (
       <main className="page page--wide">
-        <TopBar />
+        <TopBar
+          links={[]} alias={session.alias} me={me}
+          onSwitch={signOut} onSwitchSide={switchSide}
+        />
         <GrantConfirm
           wish={confirming}
           donorAlias={session.alias}
@@ -145,7 +168,10 @@ export default function Donor() {
     const { logistics } = granted
     return (
       <main className="page">
-        <TopBar />
+        <TopBar
+          links={[]} alias={session.alias} me={me}
+          onSwitch={signOut} onSwitchSide={switchSide}
+        />
         <h1 className="page__title">You just made a neighbor's week. Thank you.</h1>
         <p className="page__blurb">{granted.wish.item_description}</p>
 
