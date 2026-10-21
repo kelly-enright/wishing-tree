@@ -109,8 +109,6 @@ export default function Landing() {
         onSwitch={signOut} onSwitchSide={switchSide}
       />
 
-      <MontyArrives />
-
       <header className="hero">
         <h1 className="hero__tagline">Grant a neighbor's wish, any time of year</h1>
 
@@ -149,6 +147,8 @@ export default function Landing() {
             />
           </div>
         )}
+
+        <MontyArrives />
 
         <div className="hero__monty">
           <Monty size={96} />
@@ -194,7 +194,7 @@ export default function Landing() {
       </section>
 
       {example && (
-        <section className="band band--sand" aria-label="An example wish">
+        <section className="band" aria-label="An example wish">
           <Reveal>
             <h2 className="band__title">Here's what a wish looks like</h2>
             <p className="band__blurb">

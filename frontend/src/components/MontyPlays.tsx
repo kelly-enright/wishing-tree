@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Monty from './Monty'
+import MontyBody from './MontyBody'
 
 /**
  * Monty, animated — twice, in two different ways.
@@ -19,10 +20,13 @@ function wantsStillness(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
-/** A small scatter of leaves for him to bound through. */
-function LeafPile({ puffing }: { puffing: boolean }) {
+/** The pile he lands in. Six leaves, each with its own direction out. */
+function LeafPile() {
   return (
-    <span className={`pile${puffing ? ' pile--puff' : ''}`} aria-hidden="true">
+    <span className="pile" aria-hidden="true">
+      {/* A heap for the loose leaves to sit on, so it reads as a pile he is
+          in rather than leaves lying near him. */}
+      <span className="pile__mound" />
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <span key={i} className={`pile__leaf pile__leaf--${i}`} />
       ))}
@@ -31,38 +35,36 @@ function LeafPile({ puffing }: { puffing: boolean }) {
 }
 
 /**
- * The landing page welcome. Roughly three and a half seconds, once a visit.
+ * The landing page welcome: trot in, leap, land in the leaves, look up.
  *
- * "Once a visit" is held in `sessionStorage`, not state: a visitor who goes
- * to About and comes back should not be greeted all over again, and a React
- * remount would otherwise replay it.
+ * Four and a half seconds, once a visit. "Once" is held in `sessionStorage`
+ * rather than state — a visitor who goes to About and comes back should not
+ * be greeted again, and a React remount would otherwise replay it.
+ *
+ * What is on screen afterwards is the point of the structure: the dog's
+ * *resting* CSS position is where he ends up, sitting in the pile with the
+ * leaves drawn in front of him, and the animation travels him in from off
+ * the left. So when the animation does not run at all — reduced motion, or
+ * a second visit — the page shows him already peeking out of the finished
+ * pile, which is exactly the still version that was asked for. Nothing is
+ * left floating, because nothing was ever positioned for the journey.
  */
 export function MontyArrives() {
-  const [phase, setPhase] = useState<'waiting' | 'running' | 'done'>(() =>
-    wantsStillness() || sessionStorage.getItem('wishingtree.greeted') === 'yes'
-      ? 'done'
-      : 'waiting',
+  const [playing, setPlaying] = useState(() =>
+    !wantsStillness() && sessionStorage.getItem('wishingtree.greeted') !== 'yes',
   )
 
   useEffect(() => {
-    if (phase !== 'waiting') return
+    if (!playing) return
     try { sessionStorage.setItem('wishingtree.greeted', 'yes') } catch { /* off */ }
-    const start = setTimeout(() => setPhase('running'), 240)
-    const end = setTimeout(() => setPhase('done'), 3800)
-    return () => { clearTimeout(start); clearTimeout(end) }
-  }, [phase])
-
-  if (phase === 'done') return null
+    const done = setTimeout(() => setPlaying(false), 4800)
+    return () => clearTimeout(done)
+  }, [playing])
 
   return (
-    <div
-      className={`arrive${phase === 'running' ? ' arrive--go' : ''}`}
-      aria-hidden="true"
-    >
-      <LeafPile puffing={phase === 'running'} />
-      <span className="arrive__monty">
-        <Monty size={46} />
-      </span>
+    <div className={`arrival${playing ? ' arrival--go' : ''}`} aria-hidden="true">
+      <span className="arrival__dog"><MontyBody size={76} /></span>
+      <LeafPile />
     </div>
   )
 }
@@ -93,7 +95,7 @@ export function MontyInLeaves({
 
   return (
     <span className={`plays${playing ? ' plays--go' : ''}`} aria-hidden="true">
-      <LeafPile puffing={playing} />
+      <LeafPile />
       <span className="plays__monty"><Monty size={size} /></span>
     </span>
   )

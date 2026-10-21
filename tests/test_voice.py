@@ -706,7 +706,7 @@ def test_the_signed_out_header_puts_the_two_ways_in_on_the_right():
 def test_every_piece_of_landing_motion_can_be_switched_off():
     reduced = reduced_motion_rules()
     for piece in (".tree--swaying .leaf", ".drift__leaf", ".reveal",
-                  ".arrive", ".pile"):
+                  ".arrival--go", ".pile__leaf"):
         assert piece in reduced, piece
     assert ".drift { display: none; }" in reduced
 
@@ -789,9 +789,17 @@ def contrast(fg: str, bg: str) -> float:
 
 
 TEXT_COLORS = {"--ink": "#2B2B2B", "--ink-soft": "#5F5A53",
-               "--evergreen-deep": "#22463C"}
-NEW_BACKGROUNDS = {"--glow-peach": "#F8E6D2", "--band-sage": "#E8EFE7",
-                   "--band-sand": "#F6EBDA", "--hill-sage": "#C9D7C6"}
+               "--evergreen-deep": "#22463C", "--evergreen": "#2F5D50"}
+
+# Backgrounds that words are actually set on.
+NEW_BACKGROUNDS = {"--sky-top": "#DCE9EF", "--sky-horizon": "#F7F2E8",
+                   "--band-sage": "#E8EFE7", "--cream": "#FBF6EE"}
+
+# The hills and the leaf mound. Deliberately fresher than anything text sits
+# on — `--hill-sage-deep` against `--ink-soft` is 3.6:1, under the bar — and
+# that is safe only for as long as they carry no words. The test below is
+# what makes that a rule rather than a hope.
+DECORATION_ONLY = {"--hill-sage": "#BCD4B6", "--hill-sage-deep": "#A6C4A1"}
 
 
 def reduced_motion_rules() -> str:
@@ -819,17 +827,36 @@ def reduced_motion_rules() -> str:
 
 def test_the_new_tones_are_the_ones_in_the_stylesheet():
     """So this file cannot drift away from what the app actually paints."""
-    for name, value in {**TEXT_COLORS, **NEW_BACKGROUNDS}.items():
+    for name, value in {**TEXT_COLORS, **NEW_BACKGROUNDS,
+                        **DECORATION_ONLY}.items():
         assert f"{name}:" in CSS
         assert value in CSS, f"{name} is no longer {value}"
 
 
 @pytest.mark.parametrize("bg", sorted(NEW_BACKGROUNDS))
-def test_text_stays_readable_on_every_warm_background(bg):
-    """Every text color against every new background, at the AA bar of 4.5."""
+def test_text_stays_readable_on_every_background_it_sits_on(bg):
+    """Every text color against every background words appear on, at AA."""
     for text, fg in TEXT_COLORS.items():
         got = contrast(fg, NEW_BACKGROUNDS[bg])
         assert got >= 4.5, f"{text} on {bg} is only {got:.1f}:1"
+
+
+def test_the_hill_tones_are_used_for_shapes_and_never_behind_words():
+    """They are below AA for muted text, which is fine while nothing is
+    written on them. These are the only three places they are used, and all
+    three are drawings: the ground under the tree and the leaf pile."""
+    allowed = {".hills", "pile__mound", "fill=\"var(--hill-sage"}
+    for token in DECORATION_ONLY:
+        users = []
+        for path in [FRONTEND / "src" / "styles.css"]:
+            for line in path.read_text().splitlines():
+                if f"var({token})" in line:
+                    users.append(line.strip())
+        for line in users:
+            assert any(k in line for k in ("background", "fill")), line
+        # And in components, only inside the two drawings.
+        for page in (FRONTEND / "src" / "pages").glob("*.tsx"):
+            assert token not in page.read_text(), page.name
 
 
 def test_the_falling_leaves_are_actually_visible_now():
@@ -905,18 +932,20 @@ def test_nothing_decorative_widens_the_page():
     assert ".about::before" not in CSS
 
 
-def test_the_bands_alternate_and_fade_into_each_other():
+def test_there_is_one_band_and_it_fades_into_the_cream():
+    """The warm sand behind the example wish went: cream on cream on sand
+    read as beige on beige, and one band gives the page a single change of
+    note rather than three."""
     source = LANDING.read_text()
     assert 'band band--sage" aria-label="How it works"' in source
-    assert 'band band--sand" aria-label="An example wish"' in source
-    # Each selector appears twice — once for the shared full-bleed layout,
-    # once for its own gradient. It is the gradient we are checking.
-    for band in ("band--sage", "band--sand"):
-        rule = re.search(rf"\.{band} \{{\s*background:(.+?)\}}", CSS, re.S)
-        assert rule, band
-        # Transparent at both ends, so one gives way to the next.
-        assert "transparent 0%" in rule.group(1)
-        assert "transparent 100%" in rule.group(1)
+    assert "band--sand" not in source
+    assert "band--sand" not in CSS
+
+    rule = re.search(r"\.band--sage \{(.+?)\}", CSS, re.S)
+    assert rule
+    # Transparent at both ends, so it gives way rather than starting.
+    assert "transparent 0%" in rule.group(1)
+    assert "transparent 100%" in rule.group(1)
 
 
 def test_the_grain_is_too_faint_to_notice():
@@ -1002,11 +1031,30 @@ MONTY = FRONTEND / "src" / "components" / "MontyPlays.tsx"
 def test_monty_arrives_once_a_visit_and_then_stops():
     source = MONTY.read_text()
     assert "sessionStorage.getItem('wishingtree.greeted')" in source
-    assert "setPhase('done')" in source
-    # The whole thing is under four seconds, as asked.
-    assert "setTimeout(() => setPhase('done'), 3800)" in source
-    trot = CSS[CSS.index("@keyframes trot"):]
-    assert "3.4s" in CSS[CSS.index(".arrive__monty {"):][:260]
+    assert "setPlaying(false)" in source
+    # Four to five seconds, as asked.
+    assert "setTimeout(() => setPlaying(false), 4800)" in source
+    assert "animation: arrive 4.6s" in CSS
+
+
+def test_the_arrival_leaves_nothing_floating():
+    """His resting position *is* where he ends up — sitting in the pile with
+    the leaves drawn in front — and the animation travels him in from off the
+    left. So a second visit, or reduced motion, shows the finished picture
+    rather than a stray head at the top of the page."""
+    rule = CSS[CSS.index(".arrival__dog {"):]
+    rule = rule[:rule.index("}")]
+    assert "left: 24%" in rule and "bottom" in rule
+    # The journey lives in the keyframes, not in the resting style.
+    arrive = CSS[CSS.index("@keyframes arrive"):]
+    assert "translateX(-46vw)" in arrive[:200]
+    assert arrive[arrive.index("100%"):arrive.index("100%") + 60].count("translateY(0)") == 1
+
+    # And the leaves are in front of him, which is what makes him peek out.
+    pile = CSS[CSS.index(".arrival .pile {"):]
+    assert "z-index: 2" in pile[:pile.index("}")]
+    dog = CSS[CSS.index(".arrival__dog {"):]
+    assert "z-index: 1" in dog[:dog.index("}")]
 
 
 def test_monty_plays_in_leaves_in_the_three_places_asked_for():
@@ -1033,21 +1081,28 @@ def test_the_neighbors_own_pages_stay_calm():
 def test_no_monty_animation_loops():
     source = MONTY.read_text()
     assert "infinite" not in source
-    for block in ("@keyframes trot", "@keyframes romp", "@keyframes puff"):
+    for block in ("@keyframes arrive", "@keyframes step",
+                  "@keyframes burst", "@keyframes romp", "@keyframes puff"):
         assert block in CSS
-    # Each is declared `both`, which holds the last frame rather than
-    # snapping back, and none of them repeats.
-    assert "animation: trot 3.4s cubic-bezier(0.25, 0.6, 0.3, 1) both" in CSS
+    # Each holds its last frame rather than snapping back, and none repeats
+    # — except the leg cycle, which runs a counted six swings and stops.
+    assert "animation: arrive 4.6s ease-out both" in CSS
+    assert "animation: step 0.35s ease-in-out 6 both" in CSS
     assert "animation: romp 2.6s ease-in-out both" in CSS
 
 
 def test_monty_holds_still_for_anyone_who_asked_for_stillness():
+    """Not hidden — still. The arrival is *not* display:none under reduced
+    motion, because its resting state is the picture that was asked for:
+    Monty peeking out of a finished pile. Only the journey goes."""
     source = MONTY.read_text()
     assert "function wantsStillness" in source
-    assert source.count("wantsStillness()") >= 3
+    assert source.count("wantsStillness()") >= 2
+
     reduced = reduced_motion_rules()
-    assert ".arrive { display: none; }" in reduced
-    assert ".pile { display: none; }" in reduced
+    assert ".arrival--go .arrival__dog" in reduced
+    assert ".arrival--go .pile__leaf" in reduced
+    assert ".arrival { display: none; }" not in reduced
 
 
 # --------------------------------------------------------------------------
@@ -1137,7 +1192,125 @@ def test_every_animation_in_the_app_is_switched_off_by_the_setting():
     assert "transition-duration: 0.001ms !important" in reduced
     assert "*, *::before, *::after" in reduced
 
-    # And the decorative layers are removed outright rather than frozen.
-    for gone in (".drift { display: none; }", ".arrive { display: none; }",
-                 ".pile { display: none; }"):
-        assert gone in reduced, gone
+    # The drifting leaves are removed outright; Monty and his pile are left
+    # in place and simply stop, because the still picture is the point.
+    assert ".drift { display: none; }" in reduced
+    assert ".arrival--go .dog__leg" in reduced
+
+
+# --------------------------------------------------------------------------
+# Monty, whole
+# --------------------------------------------------------------------------
+
+BODY = FRONTEND / "src" / "components" / "MontyBody.tsx"
+
+
+def test_the_full_body_monty_is_a_pembroke():
+    """The four things that make the silhouette read as a corgi rather than
+    as a generic dog: long low body, stubby legs, outsized ears, no tail."""
+    source = BODY.read_text()
+    assert "dog__leg--front" in source and "dog__leg--back" in source
+    assert "dog__leg--frontfar" in source and "dog__leg--backfar" in source
+    assert 'viewBox="0 0 180 120"' in source          # wider than tall
+    # A Pembroke has no tail, and the drawing says so where the rump is.
+    assert "no tail at all" in source
+
+
+def test_he_is_drawn_in_the_same_palette_as_his_face():
+    """Hand-picked hexes creeping in is how two drawings of one dog end up
+    different colours."""
+    face = (FRONTEND / "src" / "components" / "Monty.tsx").read_text()
+    body = BODY.read_text()
+    for shade in ("#D5713F", "#FBF6EE", "#2B2B2B", "#F0C3A8", "#E08E8E"):
+        assert shade in face and shade in body, shade
+
+
+def test_the_white_markings_stay_inside_the_dog():
+    """White that spills past the red silhouette stops reading as markings and
+    starts reading as a shape of its own: with nothing drawn behind it, the
+    chest was a ball of fluff hung off the front of him. The fix is a red
+    chest between the head and the body, and white that fits inside it."""
+    import math
+
+    body = BODY.read_text()
+    red = [
+        (float(x), float(y), float(r))
+        for x, y, r in re.findall(
+            r'<circle cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)" fill="#D5713F"', body
+        )
+    ]
+    assert len(red) == 3, "rump, head and chest"
+
+    underside = body[body.index("The white underside"):body.index("blaze and muzzle")]
+    marks = [
+        tuple(float(v) for v in e)
+        for e in re.findall(
+            r'<ellipse cx="([\d.]+)" cy="([\d.]+)" rx="([\d.]+)" ry="([\d.]+)"', underside
+        )
+    ]
+    cx, cy, rx, ry = max(marks, key=lambda m: m[0])    # the chest, furthest forward
+    assert any(
+        math.hypot(cx - x, cy - y) + max(rx, ry) <= r + 1 for x, y, r in red
+    ), "the chest marking has no red behind it"
+
+
+def test_the_leaves_sit_at_his_feet_and_not_over_his_back():
+    """The shared `.pile` rule carries `inset: 0`, so the arrival's own rule
+    has to undo the `top` as well as set the `bottom`. With both ends pinned
+    and a height given the box is over-constrained, the browser keeps the top,
+    and the leaves end up across his shoulders with his legs hanging below."""
+    pile = CSS[CSS.index(".arrival .pile {"):]
+    pile = pile[:pile.index("}")]
+    assert "top: auto" in pile
+    assert "bottom: 0" in pile
+
+    # And the span around the drawing keeps no descender space under it, or
+    # the pile is placed against a box taller than anything you can see.
+    dog = CSS[CSS.index(".arrival__dog {"):]
+    assert "line-height: 0" in dog[:dog.index("}")]
+
+
+def test_the_legs_can_swing_in_pairs():
+    body = BODY.read_text()
+    assert body.count("dog__leg") == 4 * 2            # class plus modifier
+    assert ".dog__leg { transform-origin" in CSS
+    # Opposite phase, or he paddles rather than trots.
+    assert ".arrival--go .dog__leg--front," in CSS
+    assert "animation-delay: -0.175s" in CSS
+
+
+# --------------------------------------------------------------------------
+# The morning sky
+# --------------------------------------------------------------------------
+
+def test_the_hero_sky_is_a_morning_not_an_afternoon():
+    assert "--sky-top:        #DCE9EF" in CSS
+    assert "--sky-horizon:    #F7F2E8" in CSS
+    assert "--glow-peach" not in CSS                  # the old afternoon
+
+    sky = CSS[CSS.index("body.wt-warm {"):]
+    sky = sky[:sky.index("}")]
+    assert "var(--sky-top) 0%" in sky
+    assert "var(--sky-horizon)" in sky
+    # A thin band of early sun low down, and nothing stronger.
+    assert "rgba(224, 168, 75, 0.16)" in sky
+
+
+def test_the_hills_are_fresher_than_the_sky_they_sit_against():
+    """Otherwise the ground and the horizon are the same note."""
+    assert contrast("#BCD4B6", "#F7F2E8") > 1.3
+    assert "--hill-sage:      #BCD4B6" in CSS
+
+
+def test_a_signed_in_page_gets_a_hint_of_sky_and_no_scenery():
+    body = CSS[CSS.index("\nbody {"):]
+    body = body[:body.index("}")]
+    assert "rgba(220, 233, 239, 0.55)" in body        # the faintest top
+    assert "var(--cream)" in body
+
+    # The scenery belongs to the two pages that ask for it.
+    pages = FRONTEND / "src" / "pages"
+    warm = {p.name for p in pages.glob("*.tsx") if "useBodyClass('wt-warm')" in p.read_text()}
+    assert warm == {"Landing.tsx", "About.tsx"}
+    hills = {p.name for p in pages.glob("*.tsx") if "<Hills" in p.read_text()}
+    assert hills == {"Landing.tsx"}

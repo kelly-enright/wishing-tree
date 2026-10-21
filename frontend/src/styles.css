@@ -50,15 +50,15 @@
   --terracotta:     #C8664A;
   --terracotta-pale:#FBEAE4;
 
-  /* Warmth. Late afternoon rather than noon: a peach that is barely a color,
-     a sage light enough to read near-black text on, and a sand between the
-     two. All three were checked against --ink; the darkest leaves text at
-     better than 13:1, where 4.5 is the bar. */
-  --glow-peach:     #F8E6D2;
+  /* Morning. A pale sky at the top of the page fading to cream at the
+     horizon, with a thin gold warmth low down where the sun would be, and
+     hills fresh enough to read against it. Every one was checked against
+     --ink; the darkest leaves text at better than 9:1, where 4.5 is the bar. */
+  --sky-top:        #DCE9EF;
+  --sky-horizon:    #F7F2E8;
   --band-sage:      #E8EFE7;
-  --band-sand:      #F6EBDA;
-  --hill-sage:      #C9D7C6;
-  --hill-sage-deep: #B6C8B4;
+  --hill-sage:      #BCD4B6;
+  --hill-sage-deep: #A6C4A1;
 
   --ink:            #2B2B2B;
   --ink-soft:       #5F5A53;
@@ -100,8 +100,9 @@ body {
   line-height: 1.6;
   color: var(--ink);
   background:
-    radial-gradient(1000px 460px at 10% -12%, var(--evergreen-pale) 0%, transparent 62%),
-    radial-gradient(820px 420px at 100% 0%, var(--gold-pale) 0%, transparent 58%),
+    linear-gradient(to bottom,
+                    rgba(220, 233, 239, 0.55) 0px,
+                    rgba(220, 233, 239, 0) 190px),
     var(--cream);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
@@ -122,11 +123,7 @@ a { color: var(--evergreen); }
 
 .hero {
   text-align: center; margin-bottom: 44px;
-  /* A clear lane under the header for Monty to trot through on arrival, so
-     he never runs across the headline. Padding rather than margin: the
-     arrival block has no height, and a margin would collapse straight
-     through it and give him nothing. */
-  padding-top: 56px;
+  padding-top: 28px;
 }
 
 .hero__lede {
@@ -2715,17 +2712,20 @@ textarea.field__input { resize: vertical; font: inherit; }
    any stronger and the cream stops being cream.
    
    On the body, because that is the only box the size of the window. On the
-   page element the glow stops at the edge of a centred column and leaves a
+   page element the sky stops at the edge of a centred column and leaves a
    visible rectangle; as an absolutely positioned child it is wide enough to
-   give the page a sideways scrollbar. */
+   give the page a sideways scrollbar.
+   
+   Three layers, top to bottom: a low band of early sun, the sky itself
+   fading to cream around where the hills sit, and cream under everything. */
 body.wt-warm {
   background:
-    radial-gradient(1200px 640px at 50% 120px,
-                    var(--glow-peach) 0%,
-                    rgba(248, 230, 210, 0.5) 44%,
-                    transparent 74%),
-    radial-gradient(1000px 460px at 10% -12%, var(--evergreen-pale) 0%, transparent 62%),
-    radial-gradient(820px 420px at 100% 0%, var(--gold-pale) 0%, transparent 58%),
+    radial-gradient(760px 200px at 50% 50vh,
+                    rgba(224, 168, 75, 0.16) 0%, transparent 70%),
+    linear-gradient(to bottom,
+                    var(--sky-top) 0%,
+                    var(--sky-horizon) 48vh,
+                    var(--cream) 64vh),
     var(--cream);
   background-attachment: fixed;
 }
@@ -2755,17 +2755,16 @@ body.wt-warm {
 
 /* (e) Alternating bands down the page. Full-bleed, and faded at top and
    bottom rather than cut, so one gives way to the next instead of starting. */
-.band--sage, .band--sand {
+/* One band only, behind "How it works". The warm sand that used to sit
+   behind the example wish went: cream on cream on sand read as beige on
+   beige, and a single band gives the page one change of note rather than
+   three. Full-bleed, and faded at top and bottom rather than cut, so it
+   gives way to the cream instead of starting. */
+.band--sage {
   width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);
   max-width: none; padding: 40px max(24px, calc(50vw - 380px)) 44px;
-}
-.band--sage {
   background: linear-gradient(to bottom,
     transparent 0%, var(--band-sage) 14%, var(--band-sage) 86%, transparent 100%);
-}
-.band--sand {
-  background: linear-gradient(to bottom,
-    transparent 0%, var(--band-sand) 14%, var(--band-sand) 86%, transparent 100%);
 }
 
 /* (f) Paper grain. An inline SVG turbulence, tiled, at 3.5% — enough to take
@@ -2783,16 +2782,17 @@ body.wt-warm {
 @media (max-width: 720px) {
   body.wt-warm {
     background:
-      radial-gradient(760px 500px at 50% 100px,
-                      var(--glow-peach) 0%,
-                      rgba(248, 230, 210, 0.5) 44%,
-                      transparent 74%),
-      radial-gradient(1000px 460px at 10% -12%, var(--evergreen-pale) 0%, transparent 62%),
+      radial-gradient(420px 150px at 50% 46vh,
+                      rgba(224, 168, 75, 0.15) 0%, transparent 70%),
+      linear-gradient(to bottom,
+                      var(--sky-top) 0%,
+                      var(--sky-horizon) 44vh,
+                      var(--cream) 60vh),
       var(--cream);
     background-attachment: fixed;
   }
   .hills { bottom: -4px; height: 74px; }
-  .band--sage, .band--sand { padding: 30px 20px 34px; }
+  .band--sage { padding: 30px 20px 34px; }
 }
 
 /* Nothing posted yet: the empty state, and the one thing to do about it. */
@@ -2831,28 +2831,76 @@ body.wt-warm {
    on the compositor. Nothing loops: a dog bounding through leaves forever
    stops being charming within about fifteen seconds. */
 
-/* ---- the landing welcome: trot in, bound through leaves, sit by the logo */
-.arrive {
-  position: relative; height: 0; z-index: 2;
+/* ---- the landing welcome: trot in, leap, land in the leaves, look up */
+/* The strip sits at the foot of the hero, under the tree. The dog's resting
+   position is where he finishes — sitting in the pile, which is drawn in
+   front of him — so with no animation at all the page simply shows him
+   peeking out of it. */
+.arrival {
+  position: relative; height: 86px; margin-top: 6px;
   pointer-events: none;
 }
-.arrive__monty {
-  position: absolute; top: 6px; left: 0;
-  animation: trot 3.4s cubic-bezier(0.25, 0.6, 0.3, 1) both;
-  animation-play-state: paused;
+.arrival__dog {
+  position: absolute; left: 24%; bottom: 2px; z-index: 1;
+  /* `line-height: 0` because the SVG inside is inline: without it the span
+     keeps a few pixels of descender space under the drawing, and the pile
+     in front of him is then positioned against a box that is taller than
+     what you can see. */
+  display: block; line-height: 0;
 }
-.arrive--go .arrive__monty { animation-play-state: running; }
+.arrival .pile {
+  /* `top: auto` undoes the `inset: 0` on the shared `.pile` rule. With both
+     top and bottom set, a height makes the box over-constrained and the
+     browser keeps the top — which pinned the leaves to the *top* of the
+     strip, floating above his back with his legs dangling below. */
+  position: absolute; left: 24%; top: auto; bottom: 0; z-index: 2;
+  width: 132px; height: 40px;
+}
 
-/* Right to left along the header, a bound in the middle where the leaves
-   are, then settling beside the wordmark. The `translate` carries him; the
-   small `rotate` is the lean of a dog changing pace. */
-@keyframes trot {
-  0%   { transform: translateX(104vw) scaleX(-1); opacity: 0; }
-  8%   { opacity: 1; }
-  44%  { transform: translateX(46vw) scaleX(-1) translateY(0); }
-  56%  { transform: translateX(32vw) scaleX(-1) translateY(-16px) rotate(-7deg); }
-  66%  { transform: translateX(24vw) scaleX(-1) translateY(0) rotate(0deg); }
-  100% { transform: translateX(34px) scaleX(-1); opacity: 1; }
+/* Travelling in. The whole journey is one animation on the dog, so the trot,
+   the leap and the sink into the pile cannot drift out of step with each
+   other the way three separate ones would. */
+.arrival--go .arrival__dog { animation: arrive 4.6s ease-out both; }
+
+@keyframes arrive {
+  0%   { transform: translateX(-46vw) translateY(0); }
+  8%   { transform: translateX(-40vw) translateY(-3px); }
+  16%  { transform: translateX(-33vw) translateY(0); }
+  24%  { transform: translateX(-26vw) translateY(-3px); }
+  32%  { transform: translateX(-19vw) translateY(0); }
+  40%  { transform: translateX(-12vw) translateY(-3px); }
+  46%  { transform: translateX(-7vw) translateY(0); }
+  /* the leap */
+  54%  { transform: translateX(-3vw) translateY(-34px) rotate(-7deg); }
+  60%  { transform: translateX(0) translateY(-14px) rotate(4deg); }
+  /* landing, and sinking into the pile */
+  66%  { transform: translateX(0) translateY(14px) rotate(0deg); }
+  74%  { transform: translateX(0) translateY(16px); }
+  /* head up, pleased with himself */
+  86%  { transform: translateX(0) translateY(-4px); }
+  100% { transform: translateX(0) translateY(0); }
+}
+
+/* The leg cycle runs for the trot and then stops: six swings at 0.35s is
+   2.1s, which is the distance covered before the leap. */
+.arrival--go .dog__leg { animation: step 0.35s ease-in-out 6 both; }
+.arrival--go .dog__leg--front,
+.arrival--go .dog__leg--backfar { animation-delay: -0.175s; }
+
+@keyframes step {
+  0%, 100% { transform: rotate(9deg); }
+  50%      { transform: rotate(-9deg); }
+}
+
+.dog__leg { transform-origin: 50% 20%; }
+
+/* The pile bursts as he lands, then settles — scattered, not swept away. */
+.arrival--go .pile__leaf { animation: burst 1.6s ease-out 2.75s both; }
+
+@keyframes burst {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  28%  { transform: translate(calc(var(--puff-x) * 0.9), -30px) rotate(110deg); }
+  100% { transform: translate(calc(var(--puff-x) * 0.4), 0) rotate(190deg); }
 }
 
 /* ---- Monty having a moment in the leaves */
@@ -2874,31 +2922,41 @@ body.wt-warm {
 .pile {
   position: absolute; inset: 0; display: block; pointer-events: none;
 }
-.arrive .pile { height: 54px; width: 100%; }
+.pile__mound {
+  position: absolute; left: 50%; bottom: -4px; translate: -50% 0;
+  width: 118px; height: 34px;
+  border-radius: 60px 60px 0 0;
+  /* Warmer at the crown than at the base, so it reads as fallen leaves
+     rather than as one more of the sage hills a little way above it. */
+  background: linear-gradient(to bottom, #D9C79A 0%, var(--hill-sage) 55%, var(--hill-sage-deep) 100%);
+}
+.arrival .pile__mound { opacity: 0.92; }
+.plays .pile__mound { width: 76px; height: 22px; }
+
 .pile__leaf {
   position: absolute; bottom: 0; width: 13px; height: 13px;
   border-radius: 58% 10% 58% 10%;
   background: var(--evergreen-soft); opacity: 0.5;
 }
-.pile__leaf--0 { left: 38%; background: var(--evergreen); }
-.pile__leaf--1 { left: 44%; background: var(--gold); }
-.pile__leaf--2 { left: 50%; }
-.pile__leaf--3 { left: 56%; background: var(--gold-deep); }
-.pile__leaf--4 { left: 62%; background: var(--evergreen); }
-.pile__leaf--5 { left: 46%; background: var(--evergreen-pale); }
+.pile__leaf--0 { left: 16%; bottom: 10px; background: var(--evergreen); }
+.pile__leaf--1 { left: 31%; bottom: 20px; background: var(--gold); }
+.pile__leaf--2 { left: 46%; bottom: 24px; }
+.pile__leaf--3 { left: 60%; bottom: 20px; background: var(--gold-deep); }
+.pile__leaf--4 { left: 75%; bottom: 9px; background: var(--evergreen); }
+.pile__leaf--5 { left: 50%; bottom: 6px; background: var(--evergreen-pale); }
 
 /* The puff: up, out and gone. Each leaf on its own delay so it scatters
    rather than detonating. */
-.pile--puff .pile__leaf { animation: puff 1.5s ease-out both; }
-.pile--puff .pile__leaf--0 { animation-delay: 1.52s; --puff-x: -26px; }
-.pile--puff .pile__leaf--1 { animation-delay: 1.56s; --puff-x: -12px; }
-.pile--puff .pile__leaf--2 { animation-delay: 1.60s; --puff-x: 4px; }
-.pile--puff .pile__leaf--3 { animation-delay: 1.58s; --puff-x: 18px; }
-.pile--puff .pile__leaf--4 { animation-delay: 1.64s; --puff-x: 30px; }
-.pile--puff .pile__leaf--5 { animation-delay: 1.54s; --puff-x: -4px; }
+/* Each leaf has its own way out of the pile. */
+.pile__leaf--0 { --puff-x: -30px; }
+.pile__leaf--1 { --puff-x: -14px; }
+.pile__leaf--2 { --puff-x: 5px; }
+.pile__leaf--3 { --puff-x: 20px; }
+.pile__leaf--4 { --puff-x: 34px; }
+.pile__leaf--5 { --puff-x: -5px; }
 
-/* Inside `.plays` the leaves scatter as soon as he lands on them. */
-.plays--go .pile--puff .pile__leaf { animation-delay: 0.1s; }
+/* In the small version the leaves scatter as soon as he lands on them. */
+.plays--go .pile__leaf { animation: puff 1.5s ease-out 0.1s both; }
 
 @keyframes puff {
   0%   { transform: translate(0, 0) rotate(0deg); opacity: 0.5; }
@@ -2907,10 +2965,13 @@ body.wt-warm {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .arrive { display: none; }
+  /* The arrival is not hidden: its resting state *is* the picture that was
+     asked for — Monty peeking out of a finished pile. Only the journey goes. */
+  .arrival--go .arrival__dog,
+  .arrival--go .dog__leg,
+  .arrival--go .pile__leaf,
   .plays--go .plays__monty,
-  .pile--puff .pile__leaf { animation: none; }
-  .pile { display: none; }
+  .plays--go .pile__leaf { animation: none; }
 }
 
 /* Monty and the headline, side by side on the thank-you screen. */

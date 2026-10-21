@@ -1177,3 +1177,69 @@ which the message cut off mid-sentence.
 
 **Still outstanding, by agreement:** the live safety suite and the token
 measurements. The design is frozen as of this commit.
+
+## Problem 20 — Monty, Whole, and a Morning Sky
+
+### Prompt 1
+
+> cHere's the last round. After this, the design is frozen.
+>
+> **Monty**
+>
+> (a) Draw Monty's whole body in the same flat style — a red-and-white Pembroke corgi seen from the side, short legs, long body, big ears, fluffy behind, no tail.
+>
+> (b) Animate him trotting in with a leg cycle and a slight bounce, leaping into a pile of leaves that bursts, then popping his head out before the leaves settle. Four or five seconds, once per visit, remembered with sessionStorage. Nothing left floating afterwards — the pile and Monty can stay quietly at the foot of the hero, or fade.
+>
+> (c) If the full-body drawing doesn't look charming and natural, tell me and show me a screenshot before spending more time on it. A simpler version that looks good is better than an elaborate one that looks awkward.
+>
+> **The sky**
+>
+> (d) Replace the peach glow with a morning sky: pale blue (around #DCE9EF) at the top fading to a warm cream (#F7F2E8) near the horizon. A very faint pale-gold glow low near the horizon is fine, but keep it subtle.
+>
+> (e) Keep the sage hills under the tree, slightly fresher green.
+>
+> (f) Below the hero, drop the warm sand band. Cream, with the very light sage band behind "How it works".
+>
+> (g) About page: same pale sky fading to cream at the top.
+>
+> (h) Signed-in pages: cream with the faintest hint of the sky tone at the very top, no hills.
+>
+> (i) Keep the falling leaves, paper grain and everything else. All motion turns off with the reduced-motion setting (show Monty peeking out of the finished pile, with no movement). Recheck text contrast on the new sky and at phone widths, update tests, take fresh screenshots, and update harness.md.
+
+**Outcome:** 433 passing, 10 deselected.
+
+- **(c) was the most useful instruction in the round, and it was needed.** The
+  drawing took five passes. Four of them failed the same way in different
+  places: a flat drawing is a silhouette first, and anything that breaks the
+  silhouette stops reading as fur. Separate red shapes showed seams; a belly
+  path with straight runs became a white box; and the chest, with no red drawn
+  behind it, hung off the front of him like a ball of fluff. Adding a red
+  chest circle and tucking each white ellipse inside the red was the change
+  that made him charming rather than merely legible.
+- **A test now checks that geometrically** rather than by eye: it parses the
+  SVG and asserts the chest marking sits inside a red circle.
+- **The resting position is the design, not the end of the animation.** His
+  CSS position is where he finishes — in the pile, with the leaves in front of
+  him — and the animation travels him in from off the left. That is what makes
+  (b)'s "nothing left floating" and (i)'s still version fall out for free:
+  with no animation at all the page already shows the finished picture. Under
+  reduced motion the arrival is therefore stilled, not hidden, and a test
+  asserts it is not `display: none`.
+- **One real bug, invisible in the source.** `.pile` carries `inset: 0`; the
+  arrival's rule set `bottom` and a height but left the inherited `top: 0`,
+  and an over-constrained box keeps its top — so the leaves sat across his
+  shoulders with his legs dangling below. `top: auto` fixed it, plus
+  `line-height: 0` on the span, because an inline SVG keeps descender space
+  under it and the pile was being placed against a box taller than anything
+  visible. Both are now asserted.
+- **(e) and the contrast check pulled against each other.** Fresher hills put
+  `--ink-soft` on `--hill-sage-deep` at 3.6:1. Rather than darken the hills
+  Kelly asked to freshen, the test now separates text-bearing backgrounds from
+  decoration-only tones, after confirming in the browser that no text element
+  overlaps `.hills` or `.pile__mound`. The reasoning is written into the test,
+  so adding a caption to the hills later fails loudly.
+- **Verified at phone width.** 375×812: nothing overflows, and the full-body
+  Monty fits inside the strip.
+
+**Still outstanding, by agreement:** the live safety suite and the token
+measurements. The design is frozen as of this commit.

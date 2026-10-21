@@ -2023,3 +2023,115 @@ on the admin page where it now belongs.
 | Monty appears | three places, none of them a neighbor's own page |
 | Token numbers | both roles, collapsed; admin, open |
 | Animations that survive reduced motion | none |
+
+## 36. Monty, whole — and a morning instead of an afternoon
+
+The last round before the design freezes. Two halves: a full-body Monty who
+trots in and lands in a pile of leaves, and a sky that reads as morning.
+
+### Drawing a corgi from the side
+
+A Pembroke is four things, and getting all four right is most of the work:
+a long low body, legs that look borrowed from a smaller dog, ears far too big
+for the head, and a rounded rear with **no tail at all**. Miss any one and it
+reads as a generic dog.
+
+It took five passes, and each failure taught the same lesson in a different
+place — *a flat drawing is a silhouette first, and anything that breaks the
+silhouette stops reading as fur*:
+
+1. **Separate red shapes.** Every join showed as a seam, and the rear white
+   circle read as a pompom stuck to a loaf of bread.
+2. **One merged red silhouette** — body path, rump circle and head circle all
+   `#D5713F`, so overlaps vanish. Body and face fixed; the legs were still
+   hard rectangles crossing the belly.
+3. **Capsule legs**, starting well up *inside* the body so no edge crosses it.
+   Legs fixed; the belly, drawn as a path with straight runs, became a white
+   box laid on the dog.
+4. **Soft ellipses for the white.** Curves only. Reads as fur.
+5. **A red chest circle behind the white bib.** Below the head there was no
+   red at all, so the white chest had nothing behind it and hung off the front
+   of him like a ball of fluff. Drawing the chest in and tucking each white
+   ellipse inside the red was the change that made him charming rather than
+   merely legible.
+
+A test now parses the SVG and asserts the chest marking sits inside a red
+circle — the geometric version of "white that spills past the silhouette is a
+shape of its own."
+
+### The arrival
+
+One animation on the dog carries the whole journey — trot, leap, landing,
+head up — so the three parts cannot drift out of step the way three separate
+animations would. The legs are four `<g>` elements with their own classes,
+swinging in opposite phase on a 0.35s cycle that runs six times: 2.1s, which
+is exactly the distance covered before he leaps. The pile bursts on a 2.75s
+delay, each leaf with its own `--puff-x` so it scatters rather than detonates.
+
+The structure is chosen for what is on screen **afterwards**. His *resting*
+CSS position is where he ends up — sitting in the pile, which is drawn in
+front of him — and the animation travels him in from off the left. So when it
+does not run at all, on a second visit or under reduced motion, the page shows
+him already peeking out of the finished pile. Nothing is left floating,
+because nothing was ever positioned for the journey.
+
+Under reduced motion the arrival is therefore **stilled, not hidden** — which
+is the one place the global "turn everything off" rule needed an exception,
+and a test asserts the arrival is not `display: none`.
+
+### One bug worth the name
+
+`.pile` carries `inset: 0`. The arrival's own rule set `bottom: 0` and a
+height but left the inherited `top: 0` in place — and a box with both ends
+pinned *and* a height is over-constrained, so the browser keeps the top. The
+leaves sat across his shoulders with his legs dangling underneath. `top: auto`
+fixed it. The span around the drawing also needed `line-height: 0`: an inline
+SVG keeps descender space below it, so the pile was being positioned against
+a box several pixels taller than anything visible.
+
+Both are now asserted, because both were invisible in the source and obvious
+only on screen.
+
+### A morning sky
+
+| | |
+|---|---|
+| Top | `--sky-top: #DCE9EF`, a pale blue |
+| Horizon | `--sky-horizon: #F7F2E8`, warm cream at 48vh |
+| Glow | a 760×200 radial of `rgba(224,168,75,0.16)` low near the horizon |
+| Hills | `--hill-sage: #BCD4B6` / `--hill-sage-deep: #A6C4A1`, fresher than before |
+
+Below the hero the warm sand band is gone; one very light sage band remains
+behind "How it works". About carries the same pale sky fading to cream.
+Signed-in pages get only the faintest hint of it — a 190px wash of
+`rgba(220,233,239,0.55)` on `body` — and no hills, no bands, no drifting
+leaves. Verified in the browser: `/donor` returns `{warm: false, hills: 0,
+bands: 0, drift: 0}`.
+
+### Contrast, split in two
+
+Freshening the hills put `--ink-soft` on `--hill-sage-deep` at 3.6:1, under
+the AA bar. Rather than darken the hills Kelly asked to freshen, the check now
+distinguishes two kinds of colour:
+
+- **Text-bearing backgrounds** — `--sky-top`, `--sky-horizon`, `--band-sage`,
+  `--cream` — all pass AA against every ink used on them.
+- **Decoration only** — `--hill-sage`, `--hill-sage-deep`, and the leaf mound.
+  Safe only for as long as they carry no words, which a browser check
+  confirmed: zero text elements overlap `.hills` or `.pile__mound`.
+
+The second group is named in the test with that reasoning written down, so
+putting a caption on the hills later fails loudly rather than silently.
+
+### Checked at phone width
+
+375×812, logged out, with the resting tableau showing: nothing overflows
+(`scrollWidth` 375 against a 375 viewport) and the full-body Monty fits inside
+the strip, dog 98–212px against a mound at 105–223px.
+
+| | |
+|---|---|
+| Tests | 433 passing, 10 deselected |
+| Passes to get the drawing right | five |
+| Animations that survive reduced motion | none; the arrival stills to its finished picture |
+| Horizontal overflow at 375px | none |
