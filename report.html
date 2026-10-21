@@ -23,7 +23,7 @@
 *{box-sizing:border-box}
 body{
   font-family:var(--body); color:var(--ink); background:var(--cream);
-  font-size:10pt; line-height:1.5; margin:0;
+  font-size:10pt; line-height:1.46; margin:0;
   -webkit-font-smoothing:antialiased;
 }
 .sheet{max-width:7.2in;margin:0 auto;padding:0.4in 0.3in 0.5in}
@@ -41,6 +41,8 @@ a{color:var(--evergreen);word-break:break-word}
 code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9pt;background:var(--cream-deep);padding:1px 4px;border-radius:3px}
 
 /* Title block ------------------------------------------------------------ */
+.sec1{font-size:8.5pt;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+      color:var(--gold-deep);margin:0 0 5pt}
 .title{border-bottom:3px solid var(--evergreen);padding-bottom:11pt;margin-bottom:12pt}
 .byline{font-size:11pt;color:var(--ink-soft);margin:6pt 0 0}
 .one-liner{
@@ -51,10 +53,11 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9pt;backg
 .links div{display:flex;gap:8pt;margin:0 0 3pt;align-items:baseline}
 .links b{flex:0 0 1.1in;color:var(--evergreen-deep)}
 .links div>:not(b){flex:1;min-width:0}
+.links code{white-space:nowrap}
 .fill{background:var(--gold-pale);border:1px dashed var(--gold-deep);padding:1px 6px;border-radius:3px;font-weight:700;color:var(--gold-deep)}
 
 /* Figures ---------------------------------------------------------------- */
-figure{margin:9pt auto;max-width:4.85in;break-inside:avoid;page-break-inside:avoid}
+figure{margin:8pt auto;max-width:4.5in;break-inside:avoid;page-break-inside:avoid}
 figure img{width:100%;display:block;border:1px solid var(--line);border-radius:7px}
 figcaption{font-size:8.3pt;color:var(--ink-soft);margin-top:4pt;line-height:1.4}
 figcaption b{color:var(--evergreen-deep)}
@@ -63,7 +66,9 @@ figcaption b{color:var(--evergreen-deep)}
 .pair figure{flex:1;margin:10pt 0;max-width:none}
 
 /* Tables ----------------------------------------------------------------- */
-table{width:100%;border-collapse:collapse;font-size:8.8pt;margin:8pt 0;break-inside:avoid}
+table{width:100%;border-collapse:collapse;font-size:8.8pt;margin:8pt 0}
+tr{break-inside:avoid;page-break-inside:avoid}
+thead{display:table-header-group}
 th,td{text-align:left;padding:4pt 6pt;border-bottom:1px solid var(--line);vertical-align:top}
 th{background:var(--evergreen-pale);color:var(--evergreen-deep);font-weight:700;font-size:8.5pt;
    text-transform:uppercase;letter-spacing:0.04em}
@@ -75,10 +80,10 @@ table.compact td,table.compact th{padding:3.5pt 6pt}
 .note{background:var(--band-sage);border-left:3px solid var(--evergreen-soft);
       padding:7pt 11pt;margin:9pt 0;font-size:9.2pt;break-inside:avoid}
 .warn{background:var(--terracotta-pale);border-left:3px solid var(--terracotta);
-      padding:7pt 11pt;margin:9pt 0;font-size:9.2pt;break-inside:avoid}
+      padding:7pt 11pt;margin:9pt 0;font-size:9.2pt}
 .note p:last-child,.warn p:last-child{margin-bottom:0}
 .placeholder{background:var(--gold-pale);border:1.5px dashed var(--gold-deep);
-      padding:8pt 11pt;margin:8pt 0;border-radius:6px;break-inside:avoid}
+      padding:8pt 11pt;margin:8pt 0;border-radius:6px}
 .placeholder p{margin:0 0 5pt}
 .placeholder p:last-child{margin:0}
 .placeholder .tag{font-size:8pt;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
@@ -104,6 +109,7 @@ table.compact td,table.compact th{padding:3.5pt 6pt}
 
 <!-- ====================================================== 1. Title ===== -->
 <header class="title">
+  <p class="sec1">1 · Title + links</p>
   <h1>Wishing Tree</h1>
   <p class="byline"><strong>Kelly Enright</strong> · MGT 409, AI Foundations for Managers · Yale School of Management</p>
 
@@ -122,7 +128,7 @@ table.compact td,table.compact th{padding:3.5pt 6pt}
 </header>
 
 <!-- ================================================= 2. Motivation ===== -->
-<h2><span class="n">1</span>Why this exists</h2>
+<h2><span class="n">2</span>Motivation</h2>
 
 <p>For seven years I volunteered at a soup kitchen. Every winter I organized
 clothing drives — scarves, blankets, gloves, coats — for the people we served.
@@ -148,10 +154,10 @@ analysis found that in 2023 about <strong>40% of Connecticut households — a re
 581,000</strong> — could not afford a basic survival budget, and that the figure
 rises above <strong>60% in cities including New Haven</strong>.</p>
 
-<p>The cruelty in that number is structural. ALICE households — Asset Limited,
-Income Constrained, Employed — earn <em>above</em> the federal poverty line, which
-is precisely what excludes them from most income-based aid. They are working, they
-are over the threshold, and they are still short at the end of the month.</p>
+<p>The cruelty is structural. ALICE households — Asset Limited, Income
+Constrained, Employed — earn <em>above</em> the federal poverty line, which is
+precisely what excludes them from most income-based aid. Working, over the
+threshold, and still short at the end of the month.</p>
 
 <p class="src">Source: CT Mirror, September 2025, reporting United Way of Connecticut's ALICE analysis for 2023.</p>
 
@@ -165,12 +171,12 @@ question of whether any slots are left.</p>
 
 <p class="src">Sources: WRDW, 2025 (Augusta); FOX13 Memphis, 2025 (Memphis).</p>
 
-<p>So the cost falls twice. A family goes without a winter coat because they
-couldn't take a Tuesday morning off. And a neighbor who would gladly have bought
-that coat never hears about it.</p>
+<p>So the cost falls twice: a family goes without a winter coat because they
+couldn't take a Tuesday morning off, and a neighbor who would gladly have bought
+it never hears about it.</p>
 
 <!-- =============================================== 3. What is new ====== -->
-<h2><span class="n">2</span>What is new here</h2>
+<h2><span class="n">3</span>What is new here</h2>
 
 <p>Plenty of good organizations work on parts of this. None of them, as far as I
 can find, puts the whole thing together — and being specific about that is more
@@ -183,7 +189,7 @@ useful than claiming novelty.</p>
   <tr>
     <td><strong>goodDeeds</strong><br><span class="quiet">launched 2026</span></td>
     <td>App where verified families request specific items.</td>
-    <td>Requires an app download and an up-front verification step.</td>
+    <td>An app download, and verification up front.</td>
   </tr>
   <tr>
     <td><strong>Geenees</strong></td>
@@ -192,7 +198,7 @@ useful than claiming novelty.</p>
   </tr>
   <tr>
     <td><strong>Benevolent</strong><br><span class="quiet">founded 2011</span></td>
-    <td>Story-based crowdfunding, each need vetted by a local nonprofit.</td>
+    <td>Story-based crowdfunding, vetted by a local nonprofit.</td>
     <td>Funding follows the story. Writing well helps.</td>
   </tr>
   <tr>
@@ -213,12 +219,12 @@ useful than claiming novelty.</p>
   <tr>
     <td><strong>GoFundMe</strong></td>
     <td>Anyone can ask anyone for money.</td>
-    <td>Rewards reach and storytelling. Your network is your outcome.</td>
+    <td>Your network is your outcome.</td>
   </tr>
   <tr>
     <td><strong>Buy Nothing</strong></td>
     <td>Hyperlocal gifting between neighbors.</td>
-    <td>No privacy layer — you post under your own name, to your neighbors.</td>
+    <td>No privacy layer: you post under your own name.</td>
   </tr>
 </table>
 
@@ -235,22 +241,17 @@ useful than claiming novelty.</p>
   programs into appointments, caseworkers and partner nonprofits. Here they are
   two agents, and they cost a tenth of a cent per wish.</li>
 
-  <li><strong>Conversational intake.</strong> No forms, no appointment, no
-  documents. You type what would help in your own words, at 11pm if that's when
-  you have a minute.</li>
+  <li><strong>No forms, no appointment, no app.</strong> You type what would help
+  in your own words, at 11pm if that is when you have a minute, on a website with
+  nothing to download.</li>
 
   <li><strong>Privacy enforced in code, not just asked for.</strong> Contact
-  details never reach any agent, and the cards a wish granter sees are built by
-  naming the fields they may see rather than by removing the ones they may not.</li>
+  details never reach any agent, and a public card is built by naming the fields a
+  granter may see rather than removing the ones they may not.</li>
 
-  <li><strong>A website, not an app.</strong> Nothing to download, nothing to be
-  seen on your phone.</li>
-
-  <li><strong>Hyperlocal and physical.</strong> One drop-off hub, one weekly
-  delivery run, hand-delivered. Neither side ever learns who the other is.</li>
-
-  <li><strong>Year-round, every kind of need</strong> — coats, groceries, a bed
-  frame, help with rent — not one category in one season.</li>
+  <li><strong>Hyperlocal, physical, year-round.</strong> One drop-off hub, one
+  weekly delivery run, hand-delivered, for every kind of need — coats, groceries,
+  a bed frame, help with rent — not one category in one season.</li>
 </ul>
 
 <div class="warn">
@@ -263,7 +264,7 @@ useful than claiming novelty.</p>
 </div>
 
 <!-- =================================================== 4. The agents === -->
-<h2><span class="n">3</span>The agents</h2>
+<h2><span class="n">4</span>The agents</h2>
 
 <p>Three agents, each with a narrow job, a few tools, and no ability to do
 anything consequential on its own. They run on <strong>gpt-6-luna</strong>
@@ -388,16 +389,14 @@ sent from a browser can get around them.</p>
 told was taken out comes from a fixed vocabulary of ten phrases — a name, a
 child's name, a school name, an employer's name, a landlord's name, an address, a
 phone number, an email address, a social media handle, a medical detail. Anything
-else the agent says it removed is dropped before the neighbor sees it. This
-matters because the line reads <em>"Taken out before anyone saw it"</em>, which is
-a promise about their privacy; an early version reported a reworded sentence as
-"a use-purpose detail", which is both untrue and meaningless.</p>
+else the agent claims it removed is dropped before the neighbor sees it, because
+the line reads <em>"Taken out before anyone saw it"</em> and that is a promise
+about their privacy.</p>
 
 <p><strong>Contact details never reach any agent.</strong> Addresses, phones and
-emails live in tables the agents cannot query. The Intake agent is told who it is
-talking to by alias only. A test walks every seeded person and checks their real
-address and phone against the raw body of every endpoint a visitor, neighbor or
-wish granter can reach.</p>
+emails live in tables the agents cannot query; the Intake agent knows who it is
+talking to by alias only. A test checks every seeded person's real address and
+phone against the raw body of every endpoint an account can reach.</p>
 
 <p><strong>The neutral format is a fairness measure, not tidiness.</strong> Every
 published wish is one plain fragment — the item and what it has to match. No first
@@ -408,8 +407,7 @@ best writer.</p>
 <h3>Why gpt-6-luna</h3>
 
 <ul>
-  <li><strong>Cost.</strong> A whole neighbor journey is $0.00133. Section 4 has
-  the arithmetic.</li>
+  <li><strong>Cost.</strong> A whole neighbor journey is $0.00133 — section 5 has the arithmetic.</li>
   <li><strong>Tools and structured output.</strong> All three agents return typed
   objects — a <code>SafetyReview</code>, a list of <code>DraftWish</code> — which
   is what lets code check the model's work instead of parsing prose.</li>
@@ -479,7 +477,7 @@ best writer.</p>
 </figure>
 
 <!-- =================================================== 5. Tokenomics === -->
-<h2><span class="n">4</span>What it costs to run</h2>
+<h2><span class="n">5</span>Tokenomics</h2>
 
 <p>Every figure here comes from <code>output/tokenomics.md</code>, produced by
 <code>backend/measure.py</code> against the final prompts, with the raw per-run
@@ -563,8 +561,8 @@ the <strong>same five wishes in the same order</strong>, for 4% more cost with n
 limit ($0.000460 → $0.000480 average). The limit stays — the cost grows with the
 size of the tree while the answer does not.</p>
 
-<p><strong>Experiment: does capping output save money?</strong> Output is the
-dearest bucket, so a cap per reply is the obvious lever. Three arms:</p>
+<p><strong>Experiment: does capping output save money?</strong> Three arms, since
+output is the dearest bucket and a cap per reply is the obvious lever:</p>
 
 <table class="compact">
   <tr><th></th><th class="num">Default (1,600)</th><th class="num">700</th><th class="num">300</th></tr>
@@ -579,10 +577,10 @@ the easy mistake: set a cap, see a lower number once, conclude the cap caused it
 
 <p>A cap of 300 <strong>does bind, and breaks things</strong>: two of ten intakes
 failed outright, the structured reply never produced. The eight that finished were
-38% cheaper — which is 38% of a tenth of a cent, against a one-in-five chance that
-a neighbor who has just typed out what their children need gets an error instead
-of a wish. And the failures are not free: the tokens were spent before the limit
-was hit.</p>
+38% cheaper — 38% of a tenth of a cent, against a one-in-five chance that a
+neighbor who has just typed out what their children need gets an error instead of
+a wish. The failures are not even free: the tokens were spent before the limit was
+hit.</p>
 
 <div class="note">
   <p><strong>The cap is a trap; the prompt is the lever.</strong> What actually
@@ -627,7 +625,7 @@ where to spend effort.</p>
 
 
 <!-- ======================================================= 6. Safety === -->
-<h2><span class="n">5</span>Safety</h2>
+<h2><span class="n">6</span>Safety</h2>
 
 <p>This app handles the single most sensitive thing a person can hand over: where
 they live and what they are short of. The risks below are the ones that would
@@ -637,15 +635,15 @@ behaving well.</p>
 <table class="compact">
   <tr><th style="width:27%">Risk</th><th>Defense</th></tr>
   <tr><td><strong>Prompt injection</strong><br><span class="quiet">a wish that tries to give the agent orders</span></td>
-      <td>Every wish is wrapped in <code>&lt;wish_from_family&gt;</code> delimiters and treated as data. An instruction inside is a <em>finding</em> — flagged, quoted in the reason, and reviewed anyway — not a request to consider.</td></tr>
+      <td>Wishes are wrapped in <code>&lt;wish_from_family&gt;</code> delimiters and treated as data. An instruction inside is a <em>finding</em> — flagged and reviewed anyway — not a request to consider.</td></tr>
   <tr><td><strong>Personal details leaking</strong></td>
-      <td>Two layers: the Safety agent removes them, then plain Python checks again and can only make a wish less public. Public cards are built by naming the fields a granter may see, so a new database column cannot leak by default. Contact details never reach any agent.</td></tr>
+      <td>Two layers: the agent removes them, then plain Python checks again and can only make a wish less public. Cards name the fields a granter may see, so a new column cannot leak by default.</td></tr>
   <tr><td><strong>Cash requests and scams</strong></td>
       <td>Flagged as <code>cash_request</code> or <code>scam</code> and held. Money never moves between two people: rent and utilities are paid to the landlord or provider.</td></tr>
   <tr><td><strong>The agent inventing a detail</strong></td>
-      <td>The hardest rule in the project. A missing size or deadline must be asked for or left empty, never guessed — a wish granter buying the wrong size because a model filled in a blank is a real harm.</td></tr>
+      <td>The hardest rule here. A missing size or deadline must be asked for or left empty, never guessed: a granter buying the wrong size because a model filled a blank is a real harm.</td></tr>
   <tr><td><strong>Overspending</strong></td>
-      <td>20,000 tokens per intake session and 500,000 per day, checked server-side before every call. Neither is readable from the environment, so a deployment cannot loosen them.</td></tr>
+      <td>20,000 tokens per session and 500,000 per day, checked server-side before every call. Neither is readable from the environment, so a deployment cannot loosen them.</td></tr>
   <tr><td><strong>Account security</strong></td>
       <td>bcrypt at work factor 12, session tokens and reset codes stored as SHA-256 hashes, HttpOnly cookies, and a passcode on every screen that shows an address.</td></tr>
 </table>
@@ -653,11 +651,10 @@ behaving well.</p>
 <h3>Evidence: ten real attacks against the real model</h3>
 
 <p><code>tests/test_safety_live.py</code> runs ten attacks against gpt-6-luna and
-the final prompts, and writes <code>output/safety_test_results.json</code>. A stub
-would be worthless here — the question is not whether the code branches correctly
-but whether the agent holds when someone pushes on it.</p>
-
-<p><strong>All ten held</strong>, for $0.0039 and seven model calls.</p>
+the final prompts, writing <code>output/safety_test_results.json</code>. A stub
+would be worthless here: the question is not whether the code branches correctly
+but whether the agent holds when someone pushes on it. <strong>All ten held</strong>,
+for $0.0039 and seven model calls.</p>
 
 <table class="compact">
   <tr><th class="num" style="width:6%">#</th><th>Attack</th><th style="width:16%">Result</th></tr>
@@ -700,9 +697,7 @@ agent, so what is measured is our defense.</p>
   already drafted was kept. <span class="quiet">Screenshot from an earlier build.</span></figcaption>
 </figure>
 
-<p>The privacy defense in the current build is section 3, figures 4 and 5: a
-child's name, a school name and a phone number removed, and the neighbor told
-exactly which kinds of thing went.</p>
+<p>The privacy defense in the current build is section 4, figures 4 and 5.</p>
 
 <h3>Bugs our own guardrails caught</h3>
 
@@ -719,7 +714,7 @@ not only hypothetical attackers:</p>
   fed straight into the Matchmaker's ranking.</li>
   <li><strong>A reworded wish reported as a privacy removal.</strong> The line
   "Taken out before anyone saw it: a use-purpose detail" was both untrue and
-  meaningless. That is what the closed vocabulary in section 3 exists to prevent.</li>
+  meaningless. That is what the closed vocabulary in section 4 exists to prevent.</li>
 </ul>
 
 <div class="warn">
@@ -735,7 +730,7 @@ not only hypothetical attackers:</p>
 </div>
 
 <!-- ======================================================= 7. Impact === -->
-<h2><span class="n">6</span>Impact</h2>
+<h2><span class="n">7</span>Impact</h2>
 
 <div class="warn">
   <p><strong>Read the screenshots carefully.</strong> The "24 wishes granted so
@@ -752,11 +747,11 @@ not only hypothetical attackers:</p>
 <p><strong>The intake is fast.</strong> Across 35 real intake sessions recorded in
 <code>output/audit_trail.json</code>, the model work takes a <strong>median of 9.8
 seconds</strong>. End to end in the app — a person typing, reading the reply,
-checking the draft and posting — the two conversations in section 3 took
+checking the draft and posting — the two conversations in section 4 took
 <strong>44 and 102 seconds</strong>, measured by the app itself and shown on the
 Agent activity page.</p>
 
-<p><strong>Set against what exists today</strong>, from section 1: an in-person
+<p><strong>Set against what exists today</strong>, from section 2: an in-person
 appointment with photo ID, birth certificates and proof of income, for a program
 that may already have filled in ten hours. The comparison is a minute and a half
 at your kitchen table against a morning off work for a place in a queue that may
@@ -799,30 +794,30 @@ Nothing here is estimated or assumed.</p>
 </div>
 
 <!-- ================================================ 8. Limits + next === -->
-<h2><span class="n">7</span>Limits and what comes next</h2>
+<h2><span class="n">8</span>Limits + next steps</h2>
 
 <p>In rough order of how much each one matters.</p>
 
 <table class="compact">
   <tr><th style="width:30%">Next</th><th>Why, and what it unblocks</th></tr>
   <tr><td><strong>Partner verification</strong><br><span class="quiet">through referrers</span></td>
-      <td>The real gap. Schools, churches and pantries already know who is struggling; a referrer vouching for a neighbor gives the trust layer every comparable program has and we do not.</td></tr>
+      <td>The real gap. Schools, churches and pantries already know who is struggling; a referrer vouching gives us the trust layer every comparable program has.</td></tr>
   <tr><td><strong>Partner mode</strong></td>
-      <td>Let an organization run its own tree. Piloted with a soup kitchen's winter clothing drive — the exact drive I used to organize by hand.</td></tr>
+      <td>Let an organization run its own tree. Piloted with a soup kitchen's winter clothing drive — the drive I used to organize by hand.</td></tr>
   <tr><td><strong>Spanish-language intake</strong></td>
       <td>New Haven is substantially Spanish-speaking. A conversational intake that only speaks English is a form with extra steps.</td></tr>
   <tr><td><strong>Real payments through a fiscal sponsor</strong></td>
-      <td>Rent and utilities are simulated today. A fiscal sponsor means money can actually move to a landlord, and donations may become tax-deductible.</td></tr>
+      <td>Rent and utilities are simulated today. A sponsor means money can move to a landlord, and donations may become tax-deductible.</td></tr>
   <tr><td><strong>Pooled donations for rent</strong></td>
       <td>A $900 rent gap is beyond one neighbor and within reach of ten.</td></tr>
-  <tr><td><strong>Email notifications, email sign-in, password reset</strong></td>
-      <td>The app says "we'll email you" and currently cannot. Nothing else on this list matters if people have to keep checking the site.</td></tr>
+  <tr><td><strong>Email notifications, sign-in and password reset</strong></td>
+      <td>The app says "we'll email you" and currently cannot. Nothing else here matters if people must keep checking the site.</td></tr>
   <tr><td><strong>Volunteer delivery, opt-in both sides</strong></td>
-      <td>Anonymity is the default and should stay the default — but two neighbors who both choose to meet should be allowed to. That is how a bridge becomes a relationship.</td></tr>
+      <td>Anonymity stays the default — but two neighbors who both choose to meet should be allowed to. That is how a bridge becomes a relationship.</td></tr>
   <tr><td><strong>Multiple admins, route planning, community leads</strong></td>
-      <td>Section 4's conclusion made concrete: admin time is the constraint, so the next real work is tooling for the people doing it.</td></tr>
+      <td>Section 5's conclusion made concrete: admin time is the constraint, so the next real work is tooling for the people doing it.</td></tr>
   <tr><td><strong>New regions</strong></td>
-      <td>The region — hub, windows, zip codes — is already one config object, not a hard-coded assumption.</td></tr>
+      <td>The region — hub, windows, zip codes — is already one config object.</td></tr>
   <tr><td><strong>Recurring wishes</strong></td>
       <td>Diapers and groceries are not one-time needs.</td></tr>
   <tr><td><strong>Installable web app, address autocomplete</strong></td>
@@ -851,10 +846,8 @@ never been short of.</p>
 <footer style="margin-top:28pt;padding-top:10pt;border-top:2px solid var(--evergreen-pale);
                font-size:8.5pt;color:var(--ink-soft)">
   <p>Wishing Tree · Kelly Enright · MGT 409, AI Foundations for Managers · Yale School of Management<br>
-  Every figure in this report comes from a real run recorded in
-  <code>output/tokenomics.md</code>, <code>output/safety_test_results.json</code> or
-  <code>output/audit_trail.json</code>, or from a source named in the text.
-  All neighbor, wish granter and wish data is invented.</p>
+  Every figure comes from a real run or a source named in the text. All neighbor,
+  wish granter and wish data is invented.</p>
 </footer>
 
 </div>
