@@ -74,18 +74,23 @@
 .cols--wide{grid-template-columns:1.25fr 1fr}
 .cols--narrow{grid-template-columns:1fr 1.3fr}
 .row3{display:grid;grid-template-columns:repeat(3,1fr);gap:.8em}
+/* `align-items:start` so each card is as tall as its own content: the
+   grid default stretches all three to the tallest, which left a stripe of
+   empty card under two of them. */
+.cards{align-items:start}
 
 /* One line under the diagram saying what the two fills mean. */
 /* Capped by height: at full column width the diagram is 329px tall, which
    is the 15px that pushed this slide off the canvas. Still the largest
    thing on it. */
-.pipeline{width:100%;max-width:100%;max-height:294px;height:auto;display:block}
+.pipeline{width:100%;max-width:100%;max-height:286px;height:auto;display:block}
 .legend{font-size:.54em;color:var(--ink-soft);margin:0 0 .38em}
 .sw{display:inline-block;width:1em;height:1em;border-radius:3px;
   vertical-align:-.14em;margin:0 .34em 0 0}
 .sw--hu{margin-left:1.4em}
 .sw--ai{background:#CFE0D6;border:1.5px solid #2F5D50}
 .sw--hu{background:#F6E2B8;border:1.5px solid #C78E33}
+.sw--tr{background:#fff;border:1.5px solid #2F5D50;margin-left:1.4em}
 
 /* One card per agent: what it does, and the tools it can actually call. */
 .cards .card{background:#fff;border:1.5px solid #CFDAD3;border-radius:11px;
@@ -97,6 +102,17 @@
   color:var(--evergreen-deep);padding:.12em .36em;line-height:1.5}
 .row4{display:grid;grid-template-columns:repeat(4,1fr);gap:.7em}
 .row2x2{display:grid;grid-template-columns:1fr 1fr;gap:.45em 1em;align-items:start}
+
+/* Four phone screenshots across. They are portrait, and a 16:9 slide cannot
+   hold two rows of portrait images at a readable size — two rows leaves
+   about 190px per image, which is a letterbox strip. Four across gives each
+   one ~350px of height, which is legible from the back of a room. */
+.strip{display:grid;grid-template-columns:repeat(4,1fr);gap:.8em;align-items:start}
+.strip figure{margin:0}
+.strip img{width:100%;display:block;border:1px solid #DDD6C9;border-radius:9px;
+  box-shadow:0 5px 18px rgba(34,70,60,.15)}
+.strip figcaption{font-size:.47em;line-height:1.4;color:var(--ink-soft);margin-top:.5em}
+.strip figcaption b{color:var(--evergreen-deep)}
 /* Height-capped rather than width-capped: the four crops have different
    shapes, and capping the height is what keeps two rows on one slide. */
 .row2x2 .shot{max-height:182px;width:auto;max-width:100%}
@@ -255,7 +271,7 @@ table.mini td.us{background:var(--gold-pale);font-weight:600}
   <p class="kick">4 · How it works</p>
   <h2>Three agents, one path</h2>
 
-  <svg viewBox="0 0 980 252" class="pipeline" style="margin:.05em auto .3em"
+  <svg viewBox="0 0 980 260" class="pipeline" style="margin:.05em auto .3em"
        xmlns="http://www.w3.org/2000/svg" role="img"
        aria-label="A neighbor's words become a wish, pass a code check, reach the tree, and are granted and delivered">
     <defs>
@@ -269,7 +285,7 @@ table.mini td.us{background:var(--gold-pale);font-weight:600}
         .t{font-family:'Inter',sans-serif;font-size:17px;font-weight:700;fill:#22463C}
         .s{font-family:'Inter',sans-serif;font-size:13px;fill:#5F5A53}
         .k{font-family:'Inter',sans-serif;font-size:11px;font-weight:700;fill:#2F5D50;letter-spacing:.1em}
-        .cc{font-family:'Inter',sans-serif;font-size:12px;font-weight:700;fill:#22463C}
+        .cc{font-family:'Inter',sans-serif;font-size:12px;font-weight:700;fill:#4A7A6B}
         .ln{stroke:#4A7A6B;stroke-width:2.4;fill:none;marker-end:url(#a)}
       </style>
     </defs>
@@ -302,40 +318,42 @@ table.mini td.us{background:var(--gold-pale);font-weight:600}
     <path class="ln" d="M564 58 H586"/>
 
     <!-- the code re-check, on the one arrow that reaches the public tree -->
-    <text class="cc" x="810" y="26" text-anchor="middle">code check</text>
     <path class="ln" d="M778 58 H794"/>
     <path class="ln" d="M826 58 H836"/>
+    <path d="M810 72 V104" stroke="#4A7A6B" stroke-width="1.4" stroke-dasharray="3 3"/>
     <circle cx="810" cy="58" r="14" fill="#fff" stroke="#2F5D50" stroke-width="2"/>
     <path d="M810 50l6 2.4v4.2c0 3.6-2.5 6.3-6 7.4-3.5-1.1-6-3.8-6-7.4v-4.2z"
           fill="#2F5D50"/>
+    <text class="cc" x="810" y="118" text-anchor="middle">code check</text>
 
-    <path class="ln" d="M911 96 V124 H88 V146"/>
+    <path class="ln" d="M911 96 V134 H88 V154"/>
 
     <!-- row two -->
-    <rect class="ai" x="4"   y="148" width="176" height="76" rx="11"/>
-    <text class="k" x="18" y="172">AGENT</text>
-    <text class="t" x="18" y="194">Matchmaker</text>
-    <text class="s" x="18" y="212">ranks for one granter</text>
+    <rect class="ai" x="4"   y="156" width="176" height="76" rx="11"/>
+    <text class="k" x="18" y="180">AGENT</text>
+    <text class="t" x="18" y="202">Matchmaker</text>
+    <text class="s" x="18" y="220">ranks for one granter</text>
 
-    <rect class="hu" x="210" y="148" width="176" height="76" rx="11"/>
-    <text class="t" x="224" y="182">A wish granter</text>
-    <text class="s" x="224" y="204">commits to a wish</text>
+    <rect class="hu" x="210" y="156" width="176" height="76" rx="11"/>
+    <text class="t" x="224" y="190">A wish granter</text>
+    <text class="s" x="224" y="212">commits to a wish</text>
 
-    <rect class="hu" x="416" y="148" width="176" height="76" rx="11"/>
-    <text class="t" x="430" y="182">Admin: drop-off</text>
-    <text class="s" x="430" y="204">Thursdays at the hub</text>
+    <rect class="hu" x="416" y="156" width="176" height="76" rx="11"/>
+    <text class="t" x="430" y="190">Admin: drop-off</text>
+    <text class="s" x="430" y="212">Thursdays at the hub</text>
 
-    <rect class="hu" x="622" y="148" width="176" height="76" rx="11"/>
-    <text class="t" x="636" y="182">Admin: delivery</text>
-    <text class="s" x="636" y="204">Saturdays, by hand</text>
+    <rect class="hu" x="622" y="156" width="176" height="76" rx="11"/>
+    <text class="t" x="636" y="190">Admin: delivery</text>
+    <text class="s" x="636" y="212">Saturdays, by hand</text>
 
-    <path class="ln" d="M180 186 H204"/>
-    <path class="ln" d="M386 186 H410"/>
-    <path class="ln" d="M592 186 H616"/>
+    <path class="ln" d="M180 194 H204"/>
+    <path class="ln" d="M386 194 H410"/>
+    <path class="ln" d="M592 194 H616"/>
   </svg>
 
   <p class="legend"><span class="sw sw--ai"></span>AI agent
-    <span class="sw sw--hu"></span>a person</p>
+    <span class="sw sw--hu"></span>a person
+    <span class="sw sw--tr"></span>the public tree</p>
 
   <div class="row3 cards">
     <div class="card">
@@ -367,30 +385,32 @@ table.mini td.us{background:var(--gold-pale);font-weight:600}
   <p class="kick">5 · Demo</p>
   <h2>One wish, start to finish</h2>
 
-  <div class="row2x2" style="margin-top:.3em">
-    <div>
-      <img class="shot" src="{{IMG:s-intake}}" alt="The intake conversation">
-      <p class="cap"><b>1.</b> A neighbor types it in their own words. The agent
-        says it will leave the names out.</p>
-    </div>
-    <div>
-      <img class="shot" src="{{IMG:s-ontree}}" alt="The wish on the tree">
-      <p class="cap"><b>2.</b> Checked for privacy, then on the tree — rewritten
-        into one neutral format.</p>
-    </div>
-    <div>
-      <img class="shot" src="{{IMG:s-granter}}" alt="A wish granter opening a wish">
-      <p class="cap"><b>3.</b> A wish granter taps a leaf and commits. They never
-        learn who asked.</p>
-    </div>
-    <div>
-      <img class="shot" src="{{IMG:s-runsheet}}" alt="The admin run sheet">
-      <p class="cap"><b>4.</b> Admin drops off Thursday, delivers Saturday. The
-        only screen with an address.</p>
-    </div>
+  <div class="strip">
+    <figure>
+      <img src="{{IMG:s-intake}}" alt="The neighbor describing what they need">
+      <figcaption><b>1.</b> A neighbor types it in their own words. The agent
+        says it will leave the names and employer out.</figcaption>
+    </figure>
+    <figure>
+      <img src="{{IMG:s-ontree}}" alt="The same wish, published on the tree">
+      <figcaption><b>2.</b> Checked for privacy, then on the tree — one neutral
+        format, no name, no employer.</figcaption>
+    </figure>
+    <figure>
+      <img src="{{IMG:s-granter}}" alt="A wish granter opening that leaf">
+      <figcaption><b>3.</b> A wish granter taps that leaf and commits. They
+        never learn who asked.</figcaption>
+    </figure>
+    <figure>
+      <img src="{{IMG:s-runsheet}}" alt="The same wish on the admin run sheet">
+      <figcaption><b>4.</b> It reaches the admin run sheet for Thursday's
+        drop-off — the only screen with an address.</figcaption>
+    </figure>
   </div>
-  <p class="tiny" style="margin-top:.35em">Live at
-    <strong>wishing-tree-demo.onrender.com</strong> — all data shown is invented.</p>
+
+  <p class="tiny" style="margin-top:.3em">The same wish at every step, captured
+    in the live app. <strong>wishing-tree-demo.onrender.com</strong> — all data
+    shown is invented.</p>
 </section>
 
 <!-- 6 ------------------------------------------------------------------ -->
