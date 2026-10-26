@@ -776,12 +776,12 @@ not only hypothetical attackers:</p>
 
 <h3>What we can already say</h3>
 
-<p><strong>The intake is fast.</strong> Across 35 real intake sessions recorded in
-<code>output/audit_trail.json</code>, the model work takes a <strong>median of 9.8
+<p><strong>The intake is fast.</strong> Across 45 real intake sessions recorded in
+<code>output/audit_trail.json</code>, the model work takes a <strong>median of 8.5
 seconds</strong>. End to end in the app — a person typing, reading the reply,
-checking the draft and posting — the two conversations in section 4 took
-<strong>44 and 102 seconds</strong>, measured by the app itself and shown on the
-Agent activity page.</p>
+checking the draft and posting — two of my own runs took <strong>44 and 102
+seconds</strong>, timed by the app itself. Both figures are mine, not a tester's;
+no tester run was timed.</p>
 
 <p><strong>Set against what exists today</strong>, from section 2: an in-person
 appointment with photo ID, birth certificates and proof of income, for a program
@@ -796,34 +796,67 @@ appointments and caseworkers.</p>
 
 <h3>Real-user testing</h3>
 
-<p>The following are to be filled in from Kelly's own testing with real people.
-Nothing here is estimated or assumed.</p>
+<p><strong>Five people used Wishing Tree.</strong> Among them a fellow volunteer
+from the soup kitchen, who helped run its annual winter item drive, and my
+mother, who raised us on her own and was helped by neighbors in our community
+with things like school tuition and clothing. Between them they have been on
+both sides of this problem, which is the reason their reactions are worth more
+than the sample size suggests.</p>
 
-<div class="placeholder">
-  <span class="tag">Placeholder — tester quotes</span>
-  <p>Quotes from neighbors who used the intake, and from wish granters who used
-  the tree. Verbatim, with role and nothing identifying.</p>
-</div>
+<p class="note"><strong>Everything below is paraphrase.</strong> I did not record
+anyone's exact words, so nothing here is presented as a quotation. These are my
+summaries of what testers told me, and should be read as such.</p>
 
-<div class="placeholder">
-  <span class="tag">Placeholder — observed intake times</span>
-  <p>How long real testers took from opening "Make a wish" to a posted wish,
-  with the number of testers. To be compared against the 44 s and 102 s measured
-  above, which were my own runs.</p>
-</div>
+<p><strong>The givers would give more often.</strong> The testers who tried the
+granting side had all given to drives before — once they found out about them.
+Each said they would be more likely to give year-round if an app like this ran
+in their community. That is the whole thesis in one sentence, and it is the one
+finding here I would most want tested against a larger group before believing
+too firmly.</p>
 
-<div class="placeholder">
-  <span class="tag">Placeholder — before and after</span>
-  <p>For testers who have used an existing program (Angel Tree, a pantry, a
-  church giving tree): what that took, and what this took. This is the comparison
-  that matters, and it is the one only real users can supply.</p>
-</div>
+<p><strong>The anonymity is the feature.</strong> My mother's reaction was that
+something like this would have been genuinely helpful when she needed it, and
+that the part that mattered was not having to be identified — because admitting
+you need help, and cannot manage on your own, can feel shameful. That is a
+design requirement stated as a feeling, and it is worth more than any latency
+number in this report: it says the privacy work in section 6 is not a compliance
+exercise, it is the thing that makes the product usable at all by the people it
+is for.</p>
 
-<div class="placeholder">
-  <span class="tag">Placeholder — what testers found confusing or wrong</span>
-  <p>Worth reporting as plainly as the successes. A usability finding from a real
-  neighbor is more valuable than another passing test.</p>
-</div>
+<p><strong>One tester tried to grant a real wish.</strong> They did not realize
+the tree was demo data, and moved to actually buy and deliver the item. Taken
+one way that is a usability failure — the demo was not obviously a demo. Taken
+the other way it is the strongest signal in this round: someone read a stranger's
+need and moved to meet it. It is also precisely why the deployed site carries a
+banner saying the data is invented, and why that banner is not optional.</p>
+
+<h3>Before and after</h3>
+
+<p>Before Wishing Tree, testers gave when they happened to hear about a drive —
+in practice about once a year. With Wishing Tree in front of them, they could see
+local wishes and give at any time. That is the change the product is for: not
+more generosity, but generosity that is not gated on hearing about something in
+time.</p>
+
+<h3>What this testing does not establish</h3>
+
+<p>Said plainly, because five people in one round is a signal and not a finding:</p>
+
+<ul>
+  <li><strong>Nobody currently asking for help has tested the intake.</strong>
+  The reaction above is from someone who needed this years ago, remembering. A
+  neighbor in a hard month this week may find it quite different, and that is
+  the test that matters most. It is the first item in section 8.</li>
+  <li><strong>No tester run was timed.</strong> The 44 and 102 seconds above are
+  my own runs. I have no measured figure for how long a real person takes from
+  opening "Make a wish" to a posted wish.</li>
+  <li><strong>Confusion was not systematically collected.</strong> The demo-data
+  mix-up surfaced because it was dramatic, not because the session was structured
+  to find usability problems. A round designed to find them would find more.</li>
+  <li><strong>Five testers, one of them my mother.</strong> People who know you
+  are kind to your work. The giving-side reactions are the more reliable half of
+  this, and even those are five people.</li>
+</ul>
 
 <!-- ================================================ 8. Limits + next === -->
 <h2><span class="n">8</span>Limits + next steps</h2>
@@ -832,6 +865,10 @@ Nothing here is estimated or assumed.</p>
 
 <table class="compact">
   <tr><th style="width:30%">Next</th><th>Why, and what it unblocks</th></tr>
+  <tr><td><strong>Test with neighbors who are asking for help now</strong></td>
+      <td>The gap in section 7. Everyone who has used the intake either built it or remembers needing it years ago. Someone in a hard month this week is the only person who can say whether the conversation is kind enough, short enough and clear enough — and no amount of further building substitutes for asking them.</td></tr>
+  <tr><td><strong>Keep the demo banner on the live site</strong></td>
+      <td>A tester tried to grant a demo wish, believing a real neighbor was waiting. Until there are real wishes, anyone arriving at the deployed site has to be told the tree is invented before they spend their own money on it. The banner is a correctness requirement, not decoration.</td></tr>
   <tr><td><strong>Partner verification</strong><br><span class="quiet">through referrers</span></td>
       <td>The real gap. Schools, churches and pantries already know who is struggling; a referrer vouching gives us the trust layer every comparable program has.</td></tr>
   <tr><td><strong>Partner mode</strong></td>

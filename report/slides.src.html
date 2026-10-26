@@ -166,6 +166,10 @@
 /* The captured card brings its own rounded border, so the frame `.shot`
    draws around every other screenshot would be a second one. */
 .shot--bare{border:none;border-radius:0;box-shadow:none}
+.para{font-family:var(--display);font-size:.95em;line-height:1.33;
+  color:var(--evergreen-deep);margin:0 0 .3em}
+.para__note{font-size:.44em;color:var(--ink-soft);letter-spacing:.04em;
+  text-transform:uppercase;font-weight:700;margin:-.15em 0 1.1em}
 .pill{display:inline-block;background:var(--evergreen-pale);color:var(--evergreen-deep);
   border-radius:999px;padding:.18em .7em;font-size:.6em;font-weight:700;margin:0 .3em .3em 0}
 
@@ -517,26 +521,29 @@ table.mini td.us{background:var(--gold-pale);font-weight:600}
   <p class="kick">8 · Impact</p>
   <h2>What we can say, and what we can't</h2>
 
-  <div class="cols" style="margin-top:.4em">
+  <div class="cols cols--wide" style="margin-top:.4em">
+    <div>
+      <p class="para">Someone who was once helped by neighbors: the anonymity is
+        what matters, because asking for help can feel shameful.</p>
+      <p class="para__note">Paraphrase &middot; 5 testers, exact words not recorded</p>
+      <div class="beats">
+        <p><strong>Givers:</strong> more likely to give year-round with an app
+          like this in their community. Before, they gave when they happened to
+          hear about a drive &mdash; about once a year.</p>
+        <p><strong>One tester tried to grant a real wish</strong>, not realizing
+          the tree was demo data. Real intent to give &mdash; and why the live
+          site needs its banner.</p>
+      </div>
+    </div>
     <div>
       <div class="stat" style="margin-bottom:.5em">
-        <span class="big">9.8 s</span>
-        <span class="lab">median model time per intake, across <b>35 real
-          sessions</b> in the audit trail. End to end in the app: 44 s and 102 s.</span>
+        <span class="big">Under 2 min</span>
+        <span class="lab">to post a wish &mdash; <b>44 s and 102 s</b> in our runs.<br>
+          8.5 s median model time per intake, across 45 real sessions.</span>
       </div>
       <div class="warn">Against today: an in-person appointment with ID, birth
         certificates and proof of income — for a program that may already have
         filled.</div>
-    </div>
-    <div>
-      <div class="ph" style="margin-bottom:.5em">
-        <span class="tag">Placeholder — tester quote</span>
-        A neighbor's own words about using the intake.
-      </div>
-      <div class="ph">
-        <span class="tag">Placeholder — before and after</span>
-        What an existing program took them, against what this took.
-      </div>
     </div>
   </div>
 
@@ -554,14 +561,15 @@ table.mini td.us{background:var(--gold-pale);font-weight:600}
     <div>
       <h3>Build</h3>
       <ul style="font-size:.74em">
+        <li><strong>Test with neighbors asking for help now.</strong> The gap in
+          our testing so far, and the first thing to fix.</li>
         <li><strong>Partner mode</strong>, piloted with a soup kitchen's winter
           clothing drive — the drive I used to organize by hand.</li>
         <li><strong>Partner verification</strong> through referrers: schools,
           churches and pantries already know who is struggling.</li>
         <li><strong>Wish granters deliver their own wishes</strong>, like
-          Lasagna Love: opt-in on both sides, the address shared only for that
-          one delivery, and vetted volunteers. It removes the coordinator
-          bottleneck and lets neighbors meet the people they help.</li>
+          Lasagna Love: opt-in both sides, vetted volunteers, the address shared
+          for that one delivery. It removes the coordinator bottleneck.</li>
       </ul>
     </div>
     <div>

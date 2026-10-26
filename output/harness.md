@@ -2842,6 +2842,56 @@ gateway rather than by Wishing Tree, and the wish then waits instead of going
 up. That is the safe outcome, not a broken one, but it looks like nothing
 happening.
 
+## 45. The tester results, and two numbers that moved
+
+Five people used Wishing Tree, including a fellow soup-kitchen volunteer who
+helped run its winter item drive, and Kelly's mother, who was helped by
+neighbors years ago. Their reactions filled the last four placeholders in
+section 7 and both on slide 8.
+
+**Everything is paraphrase.** No exact words were recorded, so nothing is set
+as a quotation anywhere — slide 8 carries the label *"Paraphrase · 5 testers,
+exact words not recorded"* under the lead line, and section 7 opens with the
+same statement. This is a standing rule now, in the decisions table.
+
+**The finding that matters most is not a number.** The anonymity is what made
+it usable for someone who had needed it: admitting you cannot manage on your
+own can feel shameful. That reframes section 6 — the privacy work is not a
+compliance exercise, it is what makes the product usable by the people it is
+for.
+
+**The strongest signal was a mistake.** One tester tried to grant a wish for
+real, not realizing the tree was demo data. Read one way that is a usability
+failure; read the other it is someone moving to meet a stranger's need. Both
+readings are on the slide, and the live site's demo banner is now listed in
+section 8 as a correctness requirement rather than decoration.
+
+### Two numbers that moved, and why
+
+Both were true when written and are not any more, because the evidence files
+kept growing underneath them.
+
+| Figure | Was | Now | Why |
+|---|---|---|---|
+| Intake sessions in the audit trail | 35 | **45** | Today's real runs for the slide 7 and section 4 screenshots are in there too. |
+| Median model time per intake | 9.8 s | **8.5 s** | Same cause. Recomputed over the 45. |
+
+Recomputed with: lines in `output/audit_trail.json` where `agent` is `intake`
+and `ok` is true, grouped by `session_id`, keeping only ids beginning
+`intake-` — the `measure-*` and `cache-check-*` sessions are benchmark runs,
+not real ones, and their median is 25.5 s, which would be a different and
+misleading claim.
+
+**The 44 s and 102 s stayed**, but their description changed. They were
+labelled as "the two conversations in section 4", and section 4's screenshot
+was retaken today, so it no longer shows them. They are now described for what
+they are: two of my own runs, timed by the app, with the report saying plainly
+that no tester run was timed.
+
+**The lesson:** a figure that names its own source goes stale when the source
+is a living file. Anything quoting the audit trail needs recomputing before
+submission, not just rebuilding.
+
 ## Final submission notes
 
 Written for whoever picks this up next, including me after a break. Everything
@@ -2854,10 +2904,10 @@ below is current as of the last commit.
    value lives only in Render's dashboard, under
    Environment → `WISHINGTREE_PASSCODE`. Fill it in on the copy uploaded to
    Canvas, **not** in `report/report.src.html`, which is committed.
-2. **Fill in section 7, Impact.** Four gold dashed placeholders: a tester
-   quote, observed intake times, a before-and-after against an existing
-   program, and what testers found confusing. Edit
-   `report/report.src.html`, then rebuild.
+2. ~~Fill in section 7, Impact.~~ **Done** — all four placeholders replaced
+   with the real tester results (5 testers). Everything there is paraphrase:
+   no exact words were recorded, and the section says so, so nothing is
+   presented as a quotation. Slide 8's two placeholders are gone too.
 3. **Reseed before recording or demoing**, so the tree is the same every time:
    `./.venv/bin/python -m backend.seed --reset`
 4. **Upload** `report.html` and `slides.html` to Canvas. Both are
@@ -2876,7 +2926,8 @@ back will look like a regression to anyone reading carefully.
 | **No gift card or cash wishes** anywhere | The Safety agent flags them as `cash_request`. Three places have contradicted this and each was fixed separately: the Intake agent's prompt, the seed data, and `data/price_guide.json`, which the `estimate_cost` tool reads. Check all three. |
 | **The live passcode is a placeholder in the report** | `report.src.html` is committed. A real passcode in it is a published passcode. |
 | **Slide 5 is four across, not 2×2** | The screenshots are portrait phone captures at 2×. Two rows of portrait images on a 16:9 slide leaves ~190px each, which is unreadable. |
-| **The report is 13 pages** | To leave room for the tester results in section 7. The assignment allows up to 15; the spare pages are deliberate. |
+| **The report is 13 pages** | The tester results are now in, and it is still 13. The assignment allows up to 15. |
+| **Tester feedback is paraphrase, never quoted** | No exact words were recorded. Section 7 and slide 8 both say so in plain sight. Do not add quotation marks to any of it. |
 | **Every number in the slides matches the report** | Both trace to `output/tokenomics.md` and `output/safety_test_results.json`. Changing an agent prompt changes these — rerun both suites and update both files together. |
 | **Only `gpt-6-luna`**, through Portkey | Named once, in `backend/config.py`. |
 | **No real data anywhere** | Every neighbor, wish granter, address, phone and wish is invented. |
