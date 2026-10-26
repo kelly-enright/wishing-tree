@@ -83,6 +83,9 @@
 
 .shot{width:100%;display:block;border:1px solid #DDD6C9;border-radius:10px;
   box-shadow:0 6px 22px rgba(34,70,60,.16)}
+/* The hero is cropped tight to the tree and so is nearly square. Capped
+   by height and centred, or it runs off the bottom of the canvas. */
+.hero-shot{max-height:498px;width:auto;max-width:100%;margin:0 auto}
 .cap{font-size:.52em;color:var(--ink-soft);margin:.45em 0 0;line-height:1.35}
 .cap b{color:var(--evergreen-deep)}
 
@@ -120,7 +123,7 @@
   text-transform:uppercase;color:var(--gold-ink);margin-bottom:.25em}
 
 table.mini{width:100%;border-collapse:collapse;font-size:.56em}
-table.mini td,table.mini th{padding:.3em .45em;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+table.mini td,table.mini th{padding:.26em .45em;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 table.mini th{color:var(--evergreen-deep);font-weight:700;font-size:.9em;
   text-transform:uppercase;letter-spacing:.05em;background:var(--evergreen-pale)}
 table.mini td.us{background:var(--gold-pale);font-weight:600}
@@ -144,7 +147,7 @@ table.mini td.us{background:var(--gold-pale);font-weight:600}
         them with neighbors who want to help.</p>
     </div>
     <div>
-      <img class="shot" src="{{IMG:s-hero}}" alt="The Wish Tree, with every open wish as a leaf">
+      <img class="shot hero-shot" src="{{IMG:s-hero}}" alt="The Wish Tree, with every open wish as a leaf">
       <p class="cap">Every open wish is a leaf. Tap one to see it.
         <b>All data shown is invented.</b></p>
     </div>
@@ -203,22 +206,25 @@ table.mini td.us{background:var(--gold-pale);font-weight:600}
         <tr><td>Modest Needs</td><td>Bills only, heavy documentation</td></tr>
         <tr><td>GoFundMe</td><td>Your network is your outcome</td></tr>
         <tr><td>Buy Nothing</td><td>No privacy — you post as yourself</td></tr>
-        <tr><td class="us">Wishing Tree</td><td class="us">Year-round, private, no forms</td></tr>
+        <tr><td>Lasagna Love</td><td>Local and personal, but meals only</td></tr>
+        <tr><td class="us">Wishing Tree</td><td class="us">Local, year-round, private, any need</td></tr>
       </table>
+      <div class="warn" style="margin-top:.6em"><strong>The honest gap:</strong>
+        no partner verification yet. Most programs on that list verify through a
+        partner.</div>
     </div>
     <div>
       <h3>Our three differences</h3>
       <ul style="font-size:.74em">
         <li><strong>Fairness by design.</strong> One neutral format for every
-          wish; ranked on urgency and waiting time, never on storytelling.</li>
-        <li><strong>AI does the hard part.</strong> The intake interview and the
-          privacy review are exactly what forces others into appointments and
-          caseworkers.</li>
-        <li><strong>Year-round and local.</strong> One hub, one weekly delivery,
-          every kind of need.</li>
+          wish, ranked on urgency and waiting time, not storytelling.</li>
+        <li><strong>AI does the hard part.</strong> Intake and privacy review
+          are what force other programs into appointments and caseworkers.</li>
+        <li><strong>Neighbors, not strangers.</strong> Others are local but
+          seasonal, one kind of need, or public; or year-round but national.
+          Wishing Tree is the only one that's local, year-round, private and
+          open to any need. One hub, one weekly delivery.</li>
       </ul>
-      <div class="warn"><strong>The honest gap:</strong> no partner verification
-        yet. Everyone else on that list has one.</div>
     </div>
   </div>
 </section>
