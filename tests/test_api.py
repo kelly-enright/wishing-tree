@@ -227,3 +227,35 @@ def test_the_passcode_is_checked_on_the_server_not_shipped_to_the_browser():
     for path in dist.rglob("*"):
         if path.is_file() and path.suffix in {".js", ".css", ".html"}:
             assert config.COORDINATOR_PASSCODE not in path.read_text(errors="ignore")
+
+
+# --------------------------------------------------------------------------
+# Caching the built frontend
+# --------------------------------------------------------------------------
+
+def test_index_html_is_never_served_from_cache_without_asking(client):
+    """A rebuilt frontend has to be visible on the next visit.
+
+    index.html keeps its name while its contents point at new hashed
+    bundles, so a cached copy serves yesterday's app. FileResponse sets an
+    ETag but no Cache-Control, and with no Cache-Control a browser may pick
+    a lifetime of its own from Last-Modified — which it does, and which hid
+    a rebuild during testing.
+    """
+    headers = client.get("/").headers
+    assert headers.get("cache-control") == "no-cache"
+
+
+def test_hashed_assets_are_cached_hard(client):
+    """The hash in the filename is the cache key, so the file can never
+    change under a given URL. Anything less than a long max-age throws away
+    the whole point of building them that way."""
+    dist = config.FRONTEND_DIST / "assets"
+    if not dist.is_dir():
+        pytest.skip("frontend not built")
+    bundle = next((p for p in dist.iterdir() if p.suffix == ".js"), None)
+    if bundle is None:
+        pytest.skip("no built bundle")
+    headers = client.get(f"/assets/{bundle.name}").headers
+    assert "immutable" in headers.get("cache-control", "")
+    assert "max-age=31536000" in headers.get("cache-control", "")

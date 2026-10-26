@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import DemoBanner from './components/DemoBanner'
+import ScrollToTop from './components/ScrollToTop'
 import About from './pages/About'
 import Coordinator from './pages/Coordinator'
 import Donor from './pages/Donor'
@@ -21,7 +22,8 @@ import SignUpFamily from './pages/SignUpFamily'
 export default function App() {
   return (
     <>
-      {/* Above the routes, so it is on every page — including the 404. */}
+      {/* Both above the routes, so they apply to every page — including the 404. */}
+      <ScrollToTop />
       <DemoBanner />
       <Routes>
         <Route path="/" element={<Landing />} />

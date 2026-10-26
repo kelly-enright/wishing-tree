@@ -417,10 +417,33 @@ def coordinator_activity(limit: int = 200) -> dict:
 
 _INDEX = config.FRONTEND_DIST / "index.html"
 
+# Vite puts a content hash in every asset filename, so a given /assets/ URL
+# can never change meaning — cache it for a year. `index.html` is the
+# opposite: its name is fixed and its contents point at the current hashes,
+# so it has to be revalidated every time or a rebuild stays invisible behind
+# the browser's cache. FileResponse sends an ETag but no Cache-Control, and
+# with no Cache-Control a browser is free to guess a lifetime from
+# Last-Modified — which is exactly what it does.
+IMMUTABLE = "public, max-age=31536000, immutable"
+REVALIDATE = "no-cache"      # "ask before reusing", not "do not store".
+# FileResponse does not answer If-None-Match, so each check re-sends the
+# file rather than a 304. index.html is under a kilobyte, so that costs
+# nothing, and a stale page costs a confusing bug report.
+
+
+class HashedAssets(StaticFiles):
+    """Vite's hashed bundles, cached hard."""
+
+    def file_response(self, *args, **kwargs):
+        response = super().file_response(*args, **kwargs)
+        response.headers["cache-control"] = IMMUTABLE
+        return response
+
+
 if (config.FRONTEND_DIST / "assets").is_dir():
     app.mount(
         "/assets",
-        StaticFiles(directory=config.FRONTEND_DIST / "assets"),
+        HashedAssets(directory=config.FRONTEND_DIST / "assets"),
         name="assets",
     )
 
@@ -435,7 +458,8 @@ def spa(full_path: str):
         candidate = (config.FRONTEND_DIST / full_path).resolve()
         dist = config.FRONTEND_DIST.resolve()
         if candidate.is_file() and candidate.is_relative_to(dist):
-            return FileResponse(candidate)
+            # Fonts and icons here are not hash-named, so they revalidate too.
+            return FileResponse(candidate, headers={"cache-control": REVALIDATE})
 
     if not _INDEX.exists():
         return JSONResponse(
@@ -447,4 +471,4 @@ def spa(full_path: str):
             },
             status_code=503,
         )
-    return FileResponse(_INDEX)
+    return FileResponse(_INDEX, headers={"cache-control": REVALIDATE})
