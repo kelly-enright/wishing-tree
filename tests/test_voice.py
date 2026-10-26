@@ -1454,6 +1454,49 @@ AMERICAN_ENGLISH_PATHS = (
 )
 
 
+def _deliverable_text(path: Path) -> str:
+    """The words a reader actually sees in a built deliverable.
+
+    Scripts and styles come out — `slides.html` has reveal.js inlined, and
+    its minified source contains plenty of words nobody reads.
+    """
+    import html as _html
+
+    body = path.read_text(encoding="utf-8")
+    body = re.sub(r"<script\b.*?</script>", " ", body, flags=re.S | re.I)
+    body = re.sub(r"<style\b.*?</style>", " ", body, flags=re.S | re.I)
+    body = re.sub(r"<!--.*?-->", " ", body, flags=re.S)
+    body = re.sub(r"<[^>]+>", " ", body)
+    return _html.unescape(body).lower()
+
+
+DELIVERABLES = (
+    Path(__file__).resolve().parent.parent / "report.html",
+    Path(__file__).resolve().parent.parent / "slides.html",
+)
+
+
+@pytest.mark.parametrize("word", BRITISH)
+def test_the_report_and_slides_are_in_american_english(word):
+    """The deliverables, not just the app.
+
+    These are the two files that get handed in, and they were the one place
+    the American English rule was not actually enforced — a British spelling
+    could sit in the report indefinitely with every test passing.
+    """
+    for path in DELIVERABLES:
+        if path.exists():
+            assert word not in _deliverable_text(path), f"{word!r} in {path.name}"
+
+
+def test_no_placeholders_are_left_in_the_deliverables():
+    """The gold dashed boxes are scaffolding. The live passcode marker is not
+    one of them and is deliberately left for the uploaded copy."""
+    for path in DELIVERABLES:
+        if path.exists():
+            assert "placeholder" not in _deliverable_text(path), path.name
+
+
 @pytest.mark.parametrize("word", BRITISH)
 def test_the_app_is_written_in_american_english(word):
     """Spelling and phrasing both. The agents' prompts are in here too, so
