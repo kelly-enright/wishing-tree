@@ -2922,7 +2922,7 @@ back will look like a regression to anyone reading carefully.
 |---|---|
 | **American English** everywhere, spelling and phrasing | `tests/test_voice.py` holds 28 British forms out of the source and the prompts. A screenshot can still smuggle one in — that is how *nappies* survived once. |
 | **"wish granter", never "donor"** in anything a person reads | `donor` stays in code and database columns only. |
-| **"neighbor", never "family"** in anything a person reads | Including audit summaries on the Agent activity page, which say `neighbor message, N characters`. |
+| **"neighbor", never "family"** as the app's label for the people it serves | Including audit summaries on the Agent activity page, which say `neighbor message, N characters`. **This is about the label, not the word.** Ordinary English keeps it ("a family spending long days at the hospital"), descriptions of other programs keep their own wording (goodDeeds, Geenees), and `<wish_from_family>` is a code delimiter. The report has five such uses and all five are correct — checked 26 Oct 2026, decided to leave them. |
 | **No gift card or cash wishes** anywhere | The Safety agent flags them as `cash_request`. Three places have contradicted this and each was fixed separately: the Intake agent's prompt, the seed data, and `data/price_guide.json`, which the `estimate_cost` tool reads. Check all three. |
 | **The live passcode is a placeholder in the report** | `report.src.html` is committed. A real passcode in it is a published passcode. |
 | **Slide 5 is four across, not 2×2** | The screenshots are portrait phone captures at 2×. Two rows of portrait images on a 16:9 slide leaves ~190px each, which is unreadable. |
