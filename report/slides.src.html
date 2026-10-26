@@ -103,6 +103,10 @@
   border-radius:999px;padding:.18em .7em;font-size:.6em;font-weight:700;margin:0 .3em .3em 0}
 
 .lede{font-family:var(--display);font-size:1.05em;line-height:1.35;color:var(--evergreen-deep)}
+/* Three short beats, each led by a bold phrase. Sized once here rather
+   than inline on every paragraph. */
+.beats p{font-size:.68em;line-height:1.42;margin:0 0 .65em}
+.beats p:last-child{margin-bottom:0}
 .quiet{color:var(--ink-soft)}
 .tiny{font-size:.5em;color:var(--ink-soft);line-height:1.4}
 
@@ -150,30 +154,34 @@ table.mini td.us{background:var(--gold-pale);font-weight:600}
 <!-- 2 ------------------------------------------------------------------ -->
 <section>
   <p class="kick">2 · The problem</p>
-  <h2>Many people need help.<br>Many want to give.<br>There is no bridge.</h2>
+  <h2>Neighbors want to help neighbors.<br>There's no bridge.</h2>
 
-  <div class="cols" style="margin-top:.7em">
-    <div>
-      <p style="font-size:.8em">Seven years at a soup kitchen, winter coat drives,
-        Lasagna Love, my church's giving tree.</p>
-      <p style="font-size:.8em">Every year, the same two groups — and nothing
-        connecting them. <strong>And the tree went up once a year.</strong></p>
+  <div class="cols" style="margin-top:.55em">
+    <div class="beats">
+      <p><strong>The giving tree.</strong> Growing up, my church hung paper
+        ornaments with wishes from people in our community. A neighbor took one
+        and made it come true. I always wondered: why only at Christmas?</p>
+      <p><strong>The winter drive.</strong> Running a soup kitchen's clothing
+        drive, I saw people want to help the moment they knew someone nearby
+        needed it.</p>
+      <p><strong>Lasagna Love.</strong> Matching neighbors with someone close by
+        to cook them a meal showed me local, personal giving works, all year.</p>
     </div>
     <div>
-      <div class="stat stat--green" style="margin-bottom:.5em">
-        <span class="big">~40%</span>
-        <span class="lab">of Connecticut households — a record <b>581,000</b> — couldn't
-          afford a basic survival budget in 2023. <b>Over 60% in New Haven.</b></span>
+      <div class="stat stat--gold" style="margin-bottom:.5em">
+        <span class="big">10 hours</span>
+        <span class="lab">How fast Memphis's Angel Tree filled, after in-person
+          appointments with ID, birth certificates and proof of income.
+          Augusta's closed in under 24.</span>
       </div>
-      <div class="stat stat--gold">
-        <span class="big">Hours</span>
-        <span class="lab">is how fast Angel Tree programs fill. Augusta closed in
-          under 24; Memphis in 10 — after an in-person appointment with ID,
-          birth certificates and proof of income.</span>
+      <div class="stat stat--green">
+        <span class="big">Over 60%</span>
+        <span class="lab">of New Haven households can't afford a basic survival
+          budget. About 40% across Connecticut, a record <b>581,000</b>.</span>
       </div>
     </div>
   </div>
-  <p class="tiny" style="margin-top:.6em">ALICE households earn <em>above</em> the
+  <p class="tiny" style="margin-top:.5em">ALICE households earn <em>above</em> the
     poverty line, which is what excludes them from most aid.
     Sources: CT Mirror 2025 · WRDW 2025 · FOX13 Memphis 2025.</p>
 </section>
