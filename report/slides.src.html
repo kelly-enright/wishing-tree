@@ -17,6 +17,11 @@
   --evergreen:#2F5D50; --evergreen-deep:#22463C; --evergreen-soft:#4A7A6B; --evergreen-pale:#E3EDE8;
   --cream:#FBF6EE; --cream-deep:#F2E9D9;
   --gold:#E0A84B; --gold-deep:#C78E33; --gold-pale:#FAEFD9;
+  /* A darker gold for words only. --gold-deep is 2.9:1 on white, which is
+     fine for a border and not fine for text; this is 6.0:1 on white and
+     4.9:1 at worst anywhere. Same split the report makes between tones that
+     carry text and tones that only decorate. */
+  --gold-ink:#845B12;
   --terracotta:#C8664A; --terracotta-pale:#FBEAE4;
   --sky-top:#DCE9EF; --band-sage:#E8EFE7;
   --ink:#2B2B2B; --ink-soft:#5F5A53; --line:#E4DED2;
@@ -25,7 +30,23 @@
 }
 
 .reveal{font-family:var(--body);color:var(--ink);font-size:34px}
-.reveal-viewport{background:var(--cream)}
+.reveal-viewport{background:#FFFFFF}
+
+/* The first and last slides get the app's morning sky instead: pale blue
+   fading to white, with its sage hills along the bottom edge.
+
+   Painted on reveal's own per-slide background layer rather than inside the
+   slide, because that layer fills the window while the slide is a scaled
+   1280x720 canvas — hills drawn inside the canvas would float above the
+   bottom of the screen wherever the deck letterboxes. */
+.reveal .backgrounds .slide-background:first-child,
+.reveal .backgrounds .slide-background:last-child{
+  background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20600%20120%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20d%3D%22M0%2086c74-26%20136-30%20208-12%2070%2017%20118%2022%20180%208%2054-12%20118-16%20212%202v36H0z%22%20fill%3D%22%23BCD4B6%22%2F%3E%3Cpath%20d%3D%22M0%20104c96-20%20160-20%20236-6%2078%2015%20136%2016%20204%204%2050-9%20110-12%20160-2v20H0z%22%20fill%3D%22%23A6C4A1%22%20opacity%3D%220.75%22%2F%3E%3C%2Fsvg%3E"),
+                   linear-gradient(to bottom,#DCE9EF 0%,#F4F8FA 40%,#FFFFFF 72%);
+  background-position:bottom center,center;
+  background-size:100% 18vh,cover;
+  background-repeat:no-repeat,no-repeat;
+}
 .reveal .slides{text-align:left}
 
 .reveal h1,.reveal h2,.reveal h3{
@@ -42,11 +63,11 @@
 .reveal ul{display:block;margin:0 0 .5em;padding-left:1.1em}
 .reveal li{margin:0 0 .38em;line-height:1.4}
 .reveal code{font-family:ui-monospace,Menlo,monospace;font-size:.82em;
-  background:var(--cream-deep);padding:.06em .3em;border-radius:4px}
+  background:var(--evergreen-pale);padding:.06em .3em;border-radius:4px}
 
 /* A quiet kicker above each heading, so every slide says where it is. */
 .kick{font-size:.5em;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--gold-deep);margin:0 0 .5em}
+  color:var(--gold-ink);margin:0 0 .5em}
 
 /* Layout helpers ------------------------------------------------------- */
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:1.1em;align-items:start}
@@ -60,19 +81,23 @@
 .row2x2 .shot{max-height:182px;width:auto;max-width:100%}
 .row2x2 .cap{margin-top:.3em}
 
-.shot{width:100%;display:block;border:1px solid var(--line);border-radius:10px;
-  box-shadow:0 6px 22px rgba(34,70,60,.13)}
+.shot{width:100%;display:block;border:1px solid #DDD6C9;border-radius:10px;
+  box-shadow:0 6px 22px rgba(34,70,60,.16)}
 .cap{font-size:.52em;color:var(--ink-soft);margin:.45em 0 0;line-height:1.35}
 .cap b{color:var(--evergreen-deep)}
 
 /* Big numbers ---------------------------------------------------------- */
-.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:.7em .8em}
+/* On cream, a white card with a pale border was enough. On white it
+   disappears, so the neutral stat earns its edges with a real border and
+   a soft shadow instead. */
+.stat{background:#fff;border:1.5px solid #CFDAD3;border-radius:14px;padding:.7em .8em;
+  box-shadow:0 3px 14px rgba(34,70,60,.08)}
 .stat .big{font-family:var(--display);font-size:1.75em;color:var(--evergreen-deep);
   line-height:1;display:block;margin-bottom:.15em}
 .stat .lab{font-size:.52em;color:var(--ink-soft);line-height:1.35;display:block}
-.stat--gold{background:var(--gold-pale);border-color:var(--gold-deep)}
-.stat--gold .big{color:var(--gold-deep)}
-.stat--green{background:var(--evergreen-pale);border-color:var(--evergreen-soft)}
+.stat--gold{background:var(--gold-pale);border-color:var(--gold-deep);box-shadow:none}
+.stat--gold .big{color:var(--gold-ink)}
+.stat--green{background:var(--evergreen-pale);border-color:var(--evergreen-soft);box-shadow:none}
 
 .pill{display:inline-block;background:var(--evergreen-pale);color:var(--evergreen-deep);
   border-radius:999px;padding:.18em .7em;font-size:.6em;font-weight:700;margin:0 .3em .3em 0}
@@ -88,7 +113,7 @@
 .ph{background:var(--gold-pale);border:2px dashed var(--gold-deep);border-radius:10px;
   padding:.55em .75em;font-size:.62em;line-height:1.4}
 .ph .tag{display:block;font-size:.75em;font-weight:700;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--gold-deep);margin-bottom:.25em}
+  text-transform:uppercase;color:var(--gold-ink);margin-bottom:.25em}
 
 table.mini{width:100%;border-collapse:collapse;font-size:.56em}
 table.mini td,table.mini th{padding:.3em .45em;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
