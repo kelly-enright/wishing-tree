@@ -241,7 +241,7 @@ def summarize(message: str, reply: IntakeReply) -> tuple[str, str]:
     route, because the words never travel.
     """
     return (
-        f"family message, {len(message)} characters",
+        f"neighbor message, {len(message)} characters",
         f"{text.counted(len(reply.draft_wishes), 'wish', 'wishes')} drafted, "
         f"done={str(reply.done).lower()}",
     )

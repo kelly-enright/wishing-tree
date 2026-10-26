@@ -383,7 +383,9 @@ def test_the_summaries_the_app_writes_are_shape_not_content():
     )
     input_summary, output_summary = summarize(family_text, reply)
 
-    assert input_summary == f"family message, {len(family_text)} characters"
+    # "neighbor", not "family": the activity page is the one place a human
+    # reads these summaries, and it uses the app's own vocabulary.
+    assert input_summary == f"neighbor message, {len(family_text)} characters"
     assert output_summary == "1 wish drafted, done=false"
     for word in ("Sofia", "Delgado", "Wilbur", "coat", "size"):
         assert word not in input_summary
