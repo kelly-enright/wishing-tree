@@ -500,10 +500,12 @@ def test_the_seed_puts_home_things_in_household(client):
                      if r.category.value == "household"]
     assert any("Shower chair" in d for d in household)
     assert any("Sheets, towels" in d for d in household)
-    # A blanket asked for as a birthday present is a gift, not bedding.
+    # A blanket asked for as a birthday present is a gift, not bedding. Named
+    # in full: another wish mentions a lap blanket among things for hospital
+    # days, which is not a gift and should not be dragged in by a loose match.
     with db.connect(config.DB_PATH) as conn:
         blanket = next(r for r in db.list_requests(conn)
-                       if "lap blanket" in r.item_description)
+                       if "Weighted lap blanket" in r.item_description)
     assert blanket.category.value == "gifts"
 
 

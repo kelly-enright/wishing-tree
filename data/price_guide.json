@@ -256,7 +256,7 @@
     },
     {
       "category": "food",
-      "item": "grocery gift card, one week, small household",
+      "item": "groceries for one week, small household",
       "typical_usd": 60,
       "range_usd": [
         40,
@@ -274,7 +274,7 @@
     },
     {
       "category": "food",
-      "item": "grocery gift card, one week, large household",
+      "item": "groceries for one week, large household",
       "typical_usd": 110,
       "range_usd": [
         80,
@@ -283,7 +283,7 @@
     },
     {
       "category": "food",
-      "item": "grocery gift card, household of four",
+      "item": "groceries for one week, household of four",
       "typical_usd": 120,
       "range_usd": [
         80,
@@ -544,7 +544,7 @@
     },
     {
       "category": "other",
-      "item": "gas card for medical travel",
+      "item": "soft hats, a lap blanket and slipper socks for hospital days",
       "typical_usd": 75,
       "range_usd": [
         50,

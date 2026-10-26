@@ -2761,6 +2761,87 @@ The lesson is the same one the slides taught: **measure before cutting.**
 Both documents resisted every attempt to shrink them until I stopped
 trimming words and found what was actually consuming the space.
 
+## 44. Slide 7, and three things found behind it
+
+Slide 7 was a screenshot and four vague pills. It is now a before and after:
+the sentence the neighbor typed on the left with the child's name, the school
+and the phone number marked in red, an arrow, and a fresh capture of the
+published card on the right with *"Taken out before anyone saw it: a child's
+name, a school name, a phone number"* fully visible. The four pills say what
+they actually mean — two AI checks then code, caps nobody can bypass,
+addresses and phones never reaching the AI, plain-language notes only — and
+the 10/10 box says *personal details* rather than *PII*, with the cost on its
+own line.
+
+The typed side is set as **text, not a screenshot**. Three details have to be
+legible from the back of a room, and a capture of a text box at that size is
+not. A new `--red-ink: #A32D12` carries them: the project's terracotta is
+3.9:1 on white, which is fine for a border and not for words a reader is
+meant to pick out. The new one is 7.1:1.
+
+Getting the screenshot meant reproducing the run, and the reproduction is
+what turned up the rest.
+
+### A gift card wish still on the tree
+
+Reseeding to take the capture put *"Gas cards for travel to medical
+appointments"* on screen — a gift card wish, six commits after the gift cards
+were supposed to be gone. Section 42 fixed the Intake prompt and the seed's
+grocery cards; it missed this one, a laundry card refill, and a seed wish
+whose description had been fixed while its `product_link` still pointed at
+`stopandshop.com/gift-cards/…` with a size of `$50`.
+
+Worse, `data/price_guide.json` — the file the Intake agent's `estimate_cost`
+tool reads — still priced four of them. The agent could be steered into
+drafting a gift card wish with a confident number attached and only be caught
+two steps later by the Safety agent. All four renamed to the item behind the
+card, prices unchanged: a week of groceries costs what the card for it was
+worth.
+
+**The lesson, again:** the rule was written in the prompt and the seed, and
+nobody checked the third place the same idea lived.
+
+### Two screenshots still saying "family message"
+
+The report's two Agent activity figures were taken before the rename and
+still read **"In: family message, 158 characters"** — the exact failure the
+submission notes warn about two paragraphs above where they were sitting.
+They also carried the superseded Intake prompt hash `1d311bcdc950`. Both
+retaken against the current build: `neighbor message`, prompt `156dc6d71bc8`,
+nothing cut off at any edge.
+
+Retaking them needed the admin screens, which are behind a token the frontend
+keeps in `sessionStorage` — so the capture script sets it the way the unlock
+screen would, then reloads. Both figures are crops of one full-page capture at
+2×, which is why they line up.
+
+### A wish that failed safe, and silently
+
+The first attempt at the injection run came back `pending_review` with no
+error anywhere in the server's output. The Agent activity page had it:
+
+> `ModelHTTPError: status_code: 400, model_name: gpt-6-luna … The response
+> was filtered due to the prompt triggering Azure OpenAI's content management
+> policy`
+
+A prompt-injection attempt wrapped around three personal details tripped the
+**provider's** content filter, so the Safety agent never got an answer. The
+app did the right thing — `_review_and_publish` caught it, left the wish
+hidden, and told the neighbor their wish was saved. Holding is the correct
+direction to fail in.
+
+But the `except Exception` that did it printed nothing, so the only trace was
+on a page nobody was looking at. It now prints the traceback to the server's
+output with the wish number. Behavior is unchanged; a coordinator who hits
+this has something to go on. The second run went through normally — published
+as "Winter coat for a child, size 8", three removals, `prompt_injection`
+flagged with the attempt quoted back.
+
+**Worth knowing before the demo:** an attack this blunt may be stopped by the
+gateway rather than by Wishing Tree, and the wish then waits instead of going
+up. That is the safe outcome, not a broken one, but it looks like nothing
+happening.
+
 ## Final submission notes
 
 Written for whoever picks this up next, including me after a break. Everything
@@ -2792,7 +2873,7 @@ back will look like a regression to anyone reading carefully.
 | **American English** everywhere, spelling and phrasing | `tests/test_voice.py` holds 28 British forms out of the source and the prompts. A screenshot can still smuggle one in — that is how *nappies* survived once. |
 | **"wish granter", never "donor"** in anything a person reads | `donor` stays in code and database columns only. |
 | **"neighbor", never "family"** in anything a person reads | Including audit summaries on the Agent activity page, which say `neighbor message, N characters`. |
-| **No gift card or cash wishes** anywhere | The Safety agent flags them as `cash_request`. The Intake agent's prompt and the seed data both used to contradict that. |
+| **No gift card or cash wishes** anywhere | The Safety agent flags them as `cash_request`. Three places have contradicted this and each was fixed separately: the Intake agent's prompt, the seed data, and `data/price_guide.json`, which the `estimate_cost` tool reads. Check all three. |
 | **The live passcode is a placeholder in the report** | `report.src.html` is committed. A real passcode in it is a published passcode. |
 | **Slide 5 is four across, not 2×2** | The screenshots are portrait phone captures at 2×. Two rows of portrait images on a 16:9 slide leaves ~190px each, which is unreadable. |
 | **The report is 13 pages** | To leave room for the tester results in section 7. The assignment allows up to 15; the spare pages are deliberate. |

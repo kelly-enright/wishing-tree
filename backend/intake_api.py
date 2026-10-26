@@ -12,6 +12,8 @@ thing every time.
 
 from __future__ import annotations
 
+import sys
+import traceback
 import uuid
 from datetime import datetime, timezone
 
@@ -397,6 +399,13 @@ async def _review_and_publish(request: Request, session_id: str) -> dict:
             "budget_scope": limit.scope,
         }
     except Exception:                               # noqa: BLE001
+        # Holding the wish is the right direction to fail in, but failing
+        # silently is not: this path once left a wish sitting in
+        # `pending_review` with nothing anywhere saying why. The neighbor
+        # still gets the kind message below; the traceback goes to the
+        # server's output so a coordinator has something to go on.
+        print(f"safety review failed for wish #{request.id}:", file=sys.stderr)
+        traceback.print_exc()
         return {
             "request_id": request.id,
             "published": False,

@@ -8,7 +8,7 @@ fills one in from this guide, and that is the number a donor sees and shops
 to. A figure that is wrong by half is a donor turning up with the wrong
 thing, so each row is worth a minute against a real store.
 
-The **Checked** column is for you: write the real price you found, or a tick.
+The **Checked** column is for you: write the real price you found, or a check mark.
 
 ## Clothing
 
@@ -88,10 +88,10 @@ The **Checked** column is for you: write the real price you found, or a tick.
 | Item | Typical | Range | Checked |
 |---|---|---|---|
 | birthday cake and dinner | $35 | $22–$55 | |
-| grocery gift card, one week, small household | $60 | $40–$90 | |
+| groceries for one week, small household | $60 | $40–$90 | |
 | prepared freezer meals, one week | $70 | $45–$110 | |
-| grocery gift card, one week, large household | $110 | $80–$160 | |
-| grocery gift card, household of four | $120 | $80–$180 | |
+| groceries for one week, large household | $110 | $80–$160 | |
+| groceries for one week, household of four | $120 | $80–$180 | |
 
 ## Rent & utilities
 
@@ -119,7 +119,7 @@ The **Checked** column is for you: write the real price you found, or a tick.
 | monthly bus pass | $35 | $25–$50 | |
 | smoke detector and extinguisher | $50 | $30–$80 | |
 | mobility or bathing aid | $60 | $35–$110 | |
-| gas card for medical travel | $75 | $50–$120 | |
+| soft hats, a lap blanket and slipper socks for hospital days | $75 | $50–$120 | |
 | first apartment basics | $180 | $120–$300 | |
 
 ## Worth a closer look first
@@ -135,4 +135,4 @@ The **Checked** column is for you: write the real price you found, or a tick.
 
 Change a price by editing `data/price_guide.json` and re-running this script. Nothing is cached — the agent reads the file at run time.
 
-_Generated 2026-10-20 by `backend/price_guide_review.py`._
+_Generated 2026-10-26 by `backend/price_guide_review.py`._

@@ -173,8 +173,8 @@ REQUESTS: list[dict] = [
     # --- Family A07: child in cancer treatment ---
     dict(family="Neighbor A07", category=Category.OTHER, type=F, days=5,
          occasion="emergency", status=RequestStatus.OPEN, budget=(60.0, 100.0),
-         desc="Gas cards for travel to medical appointments",
-         prefs="Any major station works."),
+         desc="Soft hats, a lap blanket and slipper socks for hospital days",
+         prefs="Cotton if possible — synthetics itch during treatment."),
     dict(family="Neighbor A07", category=Category.ESSENTIALS, type=S, days=12,
          occasion="everyday", status=RequestStatus.OPEN, cost=22.0,
          desc="Unscented soap and lotion, sensitive skin",
@@ -243,8 +243,8 @@ REQUESTS: list[dict] = [
     dict(family="Neighbor A23", category=Category.FOOD, type=S, days=10,
          occasion="everyday", status=RequestStatus.OPEN, cost=50.0,
          desc="Groceries for a household with children",
-         link="https://www.stopandshop.com/gift-cards/product/sas-gc-50",
-         brand="Stop & Shop", size="$50", color=None, sub=False),
+         link="https://www.stopandshop.com/product/pantry-staples-box",
+         brand="Stop & Shop", size=None, color=None, sub=False),
 
     # --- Family A27: mother returning to work after an injury ---
     dict(family="Neighbor A27", category=Category.CLOTHING, type=S, days=8,
@@ -392,7 +392,7 @@ HISTORY: list[dict] = [
     dict(ago=23,  category=Category.GIFTS,           cost=29.0, occasion="birthday",
          desc="Art set for a 9-year-old"),
     dict(ago=27,  category=Category.HOUSEHOLD,       cost=45.0, occasion="everyday",
-         desc="Laundry card refill for an apartment building"),
+         desc="Laundry detergent and dryer sheets, three months' worth"),
 
     # --- older: counted on the landing page, no longer on the tree ---
     dict(ago=38,  category=Category.CLOTHING,        cost=52.0, occasion="everyday",
@@ -408,7 +408,7 @@ HISTORY: list[dict] = [
     dict(ago=74,  category=Category.CLOTHING,        cost=44.0, occasion="everyday",
          desc="School shoes for two children, sizes 11 and 13"),
     dict(ago=83,  category=Category.OTHER,           cost=70.0, occasion="emergency",
-         desc="Gas cards for travel to medical appointments"),
+         desc="Soft hats, a lap blanket and slipper socks for hospital days"),
     dict(ago=91,  category=Category.GIFTS,           cost=33.0, occasion="birthday",
          desc="Building block set for a 5-year-old"),
     dict(ago=102, category=Category.RENT_UTILITIES,  cost=420.0, occasion="emergency",
