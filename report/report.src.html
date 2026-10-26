@@ -57,7 +57,23 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9pt;backg
 .fill{background:var(--gold-pale);border:1px dashed var(--gold-deep);padding:1px 6px;border-radius:3px;font-weight:700;color:var(--gold-deep)}
 
 /* Figures ---------------------------------------------------------------- */
+/* Figures stay whole — a picture split across two pages is a mistake. What
+   was costing a page and a half was `break-after: avoid` on every h3: each
+   one dragged the block after it to the next page and left the remainder of
+   the previous one empty. Sections still start with their heading (h2 keeps
+   the rule); subheadings no longer do. */
 figure{margin:8pt auto;max-width:4.5in;break-inside:avoid;page-break-inside:avoid}
+.pair{break-inside:avoid;page-break-inside:avoid}
+/* Illustrative figures — the ones showing what a screen looks like rather than
+   proving something — run at about two-thirds of the evidence size, and go
+   side by side where two of them belong together. Evidence keeps its size,
+   because the reader is being asked to check it rather than glance at it. */
+.fig--small{max-width:3.0in}
+.pair--ill{max-width:4.4in;margin:0 auto}
+/* Portrait phone captures: wide here means tall, so they are sized by
+   what makes a legible figure rather than by the column. */
+.fig--tall{max-width:2.8in}
+.pair--small{max-width:4.2in;margin:0 auto}
 figure img{width:100%;display:block;border:1px solid var(--line);border-radius:7px}
 figcaption{font-size:8.3pt;color:var(--ink-soft);margin-top:4pt;line-height:1.4}
 figcaption b{color:var(--evergreen-deep)}
@@ -100,7 +116,6 @@ table.compact td,table.compact th{padding:3.5pt 6pt}
   body{background:var(--white)}
   .sheet{padding:0;max-width:none}
   h2{break-after:avoid;page-break-after:avoid}
-  h3{break-after:avoid;page-break-after:avoid}
 }
 </style>
 </head>
@@ -434,7 +449,7 @@ best writer.</p>
 
 <p>Everything below is a single sitting in the live app, captured as it happened.</p>
 
-<figure>
+<figure class="fig--small">
   <img src="{{IMG:r3-intake-drafted}}" alt="The intake conversation">
   <figcaption><b>1. The neighbor types what they need.</b> "Non-slip work shoes for
   my husband Daniel, size 11, for his shifts in the kitchen at Olive Garden. He
@@ -443,22 +458,22 @@ best writer.</p>
   $0.00092, 46% of input served from cache.</figcaption>
 </figure>
 
-<figure>
-  <img src="{{IMG:r5-wish-review}}" alt="The review screen before posting">
-  <figcaption><b>2. The neighbor checks it before anyone sees it.</b> Drafted as
-  "Non-slip work shoes, size 11, for an adult working kitchen shifts." The name and
-  the employer are already gone; the size and the purpose — the two things a wish
-  granter buys from — are kept. Nothing is posted until the neighbor presses the
-  gold button.</figcaption>
-</figure>
-
-<figure>
-  <img src="{{IMG:r6-wish-published}}" alt="The wish on the tree">
-  <figcaption><b>3. The Safety agent publishes it.</b> Final text: "Non-slip work
-  shoes for an adult, size 11, for kitchen work." The review reported
-  <em>nothing</em> removed — correctly, because the Intake agent had already
-  dropped the name and employer. The two layers caught it at the first one.</figcaption>
-</figure>
+<div class="pair pair--ill">
+  <figure>
+    <img src="{{IMG:r5-wish-review}}" alt="The review screen before posting">
+    <figcaption><b>2. The neighbor checks it first.</b> Drafted as "Non-slip work
+    shoes, size 11, for an adult working kitchen shifts." The name and employer
+    are already gone; the size and the purpose stay. Nothing posts until they
+    press the gold button.</figcaption>
+  </figure>
+  <figure>
+    <img src="{{IMG:r6-wish-published}}" alt="The wish on the tree">
+    <figcaption><b>3. The Safety agent publishes it.</b> "Non-slip work shoes for
+    an adult, size 11, for kitchen work." The review reported <em>nothing</em>
+    removed — correctly: Intake had already dropped the name and employer. Two
+    layers, caught at the first.</figcaption>
+  </figure>
+</div>
 
 <div class="note">
   <p><strong>So what does a removal look like?</strong> A neighbor can edit their
@@ -479,7 +494,7 @@ best writer.</p>
   </figure>
 </div>
 
-<figure>
+<figure class="fig--small">
   <img src="{{IMG:r11-agent-activity-removals}}" alt="The agent activity log">
   <figcaption><b>6. Every call, on the Agent activity page.</b> Each one in order
   with the tools it ran, tokens in and out, latency and the prompt version hash.
@@ -599,7 +614,7 @@ before the limit was hit.</p>
   it.</p>
 </div>
 
-<div class="pair">
+<div class="pair pair--small">
   <figure>
     <img src="{{IMG:r4-ai-details}}" alt="Show AI details on a neighbor's screen">
     <figcaption><b>What this session cost.</b> "Show AI details" is on every
@@ -706,7 +721,7 @@ agent, so what is measured is our defense.</p>
   </figure>
 </div>
 
-<figure>
+<figure class="fig--tall">
   <img src="{{IMG:r13-token-cap}}" alt="The chat stopping when the session token cap is reached">
   <figcaption><b>Test 6.</b> The session cap, lowered to 3,000 tokens to capture
   it: the next message made <b>zero</b> model calls, and the chat says so kindly —

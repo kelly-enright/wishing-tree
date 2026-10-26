@@ -2715,3 +2715,124 @@ the old blue theme.
 | Tests | 529 passing, 10 live |
 | Prompt versions | intake `156dc6d71bc8`, safety `61aabb7d2ea5`, matchmaker `a28d261b1622` |
 | Report | 15 pages |
+
+---
+
+## 43. Fifteen pages into thirteen, without cutting evidence
+
+The report was 15 pages and needed to be 13, so section 7 has room for the
+tester results. The first instinct — trim sentences — bought almost nothing:
+two rounds of tightening prose moved it from 15 to 14 and cost real detail.
+
+So I measured instead of guessing. The content, laid out in a continuous
+scroll at the print width, came to **12.29 pages**. It was printing as 14.
+That gap — nearly two pages — was not content at all. It was pagination
+slack: whitespace left at the bottom of pages by blocks that refuse to split.
+
+Two causes, and only one of them was worth fixing.
+
+**`break-after: avoid` on every `h3`.** Each subheading dragged the block
+after it onto the next page, leaving the bottom third of the page before it
+empty. Section headings should behave this way; sub-subheadings in a report
+this dense should not. `h2` keeps the rule, `h3` lost it.
+
+**Figures that refuse to break.** Removing `break-inside: avoid` from
+`figure` did get the count to 13, and I nearly left it there. But it is the
+wrong fix: it lets a caption drift onto the page after its own picture, and
+a caption separated from its image is worse than a longer report. I put the
+rule back and found the page elsewhere.
+
+**Where the page actually came from.** Smaller blocks pack better — a figure
+at 0.42 of a page strands whatever space is left below it, while one at 0.28
+usually fits. The illustrative screenshots, the ones showing what a screen
+looks like rather than proving a claim, went to about two-thirds size, and
+walkthrough steps 2 and 3 went side by side as a pair. Evidence — the before
+and after of a safety removal, the three live attack results — stayed full
+size, because the reader is being asked to check those rather than glance at
+them.
+
+**The result.** 13 pages, every figure whole. Measured from the PDF, the ink
+on pages 1 through 12 reaches 88–92% of the way down; page 13 is 38% full,
+which is the room section 7 needed. One gap remains, at the foot of page 3,
+where the agents table ends and the next block will not fit above the
+margin — the cost of keeping blocks intact, and cheaper than the alternative.
+
+The lesson is the same one the slides taught: **measure before cutting.**
+Both documents resisted every attempt to shrink them until I stopped
+trimming words and found what was actually consuming the space.
+
+## Final submission notes
+
+Written for whoever picks this up next, including me after a break. Everything
+below is current as of the last commit.
+
+### Still to do before submitting
+
+1. **Fill in the live admin passcode** in `report.html`, section 1. It is a
+   marked placeholder — `‹live passcode — see note below›` — on purpose. The
+   value lives only in Render's dashboard, under
+   Environment → `WISHINGTREE_PASSCODE`. Fill it in on the copy uploaded to
+   Canvas, **not** in `report/report.src.html`, which is committed.
+2. **Fill in section 7, Impact.** Four gold dashed placeholders: a tester
+   quote, observed intake times, a before-and-after against an existing
+   program, and what testers found confusing. Edit
+   `report/report.src.html`, then rebuild.
+3. **Reseed before recording or demoing**, so the tree is the same every time:
+   `./.venv/bin/python -m backend.seed --reset`
+4. **Upload** `report.html` and `slides.html` to Canvas. Both are
+   self-contained — no network, no fonts to install, no reveal.js CDN.
+
+### Decisions that must not be undone
+
+These were each decided deliberately, some of them more than once. Changing one
+back will look like a regression to anyone reading carefully.
+
+| Decision | Why it matters |
+|---|---|
+| **American English** everywhere, spelling and phrasing | `tests/test_voice.py` holds 28 British forms out of the source and the prompts. A screenshot can still smuggle one in — that is how *nappies* survived once. |
+| **"wish granter", never "donor"** in anything a person reads | `donor` stays in code and database columns only. |
+| **"neighbor", never "family"** in anything a person reads | Including audit summaries on the Agent activity page, which say `neighbor message, N characters`. |
+| **No gift card or cash wishes** anywhere | The Safety agent flags them as `cash_request`. The Intake agent's prompt and the seed data both used to contradict that. |
+| **The live passcode is a placeholder in the report** | `report.src.html` is committed. A real passcode in it is a published passcode. |
+| **Slide 5 is four across, not 2×2** | The screenshots are portrait phone captures at 2×. Two rows of portrait images on a 16:9 slide leaves ~190px each, which is unreadable. |
+| **The report is 13 pages** | To leave room for the tester results in section 7. The assignment allows up to 15; the spare pages are deliberate. |
+| **Every number in the slides matches the report** | Both trace to `output/tokenomics.md` and `output/safety_test_results.json`. Changing an agent prompt changes these — rerun both suites and update both files together. |
+| **Only `gpt-6-luna`**, through Portkey | Named once, in `backend/config.py`. |
+| **No real data anywhere** | Every neighbor, wish granter, address, phone and wish is invented. |
+
+### How to rebuild
+
+Both deliverables are generated, never hand-edited. Edit the sources in
+`report/`, then:
+
+```bash
+./.venv/bin/python report/build.py
+```
+
+That writes `report.html` and `slides.html` at the repository root, inlining
+the two fonts, every screenshot, and reveal.js.
+
+| Edit this | To change |
+|---|---|
+| `report/report.src.html` | the report |
+| `report/slides.src.html` | the slides |
+| `report/crops/*.jpg` | a screenshot (the builder prefers a crop over `screenshots/`) |
+| `report/vendor/` | the vendored reveal.js |
+
+**To check the page count** — the one thing the builder does not tell you:
+
+```bash
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless \
+  --no-pdf-header-footer --print-to-pdf=/tmp/r.pdf "file://$PWD/report.html"
+```
+
+**To re-measure after any prompt change**, in this order:
+
+```bash
+./.venv/bin/python -m pytest -m live tests/test_safety_live.py   # ~$0.004
+./.venv/bin/python -m backend.measure                            # ~$0.04
+```
+
+Then update `output/harness.md` §19–20 and every figure in both sources. The
+figures appear in: the per-agent table, the journey table, the scale table, the
+two experiment sections, §5's cost-to-run paragraph, and slide 6.
