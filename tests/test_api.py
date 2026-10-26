@@ -149,7 +149,7 @@ def test_donor_signup_stores_preferences(client):
         "zip": "06511",
         "contact_address": "12 Rookery Ln, New Haven, CT 06511",
         "contact_email": "new.donor@example.com",
-        "contact_phone": "(203) 555-0292",
+        "contact_phone": "(203) 555-0171",
         "password": "a-good-long-password",
         "budget_usd": 150,
         "preferred_categories": ["clothing", "food"],

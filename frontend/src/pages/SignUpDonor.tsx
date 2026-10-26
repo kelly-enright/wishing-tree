@@ -101,7 +101,7 @@ export default function SignUpDonor() {
           <span className="field__label">Phone <em>(optional)</em></span>
           <input
             className="field__input" value={phone} type="tel"
-            placeholder="(203) 555-0201"
+            placeholder="(203) 555-0170"
             onChange={(e) => setPhone(formatPhone(e.target.value))}
           />
           <span className="field__hint">Only used on drop-off day.</span>
